@@ -72,7 +72,7 @@ test('guest events are claimed by the user on login', function () {
 test('page views attribute the authenticated user', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->get(route('dashboard'))->assertOk();
+    $this->actingAs($user)->get(route('member.home'))->assertOk();
 
     expect(
         TrackedEvent::query()

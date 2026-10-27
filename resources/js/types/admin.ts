@@ -47,12 +47,19 @@ export type NutritionProfileSummary = {
 export type AdminPayment = {
     id: number;
     user_id: number;
-    provider: 'chapa' | 'verify_checkout' | string;
+    provider: 'chapa' | 'verify_checkout' | 'jami';
     tx_ref: string;
     deposit_id: string | null;
     amount: string;
     currency: string;
-    status: 'pending' | 'success' | 'failed' | 'refunded' | string;
+    status:
+        | 'pending'
+        | 'success'
+        | 'failed'
+        | 'expired'
+        | 'cancelled'
+        | 'review_required'
+        | 'refunded';
     email: string;
     first_name: string | null;
     last_name: string | null;

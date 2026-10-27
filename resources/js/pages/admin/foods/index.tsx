@@ -51,7 +51,11 @@ export default function AdminFoodsIndex({ foods, categories, filters }: Props) {
     function submitSearch(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        applyFilters(String(data.get('search') ?? ''), filters.category);
+        const search = data.get('search');
+        applyFilters(
+            typeof search === 'string' ? search : '',
+            filters.category,
+        );
     }
 
     return (

@@ -219,10 +219,10 @@ export default function AdminUserShow({ user }: Props) {
                                                 : '—'}
                                         </Field>
                                         <Field label="Goal">
-                                            {String(
-                                                profile.goal?.primary_goal ??
-                                                    '—',
-                                            )}
+                                            {typeof profile.goal
+                                                ?.primary_goal === 'string'
+                                                ? profile.goal.primary_goal
+                                                : '—'}
                                         </Field>
                                     </dl>
                                 )}

@@ -56,7 +56,7 @@ test('enabled integrations reach the shared tracking prop', function () {
     $user = User::factory()->create();
     TrackingIntegration::factory()->create(['scopes' => ['member']]);
 
-    $response = $this->actingAs($user)->get(route('dashboard'));
+    $response = $this->actingAs($user)->get(route('member.home'));
 
     $response->assertInertia(fn ($page) => $page
         ->where('tracking.integrations.0.provider', 'meta'));
@@ -70,7 +70,7 @@ test('disabled or out-of-scope integrations are not shared', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('dashboard'))
+        ->get(route('member.home'))
         ->assertInertia(fn ($page) => $page->where('tracking.integrations', []));
 });
 
@@ -80,7 +80,7 @@ test('secrets are never serialized to the frontend', function () {
         'config' => ['access_token' => 'super-secret-token'],
     ]);
 
-    $response = $this->actingAs($user)->get(route('dashboard'));
+    $response = $this->actingAs($user)->get(route('member.home'));
 
     $page = $response->inertiaProps();
     expect(json_encode($page['tracking']['integrations']))->not->toContain('super-secret-token');

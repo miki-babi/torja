@@ -385,7 +385,9 @@ export default function MemberSharedMealProgram({
                                 >
                                     {saving
                                         ? t('shared_program.saving')
-                                        : t('shared_meal_program.claim_program')}
+                                        : t(
+                                              'shared_meal_program.claim_program',
+                                          )}
                                 </Button>
                             ) : (
                                 <Button
@@ -393,7 +395,9 @@ export default function MemberSharedMealProgram({
                                     asChild
                                 >
                                     <Link href={proUrl}>
-                                        {t('shared_meal_program.upgrade_to_pro')}
+                                        {t(
+                                            'shared_meal_program.upgrade_to_pro',
+                                        )}
                                     </Link>
                                 </Button>
                             )}
