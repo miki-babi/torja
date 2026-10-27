@@ -1,0 +1,164 @@
+<?php
+
+use App\Models\User;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+
+beforeEach(function () {
+    config()->set('services.telegram.bot_username', 'trainpro_bot');
+    config()->set('services.telegram.bot_token', 'test-token');
+
+    Http::fake();
+});
+
+function telegramUpdate(string $text, array $from = [], int $chatId = 12345): array
+{
+    return [
+        'message' => [
+            'chat' => ['id' => $chatId, 'type' => 'private'],
+            'text' => $text,
+            'from' => [
+                'id' => 555001,
+                'username' => 'janedoe',
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
+                ...$from,
+            ],
+        ],
+    ];
+}
+
+test('init returns a bot deep link and pending token', function () {
+    $response = $this->postJson(route('telegram.login.init'));
+
+    $response->assertOk();
+    $response->assertJsonStructure(['url', 'token', 'expires_in']);
+
+    $data = $response->json();
+
+    expect($data['url'])->toStartWith('https://t.me/trainpro_bot?start=login_')
+        ->and(Cache::get("tg-login:{$data['token']}"))->toBe(['user_id' => null]);
+});
+
+test('init fails when telegram is not configured', function () {
+    config()->set('services.telegram.bot_username', null);
+
+    $this->postJson(route('telegram.login.init'))->assertStatus(503);
+});
+
+test('status reports pending then ready after the bot binds the token', function () {
+    $token = 'login_'.Str::random(48);
+    Cache::put("tg-login:{$token}", ['user_id' => null], 600);
+
+    $this->getJson(route('telegram.login.status', ['token' => $token]))
+        ->assertOk()
+        ->assertJson(['status' => 'pending']);
+
+    $user = User::factory()->withTelegram()->create(['telegram_id' => 555001]);
+
+    $this->postJson(route('telegram.webhook'), telegramUpdate("/start {$token}"))
+        ->assertOk();
+
+    $this->getJson(route('telegram.login.status', ['token' => $token]))
+        ->assertOk()
+        ->assertJson(['status' => 'ready']);
+});
+
+test('complete logs in the bound user and consumes the token', function () {
+    $user = User::factory()->withTelegram()->create(['telegram_id' => 555001]);
+
+    $token = 'login_'.Str::random(48);
+    Cache::put("tg-login:{$token}", ['user_id' => null], 600);
+
+    $this->postJson(route('telegram.webhook'), telegramUpdate("/start {$token}"));
+
+    $response = $this->postJson(route('telegram.login.complete'), ['token' => $token]);
+
+    $response->assertOk()->assertJsonStructure(['redirect']);
+    $this->assertAuthenticatedAs($user);
+    expect(Cache::get("tg-login:{$token}"))->toBeNull();
+
+    $this->post(route('logout'));
+
+    $this->postJson(route('telegram.login.complete'), ['token' => $token])
+        ->assertStatus(410);
+});
+
+test('complete returns pending before the user confirms in telegram', function () {
+    $token = 'login_'.Str::random(48);
+    Cache::put("tg-login:{$token}", ['user_id' => null], 600);
+
+    $this->postJson(route('telegram.login.complete'), ['token' => $token])
+        ->assertStatus(409);
+
+    $this->assertGuest();
+});
+
+test('webhook auto-creates an account for unknown telegram users', function () {
+    $token = 'login_'.Str::random(48);
+    Cache::put("tg-login:{$token}", ['user_id' => null], 600);
+
+    $this->postJson(route('telegram.webhook'), telegramUpdate("/start {$token}"))
+        ->assertOk();
+
+    $user = User::firstWhere('telegram_id', 555001);
+
+    expect($user)->not->toBeNull()
+        ->and($user->name)->toBe('Jane Doe')
+        ->and($user->username)->toBe('janedoe')
+        ->and($user->email)->toBeNull()
+        ->and($user->password)->toBeNull()
+        ->and($user->telegram_username)->toBe('janedoe')
+        ->and($user->telegram_chat_id)->toBe('12345');
+
+    expect(Cache::get("tg-login:{$token}"))->toBe(['user_id' => $user->id]);
+});
+
+test('username is left empty when the telegram handle is taken', function () {
+    User::factory()->create(['username' => 'janedoe']);
+
+    $token = 'login_'.Str::random(48);
+    Cache::put("tg-login:{$token}", ['user_id' => null], 600);
+
+    $this->postJson(route('telegram.webhook'), telegramUpdate("/start {$token}"));
+
+    $user = User::firstWhere('telegram_id', 555001);
+
+    expect($user->username)->toBeNull()
+        ->and($user->telegram_username)->toBe('janedoe');
+});
+
+test('webhook ignores expired login tokens', function () {
+    $this->postJson(route('telegram.webhook'), telegramUpdate('/start login_missing'))
+        ->assertOk();
+
+    expect(User::count())->toBe(0);
+});
+
+test('webhook ignores login starts in group chats', function () {
+    $token = 'login_'.Str::random(48);
+    Cache::put("tg-login:{$token}", ['user_id' => null], 600);
+
+    $update = telegramUpdate("/start {$token}");
+    $update['message']['chat']['type'] = 'group';
+
+    $this->postJson(route('telegram.webhook'), $update)->assertOk();
+
+    expect(Cache::get("tg-login:{$token}"))->toBe(['user_id' => null]);
+    expect(User::count())->toBe(0);
+});
+
+test('link token flow still binds telegram chat id and stores identity', function () {
+    $user = User::factory()->create(['telegram_link_token' => 'link-token-123']);
+
+    $this->postJson(route('telegram.webhook'), telegramUpdate('/start link-token-123'))
+        ->assertOk();
+
+    $user->refresh();
+
+    expect($user->telegram_chat_id)->toBe('12345')
+        ->and($user->telegram_link_token)->toBeNull()
+        ->and($user->telegram_id)->toBe(555001)
+        ->and($user->telegram_username)->toBe('janedoe');
+});

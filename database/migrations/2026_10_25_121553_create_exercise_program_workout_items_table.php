@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('exercise_program_workout_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('exercise_program_workout_id')
+                ->constrained('exercise_program_workouts', 'id', 'program_workout_items_workout_id_foreign')
+                ->cascadeOnDelete();
+            $table->string('exercise_id', 100);
+            $table->unsignedSmallInteger('position')->default(0);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('exercise_program_workout_items');
+    }
+};

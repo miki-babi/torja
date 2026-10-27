@@ -1,0 +1,908 @@
+{
+    "common": {
+        "save": {
+            "en": "Save",
+            "am": "አስቀምጥ"
+        },
+        "cancel": {
+            "en": "Cancel",
+            "am": "ይቅር"
+        },
+        "loading": {
+            "en": "Loading…",
+            "am": "በመጫን ላይ…"
+        },
+        "back": {
+            "en": "Back",
+            "am": "ተመለስ"
+        },
+        "search": {
+            "en": "Search",
+            "am": "ፈልግ"
+        },
+        "exercises": {
+            "en": "exercises",
+            "am": "ልምምዶች"
+        },
+        "exercise": {
+            "en": "exercise",
+            "am": "ልምምድ"
+        }
+    },
+    "settings": {
+        "language": {
+            "en": "Language",
+            "am": "ቋንቋ"
+        },
+        "language_description": {
+            "en": "Choose the language used across the app.",
+            "am": "በመተግበሪያው ላይ የሚጠቀምበትን ቋንቋ ይምረጡ።"
+        },
+        "profile_title": {
+            "en": "Profile",
+            "am": "መገለጫ"
+        },
+        "profile_description": {
+            "en": "Update your name and email address",
+            "am": "ስምዎን እና የኢሜይል አድራሻዎን ያዘምኑ"
+        },
+        "name": {
+            "en": "Name",
+            "am": "ስም"
+        },
+        "email": {
+            "en": "Email address",
+            "am": "የኢሜይል አድራሻ"
+        },
+        "saved": {
+            "en": "Saved.",
+            "am": "ተቀምጧል።"
+        }
+    },
+    "auth": {
+        "log_in": {
+            "en": "Log in",
+            "am": "ግባ"
+        },
+        "log_in_title": {
+            "en": "Log in to your account",
+            "am": "ወደ መለያዎ ይግቡ"
+        },
+        "log_in_description": {
+            "en": "Enter your email and password below to log in",
+            "am": "ለመግባት ከታች የኢሜይልዎን እና የይለፍ ቃልዎን ያስገቡ"
+        },
+        "password": {
+            "en": "Password",
+            "am": "የይለፍ ቃል"
+        },
+        "forgot_password": {
+            "en": "Forgot password?",
+            "am": "የይለፍ ቃል ረሳህ?"
+        },
+        "remember_me": {
+            "en": "Remember me",
+            "am": "አስታውሰኝ"
+        },
+        "dont_have_account": {
+            "en": "Don't have an account?",
+            "am": "መለያ የሎትም?"
+        },
+        "sign_up": {
+            "en": "Sign up",
+            "am": "ተመዝገብ"
+        }
+    },
+    "welcome": {
+        "log_in": {
+            "en": "Log in",
+            "am": "ግባ"
+        },
+        "register": {
+            "en": "Register",
+            "am": "ተመዝገብ"
+        },
+        "dashboard": {
+            "en": "Dashboard",
+            "am": "ዳሽቦርድ"
+        }
+    },
+    "member.home": {
+        "greeting": {
+            "en": "Hi",
+            "am": "ሰላም"
+        },
+        "todays_workout": {
+            "en": "Today's workout",
+            "am": "የዛሬ ልምምድ"
+        },
+        "full_body": {
+            "en": "Full body",
+            "am": "ሙሉ አካል"
+        }
+    },
+    "member.today": {
+        "title": {
+            "en": "Today's workout",
+            "am": "የዛሬ ልምምድ"
+        },
+        "instructions": {
+            "en": "Instructions",
+            "am": "መመሪያዎች"
+        },
+        "not_trained_recently": {
+            "en": "not trained recently",
+            "am": "በቅርቡ አልተለማመደም"
+        },
+        "trained_today": {
+            "en": "trained today",
+            "am": "ዛሬ ተለማምዷል"
+        },
+        "last_trained_yesterday": {
+            "en": "last trained yesterday",
+            "am": "ትናንት ተለማምዷል"
+        },
+        "last_trained_days_ago": {
+            "en": "last trained :days days ago",
+            "am": "ከ :days ቀን በፊት ተለማምዷል"
+        }
+    },
+    "member.exercise": {
+        "title": {
+            "en": "Exercise",
+            "am": "ልምምድ"
+        },
+        "explore": {
+            "en": "Explore",
+            "am": "ያስሱ"
+        },
+        "track": {
+            "en": "Track",
+            "am": "ይከታተሉ"
+        },
+        "search_placeholder": {
+            "en": "Search 1,324 exercises",
+            "am": "1,324 ልምምዶችን ፈልግ"
+        },
+        "choose_body_part": {
+            "en": "Choose target body part",
+            "am": "የሚፈልጉትን የሰውነት ክፍል ይምረጡ"
+        },
+        "any_equipment": {
+            "en": "Any equipment",
+            "am": "ማንኛውም መሳሪያ"
+        },
+        "any_level": {
+            "en": "Any level",
+            "am": "ማንኛውም ደረጃ"
+        },
+        "no_results": {
+            "en": "No exercises match — widen the filters.",
+            "am": "ምንም ልምምድ አልተገኘም — ማጣሪያዎችን ያሰፉ።"
+        },
+        "load_more": {
+            "en": "Load more",
+            "am": "ተጨማሪ ጫን"
+        },
+        "progress": {
+            "en": "Progress",
+            "am": "እድገት"
+        },
+        "sessions_this_week": {
+            "en": "sessions this week",
+            "am": "በዚህ ሳምንት የተካሄዱ ልምምዶች"
+        },
+        "total_volume": {
+            "en": "kg total volume",
+            "am": "ኪግ ጠቅላላ ድምር"
+        },
+        "personal_records": {
+            "en": "Personal records",
+            "am": "የግል ሪከርዶች"
+        },
+        "add_exercise": {
+            "en": "Add exercise",
+            "am": "ልምምድ ጨምር"
+        },
+        "done": {
+            "en": "Done",
+            "am": "ጨርሻለሁ"
+        },
+        "back_to_sessions": {
+            "en": "Back to sessions",
+            "am": "ወደ ልምምዶች ተመለስ"
+        }
+    },
+    "nudges": {
+        "checkout_abandoned.title": {
+            "en": "Almost there",
+            "am": "ትንሽ ቀርቷል"
+        },
+        "checkout_abandoned.body": {
+            "en": "Your :goal plan is waiting — complete the payment to unlock it.",
+            "am": "የ :goal እቅድዎ በመጠባበቅ ላይ ነው — ለመክፈት ክፍያውን ያጠናቅቁ።"
+        },
+        "checkout_abandoned.cta": {
+            "en": "Complete payment",
+            "am": "ክፍያ ያጠናቅቁ"
+        },
+        "plan_ready_unpaid.title": {
+            "en": "Your plan is ready",
+            "am": "እቅድዎ ዝግጁ ነው"
+        },
+        "plan_ready_unpaid.body": {
+            "en": "Your :goal plan is built and waiting. Unlock it to get every meal and workout.",
+            "am": "የ :goal እቅድዎ ተዘጋጅቷል። እያንዳንዱን ምግብ እና ልምምድ ለማግኘት ይክፈቱ።"
+        },
+        "plan_ready_unpaid.cta": {
+            "en": "Unlock my plan",
+            "am": "እቅዴን ክፈት"
+        },
+        "wizard_abandoned.title": {
+            "en": "Finish your setup",
+            "am": "ማስነጃዎን ያጠናቅቁ"
+        },
+        "wizard_abandoned.body": {
+            "en": "You're :steps steps away from your personalized :goal plan.",
+            "am": "ከግል :goal እቅድዎ :steps ደረጃዎች ቀርተውታል።"
+        },
+        "wizard_abandoned.cta": {
+            "en": "Continue setup",
+            "am": "ይቀጥሉ"
+        },
+        "goal_lose_fat": {
+            "en": "fat-loss",
+            "am": "የስብ መቀነስ"
+        },
+        "goal_build_muscle": {
+            "en": "muscle-gain",
+            "am": "የጭንቅላት መገንባት"
+        },
+        "goal_recomp": {
+            "en": "recomp",
+            "am": "ሪኮምፕ"
+        },
+        "goal_maintain": {
+            "en": "weight maintenance",
+            "am": "የክብደት መጠበቅ"
+        },
+        "goal_general": {
+            "en": "fitness",
+            "am": "የአካል ብቃት"
+        },
+        "goal_default": {
+            "en": "fitness",
+            "am": "የአካል ብቃት"
+        }
+    },
+    "programs": {
+        "title": {
+            "en": "Programs",
+            "am": "ፕሮግራሞች"
+        },
+        "search_placeholder": {
+            "en": "Search programs…",
+            "am": "ፕሮግራሞችን ፈልግ…"
+        },
+        "saved_section": {
+            "en": "Saved",
+            "am": "የተቀመጡ"
+        },
+        "tab_exercise": {
+            "en": "Exercise",
+            "am": "ልምምድ"
+        },
+        "tab_nutrition": {
+            "en": "Nutrition",
+            "am": "ካህድ"
+        },
+        "workout_programs": {
+            "en": "Workout programs",
+            "am": "የልምምድ ፕሮግራሞች"
+        },
+        "meal_programs": {
+            "en": "Meal programs",
+            "am": "የምግብ ፕሮግራሞች"
+        },
+        "workout_count": {
+            "en": ":count workout",
+            "am": ":count ልምምድ"
+        },
+        "workouts_count": {
+            "en": ":count workouts",
+            "am": ":count ልምምዶች"
+        },
+        "day_count": {
+            "en": ":count day",
+            "am": ":count ቀን"
+        },
+        "days_count": {
+            "en": ":count days",
+            "am": ":count ቀናት"
+        },
+        "save": {
+            "en": "Save",
+            "am": "አስቀምጥ"
+        },
+        "saved": {
+            "en": "Saved",
+            "am": "ተቀምጧል"
+        },
+        "open_plan": {
+            "en": "Open plan",
+            "am": "እቅዱን ክፈት"
+        },
+        "view": {
+            "en": "View",
+            "am": "ተመልከት"
+        },
+        "saved_toast": {
+            "en": "Saved to your programs.",
+            "am": "በፕሮግራሞችዎ ውስጥ ተቀምጧል።"
+        },
+        "save_failed_toast": {
+            "en": "Could not save the program. Try again.",
+            "am": "ፕሮግራሙን ማስቀመጥ አልተቻለም። እንደገና ይሞክሩ።"
+        },
+        "empty": {
+            "en": "No programs found.",
+            "am": "ምንም ፕሮግራም አልተገኘም።"
+        },
+        "home_card_title": {
+            "en": "Browse programs",
+            "am": "ፕሮግራሞችን ያስሱ"
+        },
+        "home_card_body": {
+            "en": "Find a workout or meal program and save it to your plan.",
+            "am": "የልምምድ ወይም የምግብ ፕሮግራም ያግኙ እና ወደ እቅድዎ ያስቀምጡ።"
+        },
+        "browse": {
+            "en": "Browse",
+            "am": "ያስሱ"
+        }
+    },
+    "shared_program": {
+        "shared": {
+            "en": "Shared",
+            "am": "የተጋራ"
+        },
+        "shared_by": {
+            "en": "Shared by :owner",
+            "am": "በ:owner የተጋራ"
+        },
+        "workout_count": {
+            "en": ":count workout",
+            "am": ":count ልምምድ"
+        },
+        "workouts_count": {
+            "en": ":count workouts",
+            "am": ":count ልምምዶች"
+        },
+        "exercise_count": {
+            "en": ":count exercise",
+            "am": ":count ልምምድ"
+        },
+        "exercises_count": {
+            "en": ":count exercises",
+            "am": ":count ልምምዶች"
+        },
+        "whats_included": {
+            "en": "What's included",
+            "am": "ምን ያካትታል"
+        },
+        "guided_workouts": {
+            "en": "guided workouts",
+            "am": "የተመሩ ልምምዶች"
+        },
+        "exercises_with_demos": {
+            "en": "exercises with demos",
+            "am": "ዲሞ ያላቸው ልምምዶች"
+        },
+        "equipment_needed": {
+            "en": "equipment needed",
+            "am": "የሚያስፈልጉ መሣሪያዎች"
+        },
+        "level": {
+            "en": "level",
+            "am": "ደረጃ"
+        },
+        "inside_program": {
+            "en": "Inside the program",
+            "am": "የፕሮግራሙ ይዘት"
+        },
+        "login_preview_hint": {
+            "en": "Log in to preview exercise demos",
+            "am": "የልምምድ ዲሞዎችን ለማየት ይግቡ"
+        },
+        "free": {
+            "en": "Free",
+            "am": "ነጻ"
+        },
+        "one_time_payment": {
+            "en": "one-time payment",
+            "am": "የአንድ ጊዜ ክፍያ"
+        },
+        "price": {
+            "en": ":price ETB",
+            "am": ":price ብር"
+        },
+        "buy_for": {
+            "en": "Buy for :price ETB",
+            "am": "በ:price ብር ይግዙ"
+        },
+        "save_free": {
+            "en": "Save for free",
+            "am": "በነጻ አስቀምጥ"
+        },
+        "saving": {
+            "en": "Saving…",
+            "am": "በማስቀመጥ ላይ…"
+        },
+        "login_to_save": {
+            "en": "Log in to save",
+            "am": "ለማስቀመጥ ይግቡ"
+        },
+        "login_to_buy": {
+            "en": "Log in to buy",
+            "am": "ለመግዛት ይግቡ"
+        },
+        "in_playlists": {
+            "en": "In your playlists",
+            "am": "በዝርዝሮችዎ ውስጥ ነው"
+        },
+        "already_own": {
+            "en": "You already own this program",
+            "am": "ይህን ፕሮግራም አስቀድመው አግኝተዋል"
+        },
+        "open_my_workouts": {
+            "en": "Open my workouts",
+            "am": "የእኔን ልምምዶች ክፈት"
+        },
+        "your_shared_program": {
+            "en": "Your shared program",
+            "am": "የእርስዎ የተጋራ ፕሮግራም"
+        },
+        "viewing_as_visitor": {
+            "en": "Viewing as a visitor",
+            "am": "እንደ ጎብኚ እያዩ ነው"
+        },
+        "edit_program": {
+            "en": "Edit program",
+            "am": "ፕሮግራሙን አርትዕ"
+        },
+        "saved_toast": {
+            "en": "Program added to your playlists",
+            "am": "ፕሮግራሙ ወደ ዝርዝሮችዎ ታክሏል"
+        },
+        "save_failed_toast": {
+            "en": "Could not save program",
+            "am": "ፕሮግራሙን ማስቀመጥ አልተቻለም"
+        },
+        "pro_badge": {
+            "en": "Pro",
+            "am": "ፕሮ"
+        },
+        "pro_included": {
+            "en": "Included with Pro",
+            "am": "በፕሮ ውስጥ ያለ"
+        },
+        "upgrade_to_pro": {
+            "en": "Upgrade to Pro",
+            "am": "ፕሮ ይሁኑ"
+        },
+        "claim_program": {
+            "en": "Add to my playlists",
+            "am": "ወደ ዝርዝሮቼ ያክሉ"
+        },
+        "start_workout": {
+            "en": "Start workout",
+            "am": "ልምምድ ይጀምሩ"
+        },
+        "start_workout_hint": {
+            "en": "Pick a day and log your sets as you go.",
+            "am": "ቀን ይምረጡና ስብስቦችዎን እየሰሩ ይመዝግቡ።"
+        },
+        "login_to_start": {
+            "en": "Log in to start and log a workout.",
+            "am": "ልምምድ ለመጀመርና ለመመዝገብ ይግቡ።"
+        },
+        "pro_to_start": {
+            "en": "Pro members can start and log workouts.",
+            "am": "ፕሮ አባላት ልምምዶችን መጀመርና መመዝገብ ይችላሉ።"
+        },
+        "choose_day": {
+            "en": "Choose a day",
+            "am": "ቀን ይምረጡ"
+        },
+        "start": {
+            "en": "Start",
+            "am": "ጀምር"
+        },
+        "continue_day": {
+            "en": "Continue · :count",
+            "am": "ቀጥል · :count"
+        },
+        "exercise_of": {
+            "en": "Exercise :current of :total",
+            "am": "መልመጃ :current ከ :total"
+        },
+        "target_sets_reps": {
+            "en": ":sets sets × :reps reps",
+            "am": ":sets ስብስብ × :reps ድግግሞሽ"
+        },
+        "add_set": {
+            "en": "Add set",
+            "am": "ስብስብ ጨምር"
+        },
+        "previous": {
+            "en": "Previous",
+            "am": "ቀዳሚ"
+        },
+        "next": {
+            "en": "Next",
+            "am": "ቀጣይ"
+        },
+        "finish": {
+            "en": "Finish",
+            "am": "ጨርስ"
+        },
+        "exit_workout": {
+            "en": "Exit workout",
+            "am": "ከልምምዱ ውጣ"
+        },
+        "workout_done": {
+            "en": "Workout complete — great job!",
+            "am": "ልምምዱ ተጠናቋል — በጣም ጥሩ!"
+        },
+        "start_failed_toast": {
+            "en": "Could not start the workout",
+            "am": "ልምምዱን መጀመር አልተቻለም"
+        },
+        "set_save_failed_toast": {
+            "en": "Could not save that set",
+            "am": "ያንን ስብስብ ማስቀመጥ አልተቻለም"
+        }
+    },
+    "shared_meal_program": {
+        "day_count": {
+            "en": ":count day",
+            "am": ":count ቀን"
+        },
+        "days_count": {
+            "en": ":count days",
+            "am": ":count ቀናት"
+        },
+        "meal_count": {
+            "en": ":count meal",
+            "am": ":count ምግብ"
+        },
+        "meals_count": {
+            "en": ":count meals",
+            "am": ":count ምግቦች"
+        },
+        "guided_days": {
+            "en": "days of meals",
+            "am": "የምግብ ቀናት"
+        },
+        "foods_with_macros": {
+            "en": "foods with nutrition info",
+            "am": "የካሎሪ መረጃ ያላቸው ምግቦች"
+        },
+        "inside_program": {
+            "en": "Inside the program",
+            "am": "የፕሮግራሙ ይዘት"
+        },
+        "day_label": {
+            "en": "Day :day",
+            "am": "ቀን :day"
+        },
+        "login_hint": {
+            "en": "Log in to claim this meal program",
+            "am": "ይህን የምግብ ፕሮግራም ለማግኘት ይግቡ"
+        },
+        "in_your_plans": {
+            "en": "In your meal plans",
+            "am": "በዝርዝር ምግቦችዎ ውስጥ ነው"
+        },
+        "already_own": {
+            "en": "You already own this meal program",
+            "am": "ይህን የምግብ ፕሮግራም አስቀድመው አግኝተዋል"
+        },
+        "open_my_plan": {
+            "en": "Open my meal program",
+            "am": "የእኔን የምግብ ፕሮግራም ክፈት"
+        },
+        "saved_toast": {
+            "en": "Meal program added to your plans",
+            "am": "የምግብ ፕሮግራሙ ወደ ዝርዝሮችዎ ታክሏል"
+        },
+        "save_failed_toast": {
+            "en": "Could not save meal program",
+            "am": "የምግብ ፕሮግራሙን ማስቀመጥ አልተቻለም"
+        },
+        "pro_badge": {
+            "en": "Pro",
+            "am": "ፕሮ"
+        },
+        "pro_included": {
+            "en": "Included with Pro",
+            "am": "በፕሮ ውስጥ ያለ"
+        },
+        "upgrade_to_pro": {
+            "en": "Upgrade to Pro",
+            "am": "ፕሮ ይሁኑ"
+        },
+        "claim_program": {
+            "en": "Add to my meal plans",
+            "am": "ወደ ዝርዝር ምግቦቼ ያክሉ"
+        }
+    },
+    "meal_program": {
+        "subtitle": {
+            "en": "Your claimed meal program",
+            "am": "የእርስዎ የምግብ ፕሮግራም"
+        },
+        "day_label": {
+            "en": "Day :day",
+            "am": "ቀን :day"
+        },
+        "my_programs": {
+            "en": "My meal programs",
+            "am": "የእኔ የምግብ ፕሮግራሞች"
+        },
+        "days_count": {
+            "en": ":count days",
+            "am": ":count ቀናት"
+        },
+        "logged_toast": {
+            "en": "Meal logged to your diary",
+            "am": "ምግቡ ወደ ዲይарийዎ ታክሏል"
+        },
+        "log_failed_toast": {
+            "en": "Could not log meal",
+            "am": "ምግቡን ማስቀመጥ አልተቻለም"
+        }
+    },
+    "exercise_values": {
+        "level.beginner": {
+            "en": "Beginner",
+            "am": "ጀማሪ"
+        },
+        "level.intermediate": {
+            "en": "Intermediate",
+            "am": "መካከለኛ"
+        },
+        "level.advanced": {
+            "en": "Advanced",
+            "am": "ከፍተኛ"
+        },
+        "body_part.back": {
+            "en": "Back",
+            "am": "ጀርባ"
+        },
+        "body_part.cardio": {
+            "en": "Cardio",
+            "am": "ካርዲዮ"
+        },
+        "body_part.chest": {
+            "en": "Chest",
+            "am": "ደረት"
+        },
+        "body_part.lower arms": {
+            "en": "Lower arms",
+            "am": "ታችኛ ክንድ"
+        },
+        "body_part.lower legs": {
+            "en": "Lower legs",
+            "am": "ታችኛ እግር"
+        },
+        "body_part.neck": {
+            "en": "Neck",
+            "am": "አንገት"
+        },
+        "body_part.shoulders": {
+            "en": "Shoulders",
+            "am": "ትከሻ"
+        },
+        "body_part.upper arms": {
+            "en": "Upper arms",
+            "am": "ላይኛ ክንድ"
+        },
+        "body_part.upper legs": {
+            "en": "Upper legs",
+            "am": "ጭን"
+        },
+        "body_part.waist": {
+            "en": "Waist",
+            "am": "ወገብ"
+        },
+        "target.abductors": {
+            "en": "Abductors",
+            "am": "አብዳክተሮች"
+        },
+        "target.abs": {
+            "en": "Abs",
+            "am": "የሆድ ጭንቅላት"
+        },
+        "target.adductors": {
+            "en": "Adductors",
+            "am": "አዳክተሮች"
+        },
+        "target.biceps": {
+            "en": "Biceps",
+            "am": "ባይሰፕስ"
+        },
+        "target.calves": {
+            "en": "Calves",
+            "am": "የጭካኔ ጭንቅላት"
+        },
+        "target.cardiovascular system": {
+            "en": "Cardiovascular system",
+            "am": "የልብ ሥርዓት"
+        },
+        "target.delts": {
+            "en": "Delts",
+            "am": "ዴልቶይድ"
+        },
+        "target.forearms": {
+            "en": "Forearms",
+            "am": "እማማ"
+        },
+        "target.glutes": {
+            "en": "Glutes",
+            "am": "የወዘግ ጭንቅላት"
+        },
+        "target.hamstrings": {
+            "en": "Hamstrings",
+            "am": "የኋላ ጭን ጭንቅላት"
+        },
+        "target.lats": {
+            "en": "Lats",
+            "am": "ላቲስሙስ"
+        },
+        "target.levator scapulae": {
+            "en": "Levator scapulae",
+            "am": "ሌቫተር ስካፑሌ"
+        },
+        "target.pectorals": {
+            "en": "Pectorals",
+            "am": "የደረት ጭንቅላት"
+        },
+        "target.quads": {
+            "en": "Quads",
+            "am": "ኳድሪሰፕስ"
+        },
+        "target.serratus anterior": {
+            "en": "Serratus anterior",
+            "am": "ሴራቱስ አንቴሪየር"
+        },
+        "target.spine": {
+            "en": "Spine",
+            "am": "የጀርባ አጥንት"
+        },
+        "target.traps": {
+            "en": "Traps",
+            "am": "ትራፔዢየስ"
+        },
+        "target.triceps": {
+            "en": "Triceps",
+            "am": "ትራይሰፕስ"
+        },
+        "target.upper back": {
+            "en": "Upper back",
+            "am": "ላይኛ ጀርባ"
+        },
+        "equipment.assisted": {
+            "en": "Assisted",
+            "am": "የተደገፈ"
+        },
+        "equipment.band": {
+            "en": "Band",
+            "am": "ባንድ"
+        },
+        "equipment.barbell": {
+            "en": "Barbell",
+            "am": "ባርቤል"
+        },
+        "equipment.body weight": {
+            "en": "Body weight",
+            "am": "የሰውነት ክብደት"
+        },
+        "equipment.bosu ball": {
+            "en": "Bosu ball",
+            "am": "ቦሱ ኳስ"
+        },
+        "equipment.cable": {
+            "en": "Cable",
+            "am": "ኬብል ማሽን"
+        },
+        "equipment.dumbbell": {
+            "en": "Dumbbell",
+            "am": "ዳምቤል"
+        },
+        "equipment.elliptical machine": {
+            "en": "Elliptical machine",
+            "am": "ኤሊፕቲካል ማሽን"
+        },
+        "equipment.ez barbell": {
+            "en": "EZ barbell",
+            "am": "ኢዚ ባርቤል"
+        },
+        "equipment.hammer": {
+            "en": "Hammer",
+            "am": "ሃመር"
+        },
+        "equipment.kettlebell": {
+            "en": "Kettlebell",
+            "am": "ኬትልቤል"
+        },
+        "equipment.leverage machine": {
+            "en": "Leverage machine",
+            "am": "ሌቨሬጅ ማሽን"
+        },
+        "equipment.medicine ball": {
+            "en": "Medicine ball",
+            "am": "የመድሐኒት ኳስ"
+        },
+        "equipment.olympic barbell": {
+            "en": "Olympic barbell",
+            "am": "ኦሎምፒክ ባርቤል"
+        },
+        "equipment.resistance band": {
+            "en": "Resistance band",
+            "am": "የትንቃግ ባንድ"
+        },
+        "equipment.roller": {
+            "en": "Roller",
+            "am": "ሮለር"
+        },
+        "equipment.rope": {
+            "en": "Rope",
+            "am": "ገመድ"
+        },
+        "equipment.skierg machine": {
+            "en": "SkiErg machine",
+            "am": "ስኬርግ ማሽን"
+        },
+        "equipment.sled machine": {
+            "en": "Sled machine",
+            "am": "ስሌድ ማሽን"
+        },
+        "equipment.smith machine": {
+            "en": "Smith machine",
+            "am": "ስሚዝ ማሽን"
+        },
+        "equipment.stability ball": {
+            "en": "Stability ball",
+            "am": "ስታቢሊቲ ኳስ"
+        },
+        "equipment.stationary bike": {
+            "en": "Stationary bike",
+            "am": "የቤት ውስጥ ብስክሌት"
+        },
+        "equipment.stepmill machine": {
+            "en": "Stepmill machine",
+            "am": "ስቴፕሚል ማሽን"
+        },
+        "equipment.tire": {
+            "en": "Tire",
+            "am": "ጎማ"
+        },
+        "equipment.trap bar": {
+            "en": "Trap bar",
+            "am": "ትራፕ ባር"
+        },
+        "equipment.upper body ergometer": {
+            "en": "Upper body ergometer",
+            "am": "የላይኛ ሰውነት ኤርጎሜትር"
+        },
+        "equipment.weighted": {
+            "en": "Weighted",
+            "am": "ክብደት ያለው"
+        },
+        "equipment.wheel roller": {
+            "en": "Wheel roller",
+            "am": "አብ ዊል"
+        }
+    }
+}
