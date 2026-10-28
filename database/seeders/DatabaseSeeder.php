@@ -22,9 +22,24 @@ class DatabaseSeeder extends Seeder
         $this->call(FoodDatabaseSeeder::class);
         $this->call(ExerciseDatabaseSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => 'password',
+                'role' => 'user',
+                'email_verified_at' => now(),
+            ],
+        );
+
+        User::updateOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin',
+                'password' => 'password',
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ],
+        );
     }
 }
