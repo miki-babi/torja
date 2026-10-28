@@ -109,12 +109,13 @@ One JSON array of 1,324 exercise objects (source: https://github.com/hasaneyldrm
 
 ## Media
 
-GIF demos and JPG thumbnails are NOT in git. Copy them once per environment:
+GIF demos and JPG thumbnails are committed to git under
+storage/app/public/exercises/{images,videos} and are served at
+/storage/exercises/... — just run `php artisan storage:link` per environment.
 
-    php artisan storage:link
+If the dataset is ever re-imported from source, refresh the media with:
+
     php artisan exercises:import-media "<path-to>/exercise-dataset"
-
-Files land in storage/app/public/exercises/{images,videos} and are served at /storage/exercises/...
 
 ## App logic
 
