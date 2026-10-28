@@ -43,7 +43,7 @@ test('guests locale is driven by the cookie', function () {
     ]);
 
     $this->withCookie('locale', 'en')
-        ->get('/')
+        ->get(route('home'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('locale', 'en')
             ->has('translations')

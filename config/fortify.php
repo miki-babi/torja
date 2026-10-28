@@ -79,6 +79,10 @@ return [
 
     'home' => '/dashboard',
 
+    'redirects' => [
+        'logout' => '/welcome',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Fortify Routes Prefix / Subdomain

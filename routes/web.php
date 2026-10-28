@@ -16,7 +16,7 @@ use App\Http\Controllers\Tracking\BeaconController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::inertia('welcome', 'welcome')->name('home');
 
 Route::post('t', BeaconController::class)
     ->middleware('throttle:120,1')
@@ -96,7 +96,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         : to_route('member.home')
     )->name('dashboard');
 
-    Route::get('home', Member\HomeController::class)->name('member.home');
+    Route::get('/', Member\HomeController::class)->name('member.home');
+    Route::redirect('home', '/');
     Route::get('today', Member\TodayController::class)->name('member.today');
     Route::get('exercise', Member\ExerciseController::class)->name('member.exercise');
     Route::get('member/exercises/search', Member\ExerciseSearchController::class)

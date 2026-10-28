@@ -5,7 +5,7 @@ import { exercise, home, meal, profile } from '@/routes/member';
 import { index as programsIndex } from '@/routes/programs';
 
 const TABS = [
-    { label: 'home', href: home, paths: ['/home'], icon: House },
+    { label: 'home', href: home, paths: ['/'], icon: House },
     {
         label: 'exercise',
         href: exercise,

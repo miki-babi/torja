@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('first-touch attribution is captured into the cookie and event context', function () {
-    $this->get('/?utm_source=instagram&utm_medium=bio&utm_campaign=launch&gclid=abc123')
+    $this->get('/welcome?utm_source=instagram&utm_medium=bio&utm_campaign=launch&gclid=abc123')
         ->assertOk()
         ->assertCookie('tp_attr');
 
@@ -27,7 +27,7 @@ test('first-touch attribution is captured into the cookie and event context', fu
     expect($event->context['attribution']['utm_source'])->toBe('instagram')
         ->and($event->context['attribution']['utm_campaign'])->toBe('launch')
         ->and($event->context['attribution']['gclid'])->toBe('abc123')
-        ->and($event->context['attribution']['landing_path'])->toBe('/');
+        ->and($event->context['attribution']['landing_path'])->toBe('/welcome');
 });
 
 test('direct visitors still get a first-touch payload', function () {
@@ -36,7 +36,7 @@ test('direct visitors still get a first-touch payload', function () {
     $event = TrackedEvent::query()->where('name', 'page.view')->firstOrFail();
 
     expect($event->context['attribution'])->toBeArray()
-        ->and($event->context['attribution']['landing_path'])->toBe('/')
+        ->and($event->context['attribution']['landing_path'])->toBe('/welcome')
         ->and($event->context['attribution'])->not->toHaveKey('utm_source');
 });
 
@@ -48,7 +48,7 @@ test('first-touch attribution is not overwritten by later visits', function () {
     ]);
 
     $this->withCookie('tp_attr', $first)
-        ->get('/?utm_source=tiktok')
+        ->get('/welcome?utm_source=tiktok')
         ->assertOk();
 
     $event = TrackedEvent::query()->latest('occurred_at')->firstOrFail();
