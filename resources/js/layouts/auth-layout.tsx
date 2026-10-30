@@ -10,13 +10,17 @@ import {
 export default function AuthLayout({
     title = '',
     description = '',
+    skipTelegram = false,
     children,
 }: {
     title?: string;
     description?: string;
+    skipTelegram?: boolean;
     children: React.ReactNode;
 }) {
-    const [pending, setPending] = useState(() => telegramInitData() !== null);
+    const [pending, setPending] = useState(
+        () => !skipTelegram && telegramInitData() !== null,
+    );
     const attemptedRef = useRef(false);
 
     useEffect(() => {

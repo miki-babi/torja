@@ -16,6 +16,7 @@ use App\Http\Controllers\Telegram\WebhookController;
 use App\Http\Controllers\Tracking\BeaconController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Features;
 
 Route::inertia('welcome', 'welcome')->name('home');
 
@@ -40,6 +41,9 @@ Route::middleware('guest')->group(function () {
     Route::post('auth/telegram/webapp', [TelegramLoginController::class, 'webapp'])
         ->middleware('throttle:20,1')
         ->name('telegram.login.webapp');
+    Route::inertia('admin/login', 'auth/admin-login', [
+        'canResetPassword' => Features::enabled(Features::resetPasswords()),
+    ])->name('admin.login');
     Route::post('auth/telegram/debug', [TelegramLoginController::class, 'debug'])
         ->middleware('throttle:60,1')
         ->name('telegram.login.debug');

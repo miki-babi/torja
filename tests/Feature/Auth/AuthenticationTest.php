@@ -10,6 +10,20 @@ test('login screen can be rendered', function () {
     $response->assertOk();
 });
 
+test('admin login screen can be rendered', function () {
+    $this->get(route('admin.login'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('auth/admin-login'));
+});
+
+test('guests visiting the admin area are sent to the admin login', function () {
+    $this->get(route('admin.dashboard'))
+        ->assertRedirect(route('admin.login', absolute: false));
+
+    $this->get(route('member.today'))
+        ->assertRedirect(route('login', absolute: false));
+});
+
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->create();
 
