@@ -248,7 +248,7 @@ class PaymentController extends Controller
                 'callback_url' => $returnUrl,
                 'return_url' => $returnUrl,
                 'customization' => [
-                    'title' => 'TrainPro Pro',
+                    'title' => 'Toraj Pro',
                     'description' => 'One-time payment for lifetime Pro access.',
                 ],
             ]);
@@ -306,7 +306,7 @@ class PaymentController extends Controller
         try {
             $data = $this->jami->createCheckout(array_filter([
                 'amount' => (int) round((float) $payment->amount * 100),
-                'description' => 'TrainPro Pro — lifetime access',
+                'description' => 'Toraj Pro — lifetime access',
                 'customer' => array_filter([
                     'email' => $payment->email,
                     'phone' => $phone,

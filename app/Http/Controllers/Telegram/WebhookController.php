@@ -131,7 +131,7 @@ class WebhookController extends Controller
 
             $this->reply($chatId, 'Connected — you will now receive reminders from '.config('app.name').' here.');
         } else {
-            $this->reply($chatId, 'This link has expired. Open your TrainPro profile and tap "Connect Telegram" again.');
+            $this->reply($chatId, 'This link has expired. Open your Toraj profile and tap "Connect Telegram" again.');
         }
     }
 

@@ -19,8 +19,8 @@ test('the pro page renders the default copy', function () {
             ->where('page.features.0.starter', false)
             ->where('page.features.0.pro', true)
             ->where('page.free_button', 'Continue with free')
-            ->where('page.free_notice', 'Keep using TrainPro for free — you can unlock Pro anytime from your profile.')
-            ->where('page.card_title', 'TrainPro Pro')
+            ->where('page.free_notice', 'Keep using Toraj for free — you can unlock Pro anytime from your profile.')
+            ->where('page.card_title', 'Toraj Pro')
             ->where('homeUrl', route('member.home'))
             ->where('checkoutUrl', route('plan.checkout')));
 });

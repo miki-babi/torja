@@ -23,7 +23,7 @@ test('members see their account info, stats and targets', function () {
             ->where('account.name', $user->name)
             ->where('account.email', $user->email)
             ->where('isPro', false)
-            ->where('proCard.title', 'TrainPro Pro')
+            ->where('proCard.title', 'Toraj Pro')
             ->where('proCard.button', 'Go Pro')
             ->where('profileCompleted', true)
             ->has('body')
