@@ -207,3 +207,115 @@ export type Paginated<T> = {
     prev_page_url: string | null;
     next_page_url: string | null;
 };
+
+export type BroadcastMediaItem = {
+    kind: 'photo' | 'video' | 'document' | 'animation';
+    source: 'path' | 'url' | 'file_id';
+    value: string;
+    url?: string | null;
+    file_id?: string | null;
+    caption_html?: string;
+    caption_telegram?: string;
+};
+
+export type BroadcastButton = {
+    text: string;
+    kind: string;
+    url?: string;
+    query?: string;
+    copy_text?: string;
+    action?: string;
+    toast?: string;
+    show_alert?: boolean;
+    forward_text?: string;
+    request_write_access?: boolean;
+    allow_user_chats?: boolean;
+    allow_bot_chats?: boolean;
+    allow_group_chats?: boolean;
+    allow_channel_chats?: boolean;
+};
+
+export type BroadcastPoll = {
+    question: string;
+    options: string[];
+    type: 'regular' | 'quiz';
+    is_anonymous: boolean;
+    allows_multiple_answers: boolean;
+    correct_option_id?: number | null;
+    explanation?: string;
+    open_period?: number | null;
+};
+
+export type BroadcastAudienceConfig = {
+    everyone: boolean;
+    segments: string[];
+    user_ids: number[];
+};
+
+export type BroadcastRun = {
+    id: number;
+    trigger: string;
+    recipients_count: number;
+    sent_count: number;
+    failed_count: number;
+    blocked_count: number;
+    deleted_count: number;
+    started_at: string | null;
+    finished_at: string | null;
+};
+
+export type AdminBroadcast = {
+    id: number;
+    name: string;
+    type: string;
+    status: string;
+    recurrence: string;
+    audience: string;
+    next_run_at: string | null;
+    last_run_at: string | null;
+    last_run: {
+        id: number;
+        recipients_count: number;
+        sent_count: number;
+        failed_count: number;
+        blocked_count: number;
+    } | null;
+    body_html?: string | null;
+    telegram_text?: string | null;
+    media?: BroadcastMediaItem[] | null;
+    buttons?: BroadcastButton[][] | null;
+    poll?: BroadcastPoll | null;
+    options?: { disable_notification: boolean; protect_content: boolean } | null;
+    audience_config?: BroadcastAudienceConfig;
+    scheduled_at?: string | null;
+    editable?: boolean;
+    runs?: BroadcastRun[];
+};
+
+export type BroadcastDelivery = {
+    id: number;
+    run_id: number;
+    status: string;
+    error: string | null;
+    sent_at: string | null;
+    deleted_at: string | null;
+    user: {
+        id: number;
+        name: string;
+        username: string | null;
+        telegram_username: string | null;
+        phone: string | null;
+    } | null;
+};
+
+export type BroadcastSegment = {
+    key: string;
+    label: string;
+    count: number;
+};
+
+export type BroadcastUserHit = {
+    id: number;
+    label: string;
+    detail: string;
+};

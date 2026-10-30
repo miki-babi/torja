@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\ProgramController;
 use App\Http\Controllers\Admin\ProPageController;
 use App\Http\Controllers\Admin\ShopOrderController;
 use App\Http\Controllers\Admin\ShopProductController;
+use App\Http\Controllers\Admin\TelegramBroadcastController;
 use App\Http\Controllers\Admin\TrackingIntegrationController;
 use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\UserController;
@@ -56,6 +57,29 @@ Route::middleware(['auth', 'verified', 'admin'])
         Route::resource('shop-products', ShopProductController::class)
             ->except(['show', 'destroy'])
             ->parameters(['shop-products' => 'shopProduct']);
+
+        Route::post('broadcasts/upload-media', [TelegramBroadcastController::class, 'uploadMedia'])
+            ->name('broadcasts.upload-media');
+        Route::post('broadcasts/audience-count', [TelegramBroadcastController::class, 'audienceCount'])
+            ->name('broadcasts.audience-count');
+        Route::get('broadcasts/users-search', [TelegramBroadcastController::class, 'usersSearch'])
+            ->name('broadcasts.users-search');
+        Route::resource('broadcasts', TelegramBroadcastController::class)
+            ->parameters(['broadcasts' => 'broadcast']);
+        Route::post('broadcasts/{broadcast}/test', [TelegramBroadcastController::class, 'sendTest'])
+            ->name('broadcasts.test');
+        Route::post('broadcasts/{broadcast}/send-now', [TelegramBroadcastController::class, 'sendNow'])
+            ->name('broadcasts.send-now');
+        Route::post('broadcasts/{broadcast}/pause', [TelegramBroadcastController::class, 'pause'])
+            ->name('broadcasts.pause');
+        Route::post('broadcasts/{broadcast}/resume', [TelegramBroadcastController::class, 'resume'])
+            ->name('broadcasts.resume');
+        Route::post('broadcasts/{broadcast}/cancel', [TelegramBroadcastController::class, 'cancel'])
+            ->name('broadcasts.cancel');
+        Route::post('broadcasts/{broadcast}/runs/{run}/resend-failed', [TelegramBroadcastController::class, 'resendFailed'])
+            ->name('broadcasts.runs.resend-failed');
+        Route::post('broadcasts/{broadcast}/runs/{run}/recall', [TelegramBroadcastController::class, 'recall'])
+            ->name('broadcasts.runs.recall');
         Route::resource('shop-orders', ShopOrderController::class)
             ->only(['index', 'show', 'update'])
             ->parameters(['shop-orders' => 'shopOrder']);

@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\TelegramBroadcast;
+use App\Support\Telegram\BroadcastAudience;
+use App\Support\Telegram\SendsBroadcasts;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+
+/**
+ * Kicks off one run of a broadcast: resolves the audience, creates the
+ * run + pending delivery rows, then fans out staggered send chunks.
+ * Telegram's ~30 messages/second ceiling maps to 25 deliveries per chunk
+ * dispatched one second apart.
+ */
+class DispatchTelegramBroadcast implements ShouldQueue
+{
+    use Queueable;
+
+    private const CHUNK_SIZE = 25;
+
+    public function __construct(
+        public int $broadcastId,
+        public string $trigger = 'manual',
+    ) {}
+
+    /**
+     * Build the run and queue the send chunks.
+     */
+    public function handle(): void
+    {
+        $broadcast = TelegramBroadcast::query()->find($this->broadcastId);
+
+        if ($broadcast === null || $broadcast->status->value === 'cancelled') {
+            return;
+        }
+
+        $broadcast->forceFill([
+            'status' => 'sending',
+            'last_run_at' => now(),
+        ])->save();
+
+        $run = $broadcast->runs()->create([
+            'trigger' => $this->trigger,
+            'started_at' => now(),
+        ]);
+
+        $chunkIndex = 0;
+        $recipients = 0;
+
+        BroadcastAudience::query($broadcast->audience ?? [])
+            ->select('id', 'telegram_chat_id')
+            ->orderBy('id')
+            ->chunk(500, function ($users) use ($broadcast, $run, &$chunkIndex, &$recipients): void {
+                $deliveryIds = [];
+
+                foreach ($users as $user) {
+                    $deliveryIds[] = $run->deliveries()->create([
+                        'broadcast_id' => $broadcast->id,
+                        'user_id' => $user->id,
+                        'chat_id' => (string) $user->telegram_chat_id,
+                        'status' => 'pending',
+                    ])->id;
+                    $recipients++;
+                }
+
+                foreach (array_chunk($deliveryIds, self::CHUNK_SIZE) as $ids) {
+                    SendTelegramBroadcastChunk::dispatch($run->id, $ids)
+                        ->delay(now()->addSeconds($chunkIndex++));
+                }
+            });
+
+        $run->update(['recipients_count' => $recipients]);
+
+        // Nobody to send to — finish immediately rather than leaving the
+        // broadcast stuck in `sending`.
+        if ($recipients === 0) {
+            $run->update(['finished_at' => now()]);
+            app(SendsBroadcasts::class)->finalize($broadcast, $run);
+        }
+    }
+}

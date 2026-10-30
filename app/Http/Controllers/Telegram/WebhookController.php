@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Telegram;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Telegram\BroadcastCallbacks;
 use App\Support\Telegram\UserResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,14 @@ class WebhookController extends Controller
         if (is_string($secret) && $secret !== ''
             && ! hash_equals($secret, (string) $request->header('X-Telegram-Bot-Api-Secret-Token'))) {
             abort(403);
+        }
+
+        $callbackQuery = $request->input('callback_query');
+
+        if (is_array($callbackQuery)) {
+            app(BroadcastCallbacks::class)->handle($callbackQuery);
+
+            return response()->json(['ok' => true]);
         }
 
         $message = $request->input('message');

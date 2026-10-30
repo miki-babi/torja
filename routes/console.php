@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 Schedule::command('tracking:prune')->monthly();
 Schedule::command('traits:recompute')->dailyAt('03:10');
 Schedule::command('nudges:send')->dailyAt('03:40');
+Schedule::command('broadcasts:dispatch-due')->everyMinute();

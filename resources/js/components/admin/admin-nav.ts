@@ -11,6 +11,7 @@ import {
     HandCoins,
     Languages,
     LayoutDashboard,
+    Megaphone,
     Package,
     ShoppingBag,
     Users,
@@ -19,6 +20,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { analytics, dashboard } from '@/routes/admin';
 import { index as ambassadorsIndex } from '@/routes/admin/ambassadors';
+import { index as broadcastsIndex } from '@/routes/admin/broadcasts';
 import { index as foodsIndex } from '@/routes/admin/foods';
 import { index as ingredientsIndex } from '@/routes/admin/ingredients';
 import { index as languagesIndex } from '@/routes/admin/languages';
@@ -60,6 +62,12 @@ export const adminNavGroups: AdminNavGroup[] = [
     {
         label: 'People',
         items: [{ title: 'Users', href: usersIndex(), icon: Users }],
+    },
+    {
+        label: 'Engagement',
+        items: [
+            { title: 'Broadcasts', href: broadcastsIndex(), icon: Megaphone },
+        ],
     },
     {
         label: 'Sales',
