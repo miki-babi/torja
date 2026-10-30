@@ -41,13 +41,15 @@ export const WorkoutShareCard = forwardRef<
     return (
         <div
             ref={ref}
-            className="relative flex aspect-[9/16] w-full flex-col overflow-hidden rounded-2xl bg-[#0B1F0B]"
+            className="relative flex h-full min-h-dvh w-full flex-col overflow-hidden bg-[#0B1F0B]"
             style={{
-                backgroundImage:
-                    'radial-gradient(ellipse at 50% 0%, #1E3A0F 0%, #0B1F0B 55%, #060F06 100%)',
+                backgroundImage: "url('/images/share/image.png')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
             }}
         >
-            <div className="flex flex-1 flex-col px-7 pt-10">
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/15 to-black/50" />
+            <div className="relative flex flex-1 flex-col px-7 pt-10">
                 <p className="text-xs font-bold tracking-[0.25em] text-[#AFFA01] uppercase">
                     {appName}
                 </p>
@@ -69,7 +71,7 @@ export const WorkoutShareCard = forwardRef<
                 </dl>
             </div>
 
-            <div className="overflow-hidden bg-[#AFFA01] py-2.5">
+            <div className="relative overflow-hidden bg-[#AFFA01] py-2.5">
                 <p className="text-center text-sm font-black tracking-[0.3em] whitespace-nowrap text-[#0B1F0B] uppercase italic">
                     {Array(6).fill(appName).join(' · ')}
                 </p>

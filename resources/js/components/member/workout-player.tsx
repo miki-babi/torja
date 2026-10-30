@@ -3,11 +3,9 @@ import {
     Check,
     ChevronDown,
     ChevronUp,
-    Download,
     ListCollapse,
     Maximize2,
     PlayCircle,
-    Share2,
     Trash2,
     X,
 } from 'lucide-react';
@@ -20,8 +18,6 @@ import {
 import { memberApi } from '@/components/member/member-api';
 import type { WorkoutSession } from '@/components/member/types';
 import { WorkoutShareCard } from '@/components/member/workout-share-card';
-import { Spinner } from '@/components/ui/spinner';
-import { downloadNodeAsImage, shareNodeAsImage } from '@/lib/share-image';
 import { cn } from '@/lib/utils';
 import { destroy, upsert } from '@/routes/member/sessions/sets';
 
@@ -91,9 +87,7 @@ export function WorkoutPlayer({
     const [setJustCompleted, setSetJustCompleted] = useState(false);
     const [completed, setCompleted] = useState(false);
     const [durationMinutes, setDurationMinutes] = useState(0);
-    const [sharing, setSharing] = useState(false);
     const startedAt = useRef(Date.now());
-    const cardRef = useRef<HTMLDivElement>(null);
     const { name: appName } = usePage<{ name: string }>().props;
     const [showHowTo, setShowHowTo] = useState(false);
     const [showFullscreen, setShowFullscreen] = useState(false);
@@ -202,45 +196,6 @@ export function WorkoutPlayer({
         setCompleted(true);
     }
 
-    const shareFileName = `${workout.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')}-workout.png`;
-
-    async function handleShare() {
-        if (!cardRef.current || sharing) {
-            return;
-        }
-        setSharing(true);
-        try {
-            await shareNodeAsImage(
-                cardRef.current,
-                shareFileName,
-                workout.title,
-            );
-        } catch (error) {
-            if ((error as DOMException).name !== 'AbortError') {
-                toast.error(t('workout_share.share_failed'));
-            }
-        } finally {
-            setSharing(false);
-        }
-    }
-
-    async function handleDownload() {
-        if (!cardRef.current || sharing) {
-            return;
-        }
-        setSharing(true);
-        try {
-            await downloadNodeAsImage(cardRef.current, shareFileName);
-        } catch {
-            toast.error(t('workout_share.share_failed'));
-        } finally {
-            setSharing(false);
-        }
-    }
-
     async function handleCompleteSet() {
         if (setJustCompleted) return;
 
@@ -308,58 +263,27 @@ export function WorkoutPlayer({
 
     if (completed) {
         return (
-            <div className="flex min-h-[90vh] flex-col pb-6 text-[#F5F5F5] select-none">
-                <div className="flex items-center justify-start">
-                    <button
-                        type="button"
-                        onClick={onExit}
-                        aria-label="Close"
-                        className="flex size-10 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#1F1F1F]/90 text-[#F5F5F5] backdrop-blur-md transition-all hover:border-[#AFFA01]/40 hover:text-[#AFFA01] active:scale-90"
-                    >
-                        <X className="size-5" />
-                    </button>
-                </div>
-
-                <div className="my-auto">
-                    <WorkoutShareCard
-                        ref={cardRef}
-                        appName={appName}
-                        workoutTitle={workout.title}
-                        durationMinutes={durationMinutes}
-                        session={session}
-                        labels={{
-                            duration: t('workout_share.duration'),
-                            exercises: t('workout_share.exercises'),
-                            sets: t('workout_share.sets'),
-                            volume: t('workout_share.volume'),
-                        }}
-                    />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end gap-3">
-                    <button
-                        type="button"
-                        onClick={handleDownload}
-                        disabled={sharing}
-                        aria-label={t('workout_share.save_image')}
-                        className="flex size-12 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#1F1F1F]/90 text-[#F5F5F5] backdrop-blur-md transition-all hover:border-[#AFFA01]/40 hover:text-[#AFFA01] active:scale-90 disabled:pointer-events-none disabled:opacity-40"
-                    >
-                        <Download className="size-5" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleShare}
-                        disabled={sharing}
-                        aria-label={t('workout_share.share')}
-                        className="flex size-12 items-center justify-center rounded-full bg-[#AFFA01] text-[#0B1F0B] shadow-lg transition-all hover:brightness-105 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
-                    >
-                        {sharing ? (
-                            <Spinner className="size-5" />
-                        ) : (
-                            <Share2 className="size-5" />
-                        )}
-                    </button>
-                </div>
+            <div className="fixed inset-0 z-50 text-[#F5F5F5] select-none">
+                <WorkoutShareCard
+                    appName={appName}
+                    workoutTitle={workout.title}
+                    durationMinutes={durationMinutes}
+                    session={session}
+                    labels={{
+                        duration: t('workout_share.duration'),
+                        exercises: t('workout_share.exercises'),
+                        sets: t('workout_share.sets'),
+                        volume: t('workout_share.volume'),
+                    }}
+                />
+                <button
+                    type="button"
+                    onClick={onExit}
+                    aria-label="Close"
+                    className="absolute top-6 right-6 z-10 flex size-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-all hover:bg-black/70 active:scale-90"
+                >
+                    <X className="size-5" />
+                </button>
             </div>
         );
     }
