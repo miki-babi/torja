@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Models\User;
+use App\Services\Referrals\ProGrantEvaluator;
 use App\Support\Tracking\Tracker;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
@@ -61,5 +62,7 @@ class BindReferrer
         app(Tracker::class)->record('ambassador.bound', $user, [
             'referrer_id' => $referrer->id,
         ]);
+
+        app(ProGrantEvaluator::class)->evaluate($referrer);
     }
 }

@@ -21,6 +21,7 @@ type Settings = {
     enabled: boolean;
     commission_etb: string;
     min_payout_etb: string;
+    referrals_for_pro: string;
 };
 
 export default function AdminAmbassadorSettings({
@@ -31,17 +32,20 @@ export default function AdminAmbassadorSettings({
         enabled: boolean;
         commission_etb: number;
         min_payout_etb: number;
+        referrals_for_pro: number;
     };
     defaults: {
         enabled: boolean;
         commission_etb: number;
         min_payout_etb: number;
+        referrals_for_pro: number;
     };
 }) {
     const form = useForm<Settings>({
         enabled: settings.enabled,
         commission_etb: String(settings.commission_etb),
         min_payout_etb: String(settings.min_payout_etb),
+        referrals_for_pro: String(settings.referrals_for_pro),
     });
 
     function submit(event: FormEvent<HTMLFormElement>) {
@@ -50,6 +54,7 @@ export default function AdminAmbassadorSettings({
             ...data,
             commission_etb: Number(data.commission_etb),
             min_payout_etb: Number(data.min_payout_etb),
+            referrals_for_pro: Number(data.referrals_for_pro),
         }));
         form.put(update().url, { preserveScroll: true });
     }
@@ -60,7 +65,7 @@ export default function AdminAmbassadorSettings({
             <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
                 <AdminPageHeader
                     title="Ambassador settings"
-                    description={`Defaults: ${defaults.commission_etb} ETB commission, ${defaults.min_payout_etb} ETB minimum payout.`}
+                    description={`Defaults: ${defaults.commission_etb} ETB commission, ${defaults.min_payout_etb} ETB minimum payout, ${defaults.referrals_for_pro} referrals for free Pro.`}
                 />
 
                 <Card className="max-w-xl">
@@ -131,6 +136,32 @@ export default function AdminAmbassadorSettings({
                                 />
                                 <InputError
                                     message={form.errors.min_payout_etb}
+                                />
+                            </div>
+
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="referrals_for_pro">
+                                    Referred signups for free Pro
+                                </Label>
+                                <Input
+                                    id="referrals_for_pro"
+                                    type="number"
+                                    min={0}
+                                    value={form.data.referrals_for_pro}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'referrals_for_pro',
+                                            e.target.value,
+                                        )
+                                    }
+                                    required
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Set to 0 to disable the free-Pro referral
+                                    reward.
+                                </p>
+                                <InputError
+                                    message={form.errors.referrals_for_pro}
                                 />
                             </div>
 

@@ -24,10 +24,24 @@ import {
 import { dashboard } from '@/routes/admin';
 import { show as showPayment } from '@/routes/admin/payments';
 import { destroy, index, update } from '@/routes/admin/users';
+import {
+    destroy as revokeProGrant,
+    store as grantPro,
+} from '@/routes/admin/users/pro-grant';
 import type { AdminUser } from '@/types';
+
+type ActiveProGrant = {
+    id: number;
+    source: string;
+    referral_count: number | null;
+    granter_name: string | null;
+    created_at: string;
+};
 
 type Props = {
     user: AdminUser;
+    proType: 'paid' | 'granted' | null;
+    activeProGrant: ActiveProGrant | null;
 };
 
 function Field({
@@ -45,7 +59,11 @@ function Field({
     );
 }
 
-export default function AdminUserShow({ user }: Props) {
+export default function AdminUserShow({
+    user,
+    proType,
+    activeProGrant,
+}: Props) {
     const { auth, errors } = usePage().props;
     const { confirm, confirmDialog } = useConfirm();
     const isSelf = auth.user.id === user.id;
@@ -76,6 +94,31 @@ export default function AdminUserShow({ user }: Props) {
             confirmLabel: 'Delete',
             destructive: true,
             onConfirm: () => router.delete(destroy.url(user.id)),
+        });
+    }
+
+    function grantProToUser() {
+        confirm({
+            title: `Grant Pro to ${label}?`,
+            description:
+                'They get full Pro access without paying. No commission is created.',
+            confirmLabel: 'Grant Pro',
+            onConfirm: () =>
+                router.post(grantPro.url(user.id), {}, { preserveScroll: true }),
+        });
+    }
+
+    function revokeProFromUser() {
+        confirm({
+            title: `Revoke granted Pro from ${label}?`,
+            description:
+                'Their free Pro access ends immediately. Paid Pro, if any, is unaffected.',
+            confirmLabel: 'Revoke Pro',
+            destructive: true,
+            onConfirm: () =>
+                router.delete(revokeProGrant.url(user.id), {
+                    preserveScroll: true,
+                }),
         });
     }
 
@@ -146,6 +189,78 @@ export default function AdminUserShow({ user }: Props) {
                                         {user.email_verified_at ? 'Yes' : 'No'}
                                     </Field>
                                 </dl>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">
+                                    Pro membership
+                                </CardTitle>
+                                <CardDescription>
+                                    {proType === 'paid' &&
+                                        'Paid — from a successful Pro purchase'}
+                                    {proType === 'granted' &&
+                                        'Granted — earned or given, no payment'}
+                                    {proType === null && 'No Pro access'}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Badge
+                                        variant={
+                                            proType === null
+                                                ? 'secondary'
+                                                : 'default'
+                                        }
+                                    >
+                                        {proType === null
+                                            ? 'Free'
+                                            : `Pro · ${proType}`}
+                                    </Badge>
+                                </div>
+                                {activeProGrant !== null && (
+                                    <dl className="grid gap-2 text-xs text-muted-foreground">
+                                        <Field label="Source">
+                                            {activeProGrant.source ===
+                                            'referral_reward'
+                                                ? `Referral reward (${activeProGrant.referral_count ?? '?'} referrals)`
+                                                : `Manual${
+                                                      activeProGrant.granter_name !==
+                                                      null
+                                                          ? ` by ${activeProGrant.granter_name}`
+                                                          : ''
+                                                  }`}
+                                        </Field>
+                                        <Field label="Granted">
+                                            {new Date(
+                                                activeProGrant.created_at,
+                                            ).toLocaleDateString()}
+                                        </Field>
+                                    </dl>
+                                )}
+                                <div className="flex flex-col gap-2">
+                                    {proType === null && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full justify-start"
+                                            onClick={grantProToUser}
+                                        >
+                                            Grant Pro
+                                        </Button>
+                                    )}
+                                    {activeProGrant !== null && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full justify-start text-destructive"
+                                            onClick={revokeProFromUser}
+                                        >
+                                            Revoke granted Pro
+                                        </Button>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
 

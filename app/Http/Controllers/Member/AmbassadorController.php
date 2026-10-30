@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\ProGrant;
 use App\Models\ReferralPayout;
 use App\Models\User;
 use App\Support\AmbassadorProgram;
@@ -35,10 +36,16 @@ class AmbassadorController extends Controller
         /** @var Collection<int, User> $referrals */
         $referrals = $user->referrals()->latest()->limit(15)->get();
 
-        $proIds = Payment::query()
+        $paidProIds = Payment::query()
             ->whereIn('user_id', $referrals->modelKeys())
             ->where('status', 'success')
             ->where('purpose', 'pro')
+            ->pluck('user_id')
+            ->flip();
+
+        $grantedProIds = ProGrant::query()
+            ->whereIn('user_id', $referrals->modelKeys())
+            ->active()
             ->pluck('user_id')
             ->flip();
 
@@ -49,6 +56,11 @@ class AmbassadorController extends Controller
             'inviteUrl' => $user->inviteUrl(),
             'commissionEtb' => AmbassadorProgram::commissionEtb(),
             'minPayoutEtb' => AmbassadorProgram::minPayoutEtb(),
+            'proReward' => [
+                'referrals' => $user->referrals()->count(),
+                'required' => AmbassadorProgram::referralsForPro(),
+                'earned' => $user->isGrantedPro(),
+            ],
             'wallet' => [
                 'available' => (float) $commissions
                     ->where('status', 'approved')->where('payout_id', null)->sum('amount'),
@@ -82,7 +94,10 @@ class AmbassadorController extends Controller
             'referrals' => $referrals->map(fn ($referral) => [
                 'name' => $referral->name,
                 'joined' => $referral->created_at->toDateString(),
-                'is_pro' => $proIds->has($referral->id),
+                'is_pro' => $paidProIds->has($referral->id) || $grantedProIds->has($referral->id),
+                'pro_type' => $paidProIds->has($referral->id)
+                    ? 'paid'
+                    : ($grantedProIds->has($referral->id) ? 'granted' : null),
                 'commission_status' => $commissionByReferred->get($referral->id)?->status,
             ])->values(),
             'payouts' => $payouts->map(fn ($payout) => [

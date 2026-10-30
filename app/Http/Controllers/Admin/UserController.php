@@ -49,8 +49,18 @@ class UserController extends Controller
             'payments' => fn ($query) => $query->latest(),
         ]);
 
+        $activeGrant = $user->activeProGrant()->with('granter:id,name')->first();
+
         return Inertia::render('admin/users/show', [
             'user' => $user,
+            'proType' => $user->proType(),
+            'activeProGrant' => $activeGrant === null ? null : [
+                'id' => $activeGrant->id,
+                'source' => $activeGrant->source,
+                'referral_count' => $activeGrant->referral_count,
+                'granter_name' => $activeGrant->granter?->name,
+                'created_at' => $activeGrant->created_at->toDateString(),
+            ],
         ]);
     }
 
@@ -71,6 +81,60 @@ class UserController extends Controller
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('User role updated.'),
+        ]);
+
+        return back();
+    }
+
+    /**
+     * Manually grant the user a free Pro membership.
+     */
+    public function grantPro(Request $request, User $user): RedirectResponse
+    {
+        if ($user->isPro()) {
+            Inertia::flash('toast', [
+                'type' => 'info',
+                'message' => __('This user already has Pro.'),
+            ]);
+
+            return back();
+        }
+
+        $user->proGrants()->create([
+            'source' => 'manual',
+            'granted_by_id' => $request->user()->id,
+        ]);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('Pro granted to :name.', ['name' => $user->name]),
+        ]);
+
+        return back();
+    }
+
+    /**
+     * Revoke the user's granted Pro membership. Paid Pro is untouched —
+     * cancelling a payment goes through the refund flow instead.
+     */
+    public function revokePro(Request $request, User $user): RedirectResponse
+    {
+        $grant = $user->activeProGrant()->first();
+
+        if ($grant === null) {
+            Inertia::flash('toast', [
+                'type' => 'info',
+                'message' => __('This user has no granted Pro to revoke.'),
+            ]);
+
+            return back();
+        }
+
+        $grant->revoke($request->user());
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('Granted Pro revoked for :name.', ['name' => $user->name]),
         ]);
 
         return back();

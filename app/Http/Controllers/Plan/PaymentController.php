@@ -48,7 +48,7 @@ class PaymentController extends Controller
 
         $user = $request->user();
 
-        if ($user->isPro()) {
+        if ($user->isPaidPro()) {
             Inertia::flash('toast', [
                 'type' => 'info',
                 'message' => __('You already have Pro.'),

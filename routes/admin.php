@@ -27,6 +27,10 @@ Route::middleware(['auth', 'verified', 'admin'])
 
         Route::resource('users', UserController::class)
             ->only(['index', 'show', 'update', 'destroy']);
+        Route::post('users/{user}/pro-grant', [UserController::class, 'grantPro'])
+            ->name('users.pro-grant.store');
+        Route::delete('users/{user}/pro-grant', [UserController::class, 'revokePro'])
+            ->name('users.pro-grant.destroy');
 
         Route::resource('payments', PaymentController::class)
             ->only(['index', 'show']);

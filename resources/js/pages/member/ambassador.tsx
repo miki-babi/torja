@@ -44,6 +44,7 @@ type ReferralRow = {
     name: string;
     joined: string;
     is_pro: boolean;
+    pro_type: 'paid' | 'granted' | null;
     commission_status: string | null;
 };
 
@@ -71,6 +72,7 @@ export default function MemberAmbassador({
     inviteUrl,
     commissionEtb,
     minPayoutEtb,
+    proReward,
     wallet,
     stats,
     ledger,
@@ -82,6 +84,7 @@ export default function MemberAmbassador({
     inviteUrl: string | null;
     commissionEtb: number;
     minPayoutEtb: number;
+    proReward: { referrals: number; required: number; earned: boolean };
     wallet: { available: number; pending: number; paid: number };
     stats: { referrals: number; conversions: number };
     ledger: LedgerEntry[];
@@ -290,6 +293,55 @@ export default function MemberAmbassador({
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Free Pro progress */}
+            {proReward.required > 0 && (
+                <Card className="mt-4">
+                    <CardContent className="pt-4">
+                        <div className="flex items-center gap-3">
+                            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#1F1F1F] text-[#AFFA01]">
+                                <Gift className="size-5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-[#F5F5F5]">
+                                    {t('ambassador.pro_reward_title')}
+                                </p>
+                                <p className="text-[10px] text-[#8E8E93]">
+                                    {proReward.earned
+                                        ? t('ambassador.pro_reward_earned')
+                                        : t('ambassador.pro_reward_remaining', {
+                                              count: Math.max(
+                                                  proReward.required -
+                                                      proReward.referrals,
+                                                  0,
+                                              ),
+                                          })}
+                                </p>
+                            </div>
+                            <p className="text-sm font-semibold text-[#F5F5F5] tabular-nums">
+                                {Math.min(
+                                    proReward.referrals,
+                                    proReward.required,
+                                )}
+                                /{proReward.required}
+                            </p>
+                        </div>
+                        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#2E2E2E]">
+                            <div
+                                className="h-full rounded-full bg-[#AFFA01] transition-all"
+                                style={{
+                                    width: `${Math.min(
+                                        (proReward.referrals /
+                                            proReward.required) *
+                                            100,
+                                        100,
+                                    )}%`,
+                                }}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Ledger */}
             <Card className="mt-4">

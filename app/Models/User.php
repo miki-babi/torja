@@ -320,6 +320,29 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Pro memberships granted to this user without payment — referral
+     * rewards and admin gifts, including revoked ones (kept for audit).
+     *
+     * @return HasMany<ProGrant, $this>
+     */
+    public function proGrants(): HasMany
+    {
+        return $this->hasMany(ProGrant::class);
+    }
+
+    /**
+     * The grant currently unlocking Pro, if any.
+     *
+     * @return HasOne<ProGrant, $this>
+     */
+    public function activeProGrant(): HasOne
+    {
+        return $this->hasOne(ProGrant::class)
+            ->whereNull('revoked_at')
+            ->latest('id');
+    }
+
+    /**
      * The user's ambassador invite code, minted on first use.
      */
     public function ensureReferralCode(): string
@@ -383,16 +406,47 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Whether the user holds the lifetime Pro membership — a successful
-     * `pro` payment. Legacy per-program purchases don't count; they live
-     * on the access rows instead.
+     * Whether the user holds a paid lifetime Pro membership — a
+     * successful `pro` payment. Legacy per-program purchases don't
+     * count; they live on the access rows instead.
      */
-    public function isPro(): bool
+    public function isPaidPro(): bool
     {
         return $this->payments()
             ->where('status', 'success')
             ->where('purpose', 'pro')
             ->exists();
+    }
+
+    /**
+     * Whether the user holds a granted Pro membership — earned via the
+     * ambassador referral milestone or given out by an admin, and not
+     * revoked.
+     */
+    public function isGrantedPro(): bool
+    {
+        return $this->proGrants()->active()->exists();
+    }
+
+    /**
+     * Whether the user holds any Pro membership — paid or granted.
+     */
+    public function isPro(): bool
+    {
+        return $this->isPaidPro() || $this->isGrantedPro();
+    }
+
+    /**
+     * Which kind of Pro the user holds — `paid` takes precedence when a
+     * granted member later buys the membership outright.
+     */
+    public function proType(): ?string
+    {
+        if ($this->isPaidPro()) {
+            return 'paid';
+        }
+
+        return $this->isGrantedPro() ? 'granted' : null;
     }
 
     /**

@@ -13,7 +13,7 @@ class AmbassadorProgram
     public const SETTING_KEY = 'ambassador';
 
     /**
-     * @return array{enabled: bool, commission_etb: int, min_payout_etb: int}
+     * @return array{enabled: bool, commission_etb: int, min_payout_etb: int, referrals_for_pro: int}
      */
     public static function defaults(): array
     {
@@ -21,13 +21,14 @@ class AmbassadorProgram
             'enabled' => true,
             'commission_etb' => 100,
             'min_payout_etb' => 200,
+            'referrals_for_pro' => 5,
         ];
     }
 
     /**
      * Defaults overlaid with whatever the admin saved.
      *
-     * @return array{enabled: bool, commission_etb: int, min_payout_etb: int}
+     * @return array{enabled: bool, commission_etb: int, min_payout_etb: int, referrals_for_pro: int}
      */
     public static function settings(): array
     {
@@ -42,7 +43,7 @@ class AmbassadorProgram
      */
     public static function isEnabled(): bool
     {
-        return (bool) (self::settings()['enabled'] ?? false);
+        return (bool) self::settings()['enabled'];
     }
 
     /**
@@ -50,7 +51,7 @@ class AmbassadorProgram
      */
     public static function commissionEtb(): int
     {
-        return (int) (self::settings()['commission_etb'] ?? 0);
+        return (int) self::settings()['commission_etb'];
     }
 
     /**
@@ -59,7 +60,16 @@ class AmbassadorProgram
      */
     public static function minPayoutEtb(): int
     {
-        return (int) (self::settings()['min_payout_etb'] ?? 0);
+        return (int) self::settings()['min_payout_etb'];
+    }
+
+    /**
+     * Referred signups needed to earn Pro for free. `0` disables the
+     * referral-reward milestone entirely.
+     */
+    public static function referralsForPro(): int
+    {
+        return (int) self::settings()['referrals_for_pro'];
     }
 
     /**
@@ -73,6 +83,7 @@ class AmbassadorProgram
             'enabled' => ['required', 'boolean'],
             'commission_etb' => ['required', 'integer', 'min:1', 'max:1000000'],
             'min_payout_etb' => ['required', 'integer', 'min:1', 'max:1000000'],
+            'referrals_for_pro' => ['required', 'integer', 'min:0', 'max:10000'],
         ];
     }
 }
