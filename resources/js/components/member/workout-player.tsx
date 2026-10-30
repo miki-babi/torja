@@ -280,7 +280,7 @@ export function WorkoutPlayer({
                     type="button"
                     onClick={onExit}
                     aria-label="Close"
-                    className="absolute top-6 right-6 z-10 flex size-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-all hover:bg-black/70 active:scale-90"
+                    className="absolute top-[calc(1.5rem+var(--safe-top))] right-6 z-10 flex size-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-all hover:bg-black/70 active:scale-90"
                 >
                     <X className="size-5" />
                 </button>
