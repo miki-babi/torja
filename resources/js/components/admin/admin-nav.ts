@@ -5,10 +5,13 @@ import {
     Carrot,
     ChartLine,
     CreditCard,
+    Crown,
     Dumbbell,
     Globe,
     Languages,
     LayoutDashboard,
+    Package,
+    ShoppingBag,
     Users,
     UtensilsCrossed,
 } from 'lucide-react';
@@ -19,7 +22,10 @@ import { index as ingredientsIndex } from '@/routes/admin/ingredients';
 import { index as languagesIndex } from '@/routes/admin/languages';
 import { index as mealProgramsIndex } from '@/routes/admin/meal-programs';
 import { index as paymentsIndex } from '@/routes/admin/payments';
+import { edit as proPageEdit } from '@/routes/admin/pro-page';
 import { index as programsIndex } from '@/routes/admin/programs';
+import { index as shopOrdersIndex } from '@/routes/admin/shop-orders';
+import { index as shopProductsIndex } from '@/routes/admin/shop-products';
 import { index as trackingIndex } from '@/routes/admin/tracking';
 import { index as translationsIndex } from '@/routes/admin/translations';
 import { index as usersIndex } from '@/routes/admin/users';
@@ -55,7 +61,25 @@ export const adminNavGroups: AdminNavGroup[] = [
     },
     {
         label: 'Sales',
-        items: [{ title: 'Payments', href: paymentsIndex(), icon: CreditCard }],
+        items: [
+            { title: 'Payments', href: paymentsIndex(), icon: CreditCard },
+            { title: 'Pro page', href: proPageEdit(), icon: Crown },
+        ],
+    },
+    {
+        label: 'Shop',
+        items: [
+            {
+                title: 'Products',
+                href: shopProductsIndex(),
+                icon: Package,
+            },
+            {
+                title: 'Orders',
+                href: shopOrdersIndex(),
+                icon: ShoppingBag,
+            },
+        ],
     },
     {
         label: 'Content',

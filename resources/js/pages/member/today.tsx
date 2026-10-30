@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -53,12 +53,13 @@ export default function MemberToday({
     sessions: WorkoutSession[];
     exerciseSummaries: ExerciseSummaries;
 }) {
+    const { url } = usePage();
     const [sessions, setSessions] = useState<WorkoutSession[]>(initialSessions);
     const [activeSessionId, setActiveSessionId] = useState<number | null>(
         () => {
-            const param = new URLSearchParams(window.location.search).get(
-                'session',
-            );
+            const param = new URLSearchParams(
+                url.split('?')[1] ?? '',
+            ).get('session');
             return param === null ? null : Number(param);
         },
     );
@@ -88,25 +89,25 @@ export default function MemberToday({
                 Today's workout
             </h1>
 
-            <Card className="mt-4">
-                <CardHeader>
-                    <CardTitle className="text-base">{playlist.name}</CardTitle>
+            <Card className="mt-4 p-0 overflow-hidden">
+                <CardHeader className="p-5 border-b border-[#2E2E2E]">
+                    <CardTitle className="text-lg font-bold text-[#F5F5F5]">{playlist.name}</CardTitle>
                     {muscleFocus.label !== null && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs font-semibold text-[#AFFA01]">
                             {muscleFocus.label} ·{' '}
                             {formatLastTrained(muscleFocus.lastTrainedOn)}
                         </p>
                     )}
                 </CardHeader>
-                <CardContent className="divide-y p-0">
+                <CardContent className="divide-y divide-[#2E2E2E] p-0">
                     {playlist.exercise_ids.map((id, index) => {
                         const expanded = expandedId === id;
                         return (
                             <div
                                 key={id}
-                                className="flex items-center gap-3 px-6 py-3"
+                                className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-[#252525]"
                             >
-                                <span className="w-5 text-center text-xs text-muted-foreground">
+                                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#141414] border border-[#2E2E2E] text-xs font-bold text-[#8E8E93]">
                                     {index + 1}
                                 </span>
                                 <button
@@ -116,10 +117,10 @@ export default function MemberToday({
                                     }
                                     className="min-w-0 flex-1 text-left"
                                 >
-                                    <p className="text-sm font-medium">
+                                    <p className="text-sm font-semibold text-[#F5F5F5]">
                                         {exerciseName(exerciseSummaries, id)}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-xs text-[#8E8E93]">
                                         {exerciseDetail(
                                             exerciseSummaries,
                                             id,
@@ -130,7 +131,7 @@ export default function MemberToday({
                                     <Link
                                         href={exerciseShow(id).url}
                                         aria-label={`Instructions for ${exerciseName(exerciseSummaries, id)}`}
-                                        className="flex shrink-0 items-center gap-0.5 text-xs text-lime-700 dark:text-lime-300"
+                                        className="flex shrink-0 items-center gap-1 text-xs font-semibold text-[#AFFA01] hover:underline"
                                     >
                                         Instructions
                                         <ChevronRight className="size-3" />

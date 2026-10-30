@@ -249,7 +249,7 @@ class ProgramController extends Controller
     }
 
     /**
-     * List the program in the public /programs catalog, minting a share
+     * List the program in the public /explore catalog, minting a share
      * token when needed so the catalog cards have a detail URL.
      */
     public function publish(ExerciseProgram $program): JsonResponse

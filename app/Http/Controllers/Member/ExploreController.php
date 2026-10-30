@@ -8,6 +8,7 @@ use App\Models\ExerciseProgramAccess;
 use App\Models\MealProgram;
 use App\Models\MealProgramAccess;
 use App\Models\MealProgramMeal;
+use App\Models\ShopProduct;
 use App\Models\User;
 use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
@@ -16,15 +17,17 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The public /programs catalog: every published exercise and meal program,
+ * The public /explore catalog: every published exercise and meal program,
  * searchable by name. Guests can browse; saving still needs login and Pro —
  * cards reuse the shared-program save endpoints.
  */
-class ProgramCatalogController extends Controller
+class ExploreController extends Controller
 {
     public function __invoke(Request $request): Response
     {
         $search = $request->string('q')->trim()->toString();
+        $chip = collect(['workouts', 'nutrition', 'equipment', 'supplements'])
+            ->first(fn (string $flag): bool => $request->query->has($flag), 'all');
         $user = $request->user();
 
         $exercisePrograms = ExerciseProgram::query()
@@ -56,6 +59,15 @@ class ProgramCatalogController extends Controller
 
         $claimedPrograms = $this->claimedIds($user, $exercisePrograms->modelKeys(), $mealPrograms->modelKeys());
 
+        $products = ShopProduct::query()
+            ->whereNotNull('published_at')
+            ->when($search !== '', fn ($query) => $query->where(
+                fn ($q) => $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('name_am', 'like', "%{$search}%"),
+            ))
+            ->latest('published_at')
+            ->get();
+
         $claimedPlans = $user !== null
             ? $user->mealPlans()
                 ->whereIn('meal_program_id', $mealPrograms->modelKeys())
@@ -66,9 +78,10 @@ class ProgramCatalogController extends Controller
             'exercise_programs' => $exercisePrograms->count(),
             'meal_programs' => $mealPrograms->count(),
             'search' => $search === '' ? null : $search,
+            'chip' => $chip,
         ]);
 
-        return Inertia::render('member/programs', [
+        return Inertia::render('member/explore', [
             'exercisePrograms' => $exercisePrograms
                 ->map(fn (ExerciseProgram $program): array => [
                     'key' => $program->share_token,
@@ -101,9 +114,21 @@ class ProgramCatalogController extends Controller
                         : null,
                 ])
                 ->all(),
+            'products' => $products
+                ->map(fn (ShopProduct $product): array => [
+                    'key' => (string) $product->id,
+                    'id' => $product->id,
+                    'category' => $product->category,
+                    'name' => $product->localizedName(),
+                    'description' => $product->localizedDescription(),
+                    'image_url' => $product->image_url,
+                    'price_etb' => $product->price_etb,
+                    'show_url' => route('shop.products.show', $product),
+                ])
+                ->all(),
             'isPro' => $user?->isPro() ?? false,
             'proUrl' => route('pro.show'),
-            'filters' => ['q' => $search],
+            'filters' => ['q' => $search, 'chip' => $chip],
         ]);
     }
 
@@ -128,5 +153,27 @@ class ProgramCatalogController extends Controller
                 ->whereIn('meal_program_id', $mealProgramIds)
                 ->pluck('meal_program_id'),
         ];
+    }
+
+    /**
+     * Public product detail page with the cash-on-delivery order form.
+     */
+    public function product(ShopProduct $product): Response
+    {
+        abort_unless($product->isPublished(), 404);
+
+        return Inertia::render('member/product', [
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->localizedName(),
+                'description' => $product->localizedDescription(),
+                'image_url' => $product->image_url,
+                'price_etb' => $product->price_etb,
+                'content' => $product->content,
+            ],
+            'memberPhone' => auth()->user()?->phone,
+            'storeUrl' => route('member.orders.store'),
+            'loginUrl' => route('login'),
+        ]);
     }
 }

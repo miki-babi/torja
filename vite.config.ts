@@ -13,8 +13,8 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
+                bunny('Plus Jakarta Sans', {
+                    weights: [400, 500, 600, 700],
                 }),
             ],
         }),
@@ -28,6 +28,17 @@ export default defineConfig({
             formVariants: true,
         }),
     ]),
+    resolve: {
+        dedupe: ['react', 'react-dom'],
+    },
+    optimizeDeps: {
+        include: [
+            'react',
+            'react-dom',
+            'react/jsx-dev-runtime',
+            'react/compiler-runtime',
+        ],
+    },
     server: {
         watch: {
             ignored: [

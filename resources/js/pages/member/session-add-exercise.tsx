@@ -1,8 +1,13 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, Plus, Search } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import type { ExerciseSummary } from '@/components/member/exercise-data';
+import { BodyPartPicker } from '@/components/member/body-part-picker';
+import { EquipmentPicker } from '@/components/member/equipment-picker';
+import type {
+    BodyPart,
+    ExerciseSummary,
+} from '@/components/member/exercise-data';
 import { searchExercises } from '@/components/member/exercise-search';
 import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
@@ -11,17 +16,27 @@ import { setsForExercise } from '@/components/member/workout-progress';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useTranslation } from '@/lib/i18n';
 import { upsert } from '@/routes/member/sessions/sets';
 
 export default function MemberSessionAddExercise({
     session,
     backUrl,
+    bodyParts,
+    equipment,
 }: {
     session: WorkoutSession;
     backUrl: string;
+    bodyParts: BodyPart[];
+    equipment: string[];
 }) {
+    const { t } = useTranslation();
     const [query, setQuery] = useState('');
+    const [bodyPart, setBodyPart] = useState<string[]>([]);
+    const [equipmentSel, setEquipmentSel] = useState<string[]>([]);
     const [results, setResults] = useState<ExerciseSummary[]>([]);
+    const [total, setTotal] = useState(0);
+    const [loading, setLoading] = useState(false);
     const [busy, setBusy] = useState(false);
 
     const loggedCount = new Map<string, number>();
@@ -37,21 +52,50 @@ export default function MemberSessionAddExercise({
 
     useEffect(() => {
         let cancelled = false;
+        setLoading(true);
+
         const timer = window.setTimeout(() => {
-            searchExercises({ q: query, limit: 30 })
+            searchExercises({
+                q: query,
+                body_part: bodyPart,
+                equipment: equipmentSel,
+                limit: 30,
+            })
                 .then((data) => {
                     if (!cancelled) {
                         setResults(data.exercises);
+                        setTotal(data.total);
                     }
                 })
-                .catch(() => {});
+                .catch(() => {})
+                .finally(() => {
+                    if (!cancelled) {
+                        setLoading(false);
+                    }
+                });
         }, 250);
 
         return () => {
             cancelled = true;
             window.clearTimeout(timer);
         };
-    }, [query]);
+    }, [query, bodyPart, equipmentSel]);
+
+    function loadMore() {
+        setLoading(true);
+        searchExercises({
+            q: query,
+            body_part: bodyPart,
+            equipment: equipmentSel,
+            offset: results.length,
+        })
+            .then((data) => {
+                setResults((list) => [...list, ...data.exercises]);
+                setTotal(data.total);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }
 
     async function add(ex: ExerciseSummary) {
         if (busy) {
@@ -79,14 +123,7 @@ export default function MemberSessionAddExercise({
     return (
         <MobileShell>
             <Head title="Add exercise" />
-            <Button variant="ghost" size="sm" asChild className="-ml-2">
-                <Link href={returnUrl}>
-                    <ChevronLeft className="size-4" />
-                    Back to session
-                </Link>
-            </Button>
-
-            <h1 className="mt-4 text-xl font-semibold tracking-tight">
+            <h1 className="text-xl font-semibold tracking-tight">
                 Add exercise
             </h1>
 
@@ -98,6 +135,28 @@ export default function MemberSessionAddExercise({
                     placeholder="Search exercises"
                     className="pl-9"
                     autoFocus
+                />
+            </div>
+
+            <div className="mt-4">
+                <h2 className="mb-2.5 text-xs font-bold tracking-wider text-[#AFFA01] uppercase">
+                    {t('member.exercise.choose_body_part')}
+                </h2>
+                <BodyPartPicker
+                    bodyParts={bodyParts}
+                    value={bodyPart}
+                    onChange={setBodyPart}
+                />
+            </div>
+
+            <div className="mt-4">
+                <h2 className="mb-2 text-sm font-medium">
+                    {t('member.exercise.choose_equipment')}
+                </h2>
+                <EquipmentPicker
+                    equipment={equipment}
+                    value={equipmentSel}
+                    onChange={setEquipmentSel}
                 />
             </div>
 
@@ -140,6 +199,19 @@ export default function MemberSessionAddExercise({
                     })}
                 </CardContent>
             </Card>
+
+            {results.length < total && (
+                <Button
+                    variant="outline"
+                    className="mt-4 w-full"
+                    disabled={loading}
+                    onClick={loadMore}
+                >
+                    {loading
+                        ? t('common.loading')
+                        : `${t('member.exercise.load_more')} (${total - results.length})`}
+                </Button>
+            )}
         </MobileShell>
     );
 }

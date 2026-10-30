@@ -82,30 +82,29 @@ Relational version: app-db/*.csv (foods, ingredients, food_ingredients, food_swa
 
 One JSON array of 1,324 exercise objects (source: https://github.com/hasaneyldrm/exercises-dataset, MIT).
 
-| Field                | Type     | Notes                                                                                                                                  |
-| -------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| id                   | string   | Dataset id, e.g. "0001"                                                                                                                |
-| name                 | string   | English name (some rows contain mojibake, e.g. "45в°" for "45°")                                                                       |
-| category             | string   | Mirrors body_part                                                                                                                      |
-| body_part            | string   | waist, upper legs, back, lower legs, chest, upper arms, cardio, shoulders, lower arms, neck                                            |
-| equipment            | string   | body weight, barbell, dumbbell, cable, ... (29 values)                                                                                 |
-| target               | string   | Primary target muscle, e.g. "pectorals" (19 values)                                                                                    |
-| muscle_group         | string   | Functional group, e.g. "hip flexors" (29 values)                                                                                       |
-| secondary_muscles    | string[] |                                                                                                                                        |
-| instructions         | string   | English paragraph                                                                                                                      |
-| instruction_steps    | string[] |                                                                                                                                        |
-| media_id             | string   | Media filename suffix                                                                                                                  |
-| image                | string   | "images/{id}-{media_id}.jpg" relative to dataset root                                                                                  |
-| gif_url              | string   | "videos/{id}-{media_id}.gif" relative to dataset root                                                                                  |
-| attribution          | string   | e.g. "© Gym visual — https://gymvisual.com/"                                                                                           |
-| created_at           | string   | ISO 8601                                                                                                                               |
-| tags                 | object   | exercise_type, level, location, movement_pattern, compound, isolation, full_body, women_home_friendly, goal_tags{fat_loss,muscle_gain} |
-| review_needed        | bool     | true = heuristic tags need review; reasons in review_reasons                                                                           |
-| review_reasons       | string[] |                                                                                                                                        |
-| name_am              | string   | Amharic name (English kept in brackets)                                                                                                |
-| instructions_am      | string   |                                                                                                                                        |
-| instruction_steps_am | string[] | Aligned 1:1 with instruction_steps                                                                                                     |
-| translation_status   | string   | machine_unreviewed \| reviewed \| missing — all UNREVIEWED                                                                             |
+| Field                | Type     | Notes                                                                                                                                      |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| id                   | string   | Dataset id, e.g. "0001"                                                                                                                    |
+| name                 | string   | English name (some rows contain mojibake, e.g. "45в°" for "45°")                                                                           |
+| category             | string   | Mirrors body_part                                                                                                                          |
+| body_part            | string   | waist, upper legs, back, lower legs, chest, upper arms, cardio, shoulders, lower arms, neck                                                |
+| equipment            | string   | body weight, barbell, dumbbell, cable, ... (29 values)                                                                                     |
+| target               | string   | Primary target muscle, e.g. "pectorals" (19 values)                                                                                        |
+| muscle_group         | string   | Functional group, e.g. "hip flexors" (29 values)                                                                                           |
+| secondary_muscles    | string[] |                                                                                                                                            |
+| instructions         | string   | English paragraph                                                                                                                          |
+| instruction_steps    | string[] |                                                                                                                                            |
+| media_id             | string   | Media filename suffix                                                                                                                      |
+| image                | string   | "images/{id}-{media_id}.jpg" relative to dataset root                                                                                      |
+| gif_url              | string   | "videos/{id}-{media_id}.gif" relative to dataset root                                                                                      |
+| created_at           | string   | ISO 8601                                                                                                                                   |
+| tags                 | object   | exercise_type, level, location, movement_pattern, compound, isolation, full_body, women_home_friendly, goal_tags{fat_loss,muscle_gain}     |
+| review_needed        | bool     | true = heuristic tags need review; reasons in review_reasons                                                                               |
+| review_reasons       | string[] |                                                                                                                                            |
+| name_am              | string   | English name transliterated into Amharic script, original kept in brackets (e.g. "ሲት አፕ (sit up)") — see App\Support\AmharicTransliterator |
+| instructions_am      | string   |                                                                                                                                            |
+| instruction_steps_am | string[] | Aligned 1:1 with instruction_steps                                                                                                         |
+| translation_status   | string   | transliterated (name_am) \| machine_unreviewed (instructions) \| reviewed \| missing                                                       |
 
 ## Media
 

@@ -836,7 +836,7 @@ export default function AdminMealProgramEdit({
                                             Publish to catalog
                                         </Label>
                                         <p className="text-xs text-muted-foreground">
-                                            Listed publicly at /programs so
+                                            Listed publicly at /explore so
                                             members can browse and save it. A
                                             share link is created if needed.
                                         </p>

@@ -180,12 +180,18 @@ test('non-pro members cannot claim a program', function () {
 test('the shared page exposes the pro state and upgrade url', function () {
     $program = sharedProgram();
 
+    $this->get(route('programs.shared.show', $program->share_token))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('homeUrl', route('explore.index')));
+
     $this->actingAs(User::factory()->create())
         ->get(route('programs.shared.show', $program->share_token))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('isPro', false)
-            ->where('proUrl', route('pro.show')));
+            ->where('proUrl', route('pro.show'))
+            ->where('homeUrl', route('member.home')));
 
     $this->actingAs(proUser())
         ->get(route('programs.shared.show', $program->share_token))

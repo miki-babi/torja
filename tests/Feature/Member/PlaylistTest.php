@@ -74,7 +74,12 @@ test('users cannot touch other users playlists', function () {
 });
 
 test('members can view their own playlist page', function () {
+    Exercise::factory()->create(['slug' => 'barbell-bench-press']);
     $playlist = ExercisePlaylist::factory()->create();
+    $playlist->items()->create([
+        'exercise_id' => 'barbell-bench-press',
+        'position' => 1,
+    ]);
 
     $this->actingAs($playlist->user)
         ->get(route('member.playlists.show', $playlist->id))
@@ -82,7 +87,8 @@ test('members can view their own playlist page', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('member/playlist-show')
             ->where('playlist.id', $playlist->id)
-            ->has('sessions'));
+            ->has('sessions')
+            ->has('exerciseSummaries.barbell-bench-press.image_url'));
 });
 
 test('members cannot view other users playlist pages', function () {

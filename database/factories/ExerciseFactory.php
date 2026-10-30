@@ -39,7 +39,7 @@ class ExerciseFactory extends Factory
             'media_id' => fake()->bothify('??###??'),
             'image_path' => 'exercises/images/placeholder.jpg',
             'gif_path' => 'exercises/videos/placeholder.gif',
-            'attribution' => '© Gym visual — https://gymvisual.com/',
+
             'exercise_type' => 'strength',
             'level' => 'intermediate',
             'location' => 'home',

@@ -95,6 +95,7 @@ class SharedProgramController extends Controller
             'saveUrl' => route('programs.shared.save', $program->share_token),
             'startUrl' => route('programs.shared.start', $program->share_token),
             'proUrl' => route('pro.show'),
+            'homeUrl' => $user !== null ? route('member.home') : route('explore.index'),
             'editUrl' => $user?->isAdmin() ? route('admin.programs.edit', $program) : null,
         ]);
     }

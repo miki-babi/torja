@@ -47,16 +47,7 @@ class HomeController extends Controller
                 'subtitle' => ($muscle === null ? 'Full body' : ExerciseCatalog::label($muscle))
                     .' · '.$playlist->items->count().' exercises',
             ],
-            'habits' => $request->user()->habits()
-                ->with(['logs' => fn ($q) => $q->where('date', today())])
-                ->orderBy('position')
-                ->get()
-                ->map(fn ($h) => [
-                    'id' => $h->id,
-                    'name' => $h->name,
-                    'done' => $h->logs->isNotEmpty(),
-                ])
-                ->all(),
+            'streak' => $request->user()->activityStreak(),
         ]);
     }
 }

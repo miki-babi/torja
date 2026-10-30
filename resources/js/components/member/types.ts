@@ -87,6 +87,7 @@ export type FoodSearchResult = {
 
 export type WorkoutSetEntry = {
     id: number;
+    workout_session_id: number;
     exercise_id: string;
     set_index: number;
     weight_kg: number | null;

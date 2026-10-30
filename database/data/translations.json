@@ -8,6 +8,14 @@
             "en": "Cancel",
             "am": "ይቅር"
         },
+        "done": {
+            "en": "Done",
+            "am": "ተጠናቋል"
+        },
+        "ok": {
+            "en": "OK",
+            "am": "እሺ"
+        },
         "loading": {
             "en": "Loading…",
             "am": "በመጫን ላይ…"
@@ -158,7 +166,7 @@
         },
         "track": {
             "en": "Track",
-            "am": "ይከታተሉ"
+            "am": "ትራክ"
         },
         "search_placeholder": {
             "en": "Search 1,324 exercises",
@@ -211,6 +219,50 @@
         "back_to_sessions": {
             "en": "Back to sessions",
             "am": "ወደ ልምምዶች ተመለስ"
+        },
+        "choose_equipment": {
+            "en": "Choose equipment",
+            "am": "መሳሪያ ይምረጡ"
+        },
+        "choose_level": {
+            "en": "Choose level",
+            "am": "ደረጃ ይምረጡ"
+        },
+        "level_all": {
+            "en": "All",
+            "am": "ሁሉም"
+        },
+        "other_equipment": {
+            "en": "Other",
+            "am": "ሌላ"
+        },
+        "other_equipment_title": {
+            "en": "Other equipment",
+            "am": "ሌሎች መሳሪያዎች"
+        },
+        "other_equipment_desc": {
+            "en": "Search the remaining equipment types. Select as many as you like.",
+            "am": "ቀሪውን የመሳሪያ አይነቶች ይፈልጉ። እስከፈለጉ ይምረጡ።"
+        },
+        "search_equipment": {
+            "en": "Search equipment…",
+            "am": "መሳሪያ ፈልግ…"
+        },
+        "no_equipment_matches": {
+            "en": "No equipment matches.",
+            "am": "ምንም መሳሪያ አልተገኘም።"
+        },
+        "fallback_title": {
+            "en": "Try these :part exercises instead",
+            "am": "እነዚህን :part ልምምዶች ይሞክሩ"
+        },
+        "similar_muscle": {
+            "en": "Similar muscle",
+            "am": "ተመሳሳይ ጡንቻ"
+        },
+        "similar_equipment": {
+            "en": "Similar equipment",
+            "am": "ተመሳሳይ መሳሪያ"
         }
     },
     "nudges": {
@@ -277,8 +329,8 @@
     },
     "programs": {
         "title": {
-            "en": "Programs",
-            "am": "ፕሮግራሞች"
+            "en": "Explore",
+            "am": "ያስሱ"
         },
         "search_placeholder": {
             "en": "Search programs…",
@@ -359,6 +411,30 @@
         "browse": {
             "en": "Browse",
             "am": "ያስሱ"
+        },
+        "chip_all": {
+            "en": "All",
+            "am": "ሁሉም"
+        },
+        "chip_workouts": {
+            "en": "Workouts",
+            "am": "ልምምዶች"
+        },
+        "chip_nutrition": {
+            "en": "Nutrition",
+            "am": "ሚል ፕላን"
+        },
+        "chip_equipment": {
+            "en": "Equipment",
+            "am": "መሳሪያዎች"
+        },
+        "chip_supplements": {
+            "en": "Supplements",
+            "am": "ሳፕሊመንቶች"
+        },
+        "coming_soon": {
+            "en": "Coming soon.",
+            "am": "በቅርቡ።"
         }
     },
     "shared_program": {
@@ -489,6 +565,10 @@
         "upgrade_to_pro": {
             "en": "Upgrade to Pro",
             "am": "ፕሮ ይሁኑ"
+        },
+        "back_to_app": {
+            "en": "Back to app",
+            "am": "ወደ መተግበሪያው ተመለስ"
         },
         "claim_program": {
             "en": "Add to my playlists",
@@ -676,6 +756,10 @@
             "en": "Advanced",
             "am": "ከፍተኛ"
         },
+        "body_part.arms": {
+            "en": "Arms",
+            "am": "ክንዶች"
+        },
         "body_part.back": {
             "en": "Back",
             "am": "ጀርባ"
@@ -687,6 +771,10 @@
         "body_part.chest": {
             "en": "Chest",
             "am": "ደረት"
+        },
+        "body_part.full body": {
+            "en": "Full body",
+            "am": "ሙሉ ሰውነት"
         },
         "body_part.lower arms": {
             "en": "Lower arms",
@@ -903,6 +991,82 @@
         "equipment.wheel roller": {
             "en": "Wheel roller",
             "am": "አብ ዊል"
+        }
+    },
+    "workout_share": {
+        "duration": {
+            "en": "Duration",
+            "am": "ቆይታ"
+        },
+        "exercises": {
+            "en": "Exercises",
+            "am": "ልምምዶች"
+        },
+        "sets": {
+            "en": "Sets",
+            "am": "ስብስቦች"
+        },
+        "volume": {
+            "en": "Volume",
+            "am": "ጠቅላላ ክብደት"
+        },
+        "share": {
+            "en": "Share",
+            "am": "አጋራ"
+        },
+        "save_image": {
+            "en": "Save image",
+            "am": "ምስሉን አስቀምጥ"
+        },
+        "share_failed": {
+            "en": "Could not share the image",
+            "am": "ምስሉን ማጋራት አልተቻለም"
+        }
+    },
+    "shop": {
+        "order": {
+            "en": "Order now",
+            "am": "አሁን እዘዝ"
+        },
+        "order_placed": {
+            "en": "Order placed — pay on delivery.",
+            "am": "ትዕዛዙ ደርሶናል"
+        },
+        "order_failed": {
+            "en": "Could not place the order.",
+            "am": "ትዕዛዝ ማስተጠበቅ አልተቻለም።"
+        },
+        "quantity": {
+            "en": "Quantity",
+            "am": "ብዛት"
+        },
+        "phone": {
+            "en": "Phone number",
+            "am": "ስልክ ቁጥር"
+        },
+        "cod_hint": {
+            "en": "We will call this number to deliver. Pay in cash on delivery.",
+            "am": "ትዕዛዝዎን ለማረጋገጥ፣ ባስገቡት ስልክ ቁጥር አማካኝነት እንደውልልዎታለን።"
+        },
+        "total": {
+            "en": "Total",
+            "am": "ጠቅላላ"
+        },
+        "place_order": {
+            "en": "Order now",
+            "am": "አሁን እዘዝ"
+        },
+        "my_orders": {
+            "en": "My orders",
+            "am": "ትዕዛዦቼ"
+        },
+        "free_delivery": {
+            "en": "Free delivery — we bring it to you at no cost.",
+            "am": "ነጻ ዴሊቨሪ — በነጻ እናመጣለን።"
+        },
+        "login_to_order": {
+            "en": "Log in to order",
+            "am": "ለማዘዝ ይግቡ"
         }
     }
 }

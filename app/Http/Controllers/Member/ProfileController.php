@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
 use App\Services\Nutrition\NutritionTargetCalculator;
 use App\Services\Nutrition\ProfileResolver;
+use App\Support\ProPage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,8 +26,18 @@ class ProfileController extends Controller
     {
         $profile = $this->profiles->for($request);
         $user = $request->user();
+        $copy = ProPage::forMember();
+        $isPro = $user?->isPro() ?? false;
 
         return Inertia::render('member/profile', [
+            'isPro' => $isPro,
+            'proUrl' => route('pro.show'),
+            'ordersUrl' => route('member.orders.index'),
+            'proCard' => [
+                'title' => $isPro ? $copy['pro_title'] : $copy['card_title'],
+                'body' => $isPro ? $copy['pro_body'] : $copy['card_body'],
+                'button' => $isPro ? null : $copy['card_button'],
+            ],
             'account' => [
                 'name' => $user?->name,
                 'username' => $user?->username,
@@ -44,6 +55,8 @@ class ProfileController extends Controller
             'activity' => $profile->activity,
             'pace' => $profile->pace,
             'profileCompleted' => $profile->completed_at !== null,
+            'streak' => $user->activityStreak(),
+            'activityWeek' => $user->activityWeek(),
             'targets' => $this->targets->for($profile),
             'planName' => $this->preview->for($profile)['plan_name'] ?? null,
             'weightLogs' => $user->weightLogs()->limit(8)->get()

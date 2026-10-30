@@ -57,7 +57,26 @@ test('members can view an exercise detail page', function () {
             ->where('exercise.slug', 'barbell-bench-press')
             ->where('exercise.name', $exercise->name)
             ->has('playlists')
-            ->has('sessions'));
+            ->has('sessions')
+            ->has('similarMuscle')
+            ->has('similarEquipment'));
+});
+
+test('exercise detail suggests exercises with the same target and equipment', function () {
+    Exercise::factory()->create(['slug' => 'subject', 'target' => 'abs', 'equipment' => 'body weight']);
+    Exercise::factory()->create(['slug' => 'same-muscle', 'target' => 'abs', 'equipment' => 'band']);
+    Exercise::factory()->create(['slug' => 'same-equipment', 'target' => 'pectorals', 'equipment' => 'body weight']);
+    Exercise::factory()->create(['slug' => 'unrelated', 'target' => 'pectorals', 'equipment' => 'barbell']);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('member.exercises.show', 'subject'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('member/exercise-show')
+            ->has('similarMuscle', 1)
+            ->where('similarMuscle.0.slug', 'same-muscle')
+            ->has('similarEquipment', 1)
+            ->where('similarEquipment.0.slug', 'same-equipment'));
 });
 
 test('legacy catalog ids redirect to the canonical slug', function () {

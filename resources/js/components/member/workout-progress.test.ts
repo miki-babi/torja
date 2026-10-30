@@ -4,6 +4,7 @@ import {
     exerciseHistory,
     lastSessionWithExercise,
     prByExercise,
+    sessionExerciseCount,
     sessionVolume,
     sessionsThisWeek,
     setsForExercise,
@@ -28,6 +29,7 @@ function set(
 ): WorkoutSession['sets'][number] {
     return {
         id,
+        workout_session_id: 0,
         exercise_id: exerciseId,
         set_index: index,
         weight_kg: weight,
@@ -50,6 +52,14 @@ describe('volume helpers', () => {
     it('computes per-session and total volume', () => {
         expect(sessionVolume(SESSIONS[0])).toBe(980);
         expect(totalVolume(SESSIONS)).toBe(980 + 600 + 400);
+    });
+});
+
+describe('sessionExerciseCount', () => {
+    it('counts distinct exercises with logged sets', () => {
+        expect(sessionExerciseCount(SESSIONS[0])).toBe(1);
+        expect(sessionExerciseCount(SESSIONS[1])).toBe(2);
+        expect(sessionExerciseCount(session(9, '2026-10-22', []))).toBe(0);
     });
 });
 
@@ -81,6 +91,22 @@ describe('prByExercise', () => {
         ]);
         expect(prs['a']).toEqual({ weight_kg: 50, reps: 9 });
     });
+
+    it('tracks a reps-only PR for unweighted sets', () => {
+        const prs = prByExercise([
+            session(1, '2026-10-01', [set(1, 'push-up', 0, null, 15)]),
+            session(2, '2026-10-02', [set(2, 'push-up', 0, null, 20)]),
+        ]);
+        expect(prs['push-up']).toEqual({ weight_kg: 0, reps: 20 });
+    });
+
+    it('prefers a weighted PR over a reps-only PR', () => {
+        const prs = prByExercise([
+            session(1, '2026-10-01', [set(1, 'push-up', 0, null, 30)]),
+            session(2, '2026-10-02', [set(2, 'push-up', 0, 10, 8)]),
+        ]);
+        expect(prs['push-up']).toEqual({ weight_kg: 10, reps: 8 });
+    });
 });
 
 describe('history helpers', () => {
@@ -109,5 +135,14 @@ describe('setsForExercise / setSummary', () => {
         const sets = setsForExercise(SESSIONS[0], 'bench-press');
         expect(sets.map((s) => s.set_index)).toEqual([0, 1]);
         expect(setSummary(sets)).toBe('70kg×8, 70kg×6');
+    });
+
+    it('formats unweighted sets as reps', () => {
+        expect(
+            setSummary([
+                set(1, 'push-up', 0, null, 15),
+                set(2, 'push-up', 1, null, 12),
+            ]),
+        ).toBe('15 reps, 12 reps');
     });
 });

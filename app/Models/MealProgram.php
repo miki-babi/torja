@@ -109,7 +109,7 @@ class MealProgram extends Model
     }
 
     /**
-     * Whether the program is listed in the public /programs catalog.
+     * Whether the program is listed in the public /explore catalog.
      */
     public function isPublished(): bool
     {

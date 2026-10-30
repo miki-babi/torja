@@ -37,27 +37,27 @@ export function TargetsCard({
                             / {targets.kcal_target} kcal
                         </span>
                     </p>
-                    <div className="mx-auto mt-2 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-muted">
+                    <div className="mx-auto mt-2 h-2 w-full max-w-xs overflow-hidden rounded-full bg-[#2E2E2E]">
                         <div
-                            className="h-full rounded-full bg-lime-400"
+                            className="h-full rounded-full bg-gradient-to-r from-[#D7F457] to-[#AFFA01] shadow-[0_0_8px_rgba(175,250,1,0.3)] transition-all"
                             style={{ width: `${kcalPercent}%` }}
                         />
                     </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {rows.map(({ label, value, target }) => (
-                        <div key={label} className="grid gap-1">
-                            <div className="flex justify-between text-xs">
-                                <span className="text-muted-foreground">
+                        <div key={label} className="grid gap-1.5">
+                            <div className="flex justify-between text-xs font-semibold">
+                                <span className="text-[#8E8E93]">
                                     {label}
                                 </span>
-                                <span>
+                                <span className="font-mono text-[#F5F5F5]">
                                     {Math.round(value)}g / {target}g
                                 </span>
                             </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                            <div className="h-1.5 overflow-hidden rounded-full bg-[#2E2E2E]">
                                 <div
-                                    className="h-full rounded-full bg-lime-400"
+                                    className="h-full rounded-full bg-[#AFFA01] transition-all"
                                     style={{
                                         width: `${Math.min(100, (value / target) * 100)}%`,
                                     }}

@@ -11,10 +11,10 @@ test('guests can browse published exercise and meal programs', function () {
     ExerciseProgram::factory()->published()->create(['name' => 'Home Split']);
     MealProgram::factory()->published()->create(['name' => 'Cutting Plan']);
 
-    $this->get(route('programs.index'))
+    $this->get(route('explore.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('member/programs')
+            ->component('member/explore')
             ->has('exercisePrograms', 1)
             ->has('mealPrograms', 1)
             ->where('exercisePrograms.0.name', 'Home Split')
@@ -32,7 +32,7 @@ test('only published and shared programs are listed', function () {
     MealProgram::factory()->create(['name' => 'Draft Meal']);
     MealProgram::factory()->published()->unshared()->create(['name' => 'Unshared Meal']);
 
-    $this->get(route('programs.index'))
+    $this->get(route('explore.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->has('exercisePrograms', 1)
@@ -47,7 +47,7 @@ test('the catalog can be searched by name', function () {
     MealProgram::factory()->published()->create(['name' => 'Strength Fuel']);
     MealProgram::factory()->published()->create(['name' => 'Bulk Plan']);
 
-    $this->get(route('programs.index', ['q' => 'strength']))
+    $this->get(route('explore.index', ['q' => 'strength']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->has('exercisePrograms', 1)
@@ -66,7 +66,7 @@ test('members see which programs they already claimed', function () {
     app(MealProgramAccessGranter::class)->grant($user, $mealProgram);
 
     $this->actingAs($user)
-        ->get(route('programs.index'))
+        ->get(route('explore.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('exercisePrograms.0.claimed', true)
@@ -74,11 +74,25 @@ test('members see which programs they already claimed', function () {
             ->where('isPro', true));
 });
 
+test('the selected chip comes from the query string', function () {
+    $this->get(route('explore.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('filters.chip', 'all'));
+
+    $this->get(route('explore.index', ['nutrition' => '']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('filters.chip', 'nutrition'));
+
+    $this->get(route('explore.index', ['bogus' => '']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('filters.chip', 'all'));
+});
+
 test('non-pro members see programs as unclaimed without pro', function () {
     ExerciseProgram::factory()->published()->create();
 
     $this->actingAs(User::factory()->create())
-        ->get(route('programs.index'))
+        ->get(route('explore.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('exercisePrograms.0.claimed', false)

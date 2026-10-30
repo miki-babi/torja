@@ -26,8 +26,10 @@ class NudgeResolver
     {
         $user = $request->user();
 
+        // Guests only get nudged back into the wizard, which is hidden for
+        // now — no guest nudges until the quiz returns.
         if ($user === null) {
-            return $this->forGuest($request);
+            return null;
         }
 
         if ($user->isPro()) {
@@ -54,41 +56,6 @@ class NudgeResolver
         }
 
         return null;
-    }
-
-    /**
-     * Guests can only be nudged back into the wizard — there is no
-     * notification channel for them (that's what ad remarketing is for).
-     *
-     * @return array{slug: string, title: string, body: string, cta: string, url: string}|null
-     */
-    private function forGuest(Request $request): ?array
-    {
-        if (! $request->hasSession()) {
-            return null;
-        }
-
-        $profile = NutritionProfile::query()
-            ->where('session_id', $request->session()->getId())
-            ->whereNull('user_id')
-            ->where('status', 'in_progress')
-            ->where('current_step', '>', 1)
-            ->first();
-
-        if ($profile === null) {
-            return null;
-        }
-
-        if ($request->routeIs('plan.wizard')
-            || $this->suppressed('wizard_abandoned', null, $request->attributes->get('visitor_id'))) {
-            return null;
-        }
-
-        return NudgeRegistry::payload(
-            'wizard_abandoned',
-            $profile->goal['primary_goal'] ?? null,
-            max(0, 13 - (int) $profile->current_step),
-        );
     }
 
     /**

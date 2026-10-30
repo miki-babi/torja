@@ -76,6 +76,7 @@ export default function MemberSharedProgram({
     alreadyClaimed,
     saveUrl,
     proUrl,
+    homeUrl,
     editUrl,
     todaysSessions: initialTodaysSessions,
 }: {
@@ -85,6 +86,7 @@ export default function MemberSharedProgram({
     alreadyClaimed: boolean;
     saveUrl: string;
     proUrl: string;
+    homeUrl: string;
     editUrl: string | null;
     todaysSessions: Record<string, WorkoutSession>;
 }) {
@@ -166,8 +168,8 @@ export default function MemberSharedProgram({
         <MobileShell hideNav>
             <Head title={program.name} />
 
-            {languages.length > 1 && (
-                <div className="mb-4 flex justify-end">
+            <div className="mb-4 flex items-center justify-end">
+                {languages.length > 1 && (
                     <div className="flex items-center gap-1 rounded-full border p-1">
                         {languages.map((language) => (
                             <button
@@ -186,8 +188,8 @@ export default function MemberSharedProgram({
                             </button>
                         ))}
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
                 {program.image_url !== null ? (
@@ -474,7 +476,7 @@ export default function MemberSharedProgram({
                 </p>
             )}
 
-            <div className="h-24" />
+            <div className="h-40" />
 
             <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur">
                 <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
@@ -529,18 +531,14 @@ export default function MemberSharedProgram({
                             </Button>
                         </>
                     ) : (
-                        <>
-                            <div className="shrink-0">
-                                <p className="text-lg leading-none font-bold">
-                                    {t('shared_program.pro_badge')}
-                                </p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    {t('shared_program.pro_included')}
-                                </p>
-                            </div>
+                        <div className="min-w-0 flex-1 space-y-2">
+                            <p className="text-center text-xs text-muted-foreground">
+                                {t('shared_program.pro_badge')} ·{' '}
+                                {t('shared_program.pro_included')}
+                            </p>
                             {isGuest ? (
                                 <Button
-                                    className="flex-1 bg-lime-400 text-lime-950 hover:bg-lime-500"
+                                    className="w-full rounded-full"
                                     asChild
                                 >
                                     <Link href={login()}>
@@ -549,7 +547,7 @@ export default function MemberSharedProgram({
                                 </Button>
                             ) : isPro ? (
                                 <Button
-                                    className="flex-1 bg-lime-400 text-lime-950 hover:bg-lime-500"
+                                    className="w-full rounded-full"
                                     disabled={saving}
                                     onClick={save}
                                 >
@@ -559,7 +557,7 @@ export default function MemberSharedProgram({
                                 </Button>
                             ) : (
                                 <Button
-                                    className="flex-1 bg-lime-400 text-lime-950 hover:bg-lime-500"
+                                    className="w-full rounded-full"
                                     asChild
                                 >
                                     <Link href={proUrl}>
@@ -567,7 +565,16 @@ export default function MemberSharedProgram({
                                     </Link>
                                 </Button>
                             )}
-                        </>
+                            <Button
+                                variant="outline"
+                                className="w-full rounded-full"
+                                asChild
+                            >
+                                <Link href={homeUrl}>
+                                    {t('shared_program.back_to_app')}
+                                </Link>
+                            </Button>
+                        </div>
                     )}
                 </div>
             </div>

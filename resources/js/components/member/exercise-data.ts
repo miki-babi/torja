@@ -33,13 +33,12 @@ export type ExerciseDetail = ExerciseSummary & {
     location: string;
     exercise_type: string;
     movement_pattern: string | null;
-    attribution: string;
 };
 
-/** slug → {name, detail} map passed by controllers for ids on the page. */
+/** slug → {name, detail, equipment, image_url} map passed by controllers for ids on the page. */
 export type ExerciseSummaries = Record<
     string,
-    { name: string; detail: string }
+    { name: string; detail: string; image_url?: string; equipment?: string }
 >;
 
 export type BodyPart = {
@@ -47,6 +46,35 @@ export type BodyPart = {
     label: string;
     count?: number;
 };
+
+/** Equipment with no meaningful load to record — logging asks for reps only. */
+export const UNWEIGHTED_EQUIPMENT: ReadonlySet<string> = new Set([
+    'assisted',
+    'band',
+    'body weight',
+    'bosu ball',
+    'elliptical machine',
+    'hammer',
+    'medicine ball',
+    'resistance band',
+    'roller',
+    'rope',
+    'skierg machine',
+    'stability ball',
+    'stationary bike',
+    'stepmill machine',
+    'tire',
+    'upper body ergometer',
+    'wheel roller',
+]);
+
+/**
+ * Whether sets for this equipment capture a kg weight. Unknown equipment
+ * defaults to weighted.
+ */
+export function tracksWeight(equipment: string | null | undefined): boolean {
+    return !UNWEIGHTED_EQUIPMENT.has(equipment ?? '');
+}
 
 export const BODY_PART_ICONS: Record<string, LucideIcon> = {
     '': PersonStanding, // "Full body" tile — empty id means no filter
@@ -65,6 +93,24 @@ export const BODY_PART_ICONS: Record<string, LucideIcon> = {
 
 export function bodyPartIcon(id: string): LucideIcon {
     return BODY_PART_ICONS[id] ?? Grip;
+}
+
+/** Muscle illustration for a body part; null keeps the Lucide icon. */
+export const BODY_PART_IMAGES: Record<string, string> = {
+    chest: '/images/target-muscles/chest.png',
+    back: '/images/target-muscles/back.png',
+    shoulders: '/images/target-muscles/shoulder.png',
+    arms: '/images/target-muscles/arms.png',
+    'upper arms': '/images/target-muscles/arms.png',
+    'lower arms': '/images/target-muscles/arms.png',
+    waist: '/images/target-muscles/waist.png',
+    'upper legs': '/images/target-muscles/upperleg.png',
+    'lower legs': '/images/target-muscles/lowerleg.png',
+    neck: '/images/target-muscles/neck.png',
+};
+
+export function bodyPartImage(id: string): string | null {
+    return BODY_PART_IMAGES[id] ?? null;
 }
 
 /**

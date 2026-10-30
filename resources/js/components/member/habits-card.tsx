@@ -56,13 +56,13 @@ export function HabitsCard({ habits: initial }: { habits: HomeHabit[] }) {
                             >
                                 <span
                                     className={cn(
-                                        'flex size-6 shrink-0 items-center justify-center rounded-full border-2',
+                                        'flex size-6 shrink-0 items-center justify-center rounded-full border transition-all',
                                         h.done
-                                            ? 'border-lime-500 bg-lime-400 text-lime-950'
-                                            : 'border-muted-foreground/40',
+                                            ? 'border-[#AFFA01] bg-[#AFFA01] text-black shadow-[0_0_10px_rgba(175,250,1,0.4)]'
+                                            : 'border-[#3E3E3E] bg-[#121212]',
                                     )}
                                 >
-                                    {h.done && <Check className="size-3.5" />}
+                                    {h.done && <Check className="size-3.5 stroke-[3]" />}
                                 </span>
                                 <span
                                     className={cn(

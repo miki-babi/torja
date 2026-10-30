@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Plan;
 
 use App\Http\Controllers\Controller;
 use App\Services\Payments\PaymentSynchronizer;
+use App\Support\ProPage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,7 +35,9 @@ class ProController extends Controller
 
         return Inertia::render('pro', [
             'isPro' => $request->user()->isPro(),
-            'price' => (int) config('plans.pro_price_etb'),
+            'price' => ProPage::price(),
+            'page' => ProPage::forMember(),
+            'homeUrl' => route('member.home'),
             'providers' => [
                 'chapa' => filled(config('services.chapa.secret_key')),
                 'verify_checkout' => filled(config('services.verify_checkout.api_key')),

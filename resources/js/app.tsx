@@ -8,7 +8,7 @@ import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { MobileShell } from '@/components/member/mobile-shell';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'Torja';
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -16,6 +16,7 @@ void createInertiaApp({
         switch (true) {
             case name === 'welcome':
             case name === 'calculator':
+            case name.startsWith('calculator/'):
             case name === 'pro':
             case name === 'plan/wizard':
             case name === 'plan/review':

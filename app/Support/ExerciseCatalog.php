@@ -97,6 +97,37 @@ class ExerciseCatalog
     }
 
     /**
+     * Filter tiles for the body part picker: lower arms fold into a grouped
+     * "Arms" tile and a "Full body" tile (empty id = no filter) comes first.
+     *
+     * @return array<int, array{id: string, label: string, count: int}>
+     */
+    public static function bodyPartFilters(): array
+    {
+        return collect(self::BODY_PARTS)
+            ->reject(fn (string $part): bool => $part === 'lower arms')
+            ->map(fn (string $part): array => $part === 'upper arms'
+                ? [
+                    'id' => 'arms',
+                    'label' => 'Arms',
+                    'count' => count(self::idsFor('upper arms'))
+                        + count(self::idsFor('lower arms')),
+                ]
+                : [
+                    'id' => $part,
+                    'label' => self::label($part),
+                    'count' => count(self::idsFor($part)),
+                ])
+            ->prepend([
+                'id' => '',
+                'label' => 'Full body',
+                'count' => Exercise::count(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Exercise slugs belonging to a body part, ordered by name.
      *
      * @return array<int, string>
@@ -145,7 +176,7 @@ class ExerciseCatalog
      * rendering exercise names in playlists and sessions.
      *
      * @param  array<int, string>  $exerciseIds
-     * @return array<string, array{name: string, detail: string}>
+     * @return array<string, array{name: string, detail: string, equipment: string, image_url: string}>
      */
     public static function namesFor(array $exerciseIds): array
     {
@@ -155,12 +186,17 @@ class ExerciseCatalog
 
         $exercises = Exercise::query()
             ->whereIn('slug', $resolved->values()->unique()->all())
-            ->get(['slug', 'name', 'equipment', 'target'])
+            ->get(['slug', 'name', 'equipment', 'target', 'image_path'])
             ->keyBy('slug');
 
         return $resolved
             ->map(fn (string $slug): ?array => $exercises->has($slug)
-                ? ['name' => $exercises[$slug]->name, 'detail' => $exercises[$slug]->detail()]
+                ? [
+                    'name' => $exercises[$slug]->localizedName(),
+                    'detail' => $exercises[$slug]->detail(),
+                    'equipment' => $exercises[$slug]->equipment,
+                    'image_url' => $exercises[$slug]->image_url,
+                ]
                 : null)
             ->filter()
             ->all();

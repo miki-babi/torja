@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import {
     exerciseName,
+    tracksWeight,
     type ExerciseSummaries,
 } from '@/components/member/exercise-data';
 import { memberApi } from '@/components/member/member-api';
@@ -33,16 +34,18 @@ function parseOptional(value: string): number | null {
     return Number.isNaN(parsed) ? null : parsed;
 }
 
-function SetRow({
+export function SetRow({
     set,
     index,
     onSave,
     onRemove,
+    weighted = true,
 }: {
     set: WorkoutSetEntry;
     index: number;
     onSave: (weight: number | null, reps: number | null) => void;
     onRemove: () => void;
+    weighted?: boolean;
 }) {
     const [weight, setWeight] = useState(
         set.weight_kg === null ? '' : String(set.weight_kg),
@@ -50,7 +53,7 @@ function SetRow({
     const [reps, setReps] = useState(set.reps === null ? '' : String(set.reps));
 
     function commit() {
-        onSave(parseOptional(weight), parseOptional(reps));
+        onSave(weighted ? parseOptional(weight) : null, parseOptional(reps));
     }
 
     return (
@@ -58,19 +61,23 @@ function SetRow({
             <span className="w-6 text-center text-xs text-muted-foreground">
                 {index + 1}
             </span>
-            <Input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="any"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                onBlur={commit}
-                placeholder="kg"
-                aria-label={`Set ${index + 1} weight in kg`}
-                className="h-8 w-20"
-            />
-            <span className="text-xs text-muted-foreground">×</span>
+            {weighted && (
+                <>
+                    <Input
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        step="any"
+                        value={weight}
+                        onChange={(e) => setWeight(e.target.value)}
+                        onBlur={commit}
+                        placeholder="kg"
+                        aria-label={`Set ${index + 1} weight in kg`}
+                        className="h-8 w-20"
+                    />
+                    <span className="text-xs text-muted-foreground">×</span>
+                </>
+            )}
             <Input
                 type="number"
                 inputMode="numeric"
@@ -80,7 +87,7 @@ function SetRow({
                 onBlur={commit}
                 placeholder="reps"
                 aria-label={`Set ${index + 1} reps`}
-                className="h-8 w-16"
+                className={weighted ? 'h-8 w-16' : 'h-8 w-24'}
             />
             <Button
                 variant="ghost"
@@ -102,6 +109,7 @@ export function WorkoutSessionCard({
     exerciseSummaries,
     onSessionChange,
     onBack,
+    editable = true,
 }: {
     session: WorkoutSession;
     playlist: ExercisePlaylist | null;
@@ -109,6 +117,7 @@ export function WorkoutSessionCard({
     exerciseSummaries: ExerciseSummaries;
     onSessionChange: (session: WorkoutSession) => void;
     onBack: () => void;
+    editable?: boolean;
 }) {
     const [historyFor, setHistoryFor] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
@@ -213,6 +222,9 @@ export function WorkoutSessionCard({
                         session.id,
                     );
                     const showHistory = historyFor === exerciseId;
+                    const weighted = tracksWeight(
+                        exerciseSummaries[exerciseId]?.equipment,
+                    );
 
                     return (
                         <div key={exerciseId}>
@@ -234,7 +246,7 @@ export function WorkoutSessionCard({
                                         className={cn(
                                             'size-7 shrink-0',
                                             showHistory &&
-                                                'bg-lime-300/40 text-lime-900',
+                                                'bg-[#AFFA01]/20 text-[#AFFA01]',
                                         )}
                                         onClick={() =>
                                             setHistoryFor(
@@ -249,38 +261,57 @@ export function WorkoutSessionCard({
                             </div>
 
                             <div className="mt-2 space-y-2 pl-1">
-                                {sets.map((set, i) => (
-                                    <SetRow
-                                        key={set.id}
-                                        set={set}
-                                        index={i}
-                                        onSave={(weight, reps) =>
+                                {sets.map((set, i) =>
+                                    editable ? (
+                                        <SetRow
+                                            key={set.id}
+                                            set={set}
+                                            index={i}
+                                            weighted={weighted}
+                                            onSave={(weight, reps) =>
+                                                upsertSet(
+                                                    exerciseId,
+                                                    set.set_index,
+                                                    weight,
+                                                    reps,
+                                                )
+                                            }
+                                            onRemove={() => removeSet(set.id)}
+                                        />
+                                    ) : (
+                                        <div
+                                            key={set.id}
+                                            className="flex items-center gap-2 text-sm"
+                                        >
+                                            <span className="w-6 text-center text-xs text-muted-foreground">
+                                                {i + 1}
+                                            </span>
+                                            <span>
+                                                {set.weight_kg
+                                                    ? `${set.weight_kg} kg × ${set.reps ?? 0} reps`
+                                                    : `${set.reps ?? 0} reps`}
+                                            </span>
+                                        </div>
+                                    ),
+                                )}
+                                {editable && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-xs"
+                                        onClick={() =>
                                             upsertSet(
                                                 exerciseId,
-                                                set.set_index,
-                                                weight,
-                                                reps,
+                                                sets.length,
+                                                null,
+                                                null,
                                             )
                                         }
-                                        onRemove={() => removeSet(set.id)}
-                                    />
-                                ))}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 text-xs"
-                                    onClick={() =>
-                                        upsertSet(
-                                            exerciseId,
-                                            sets.length,
-                                            null,
-                                            null,
-                                        )
-                                    }
-                                >
-                                    <Plus className="size-3.5" />
-                                    Add set
-                                </Button>
+                                    >
+                                        <Plus className="size-3.5" />
+                                        Add set
+                                    </Button>
+                                )}
                             </div>
 
                             {showHistory && (
@@ -327,7 +358,7 @@ export function WorkoutSessionCard({
                         Add exercise
                     </Button>
                     <Button
-                        className="flex-1 bg-lime-400 text-lime-950 hover:bg-lime-500"
+                        className="flex-1 bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black shadow-md hover:brightness-105"
                         onClick={onBack}
                     >
                         Done

@@ -65,6 +65,73 @@ test('sets can be upserted and removed', function () {
     ]))->assertOk()->assertJsonCount(1, 'session.sets');
 });
 
+test('quick logging a set creates and resumes todays free session', function () {
+    Exercise::factory()->create(['slug' => 'barbell-bench-press']);
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->postJson(route('member.sessions.log-set'), [
+        'exercise_id' => 'barbell-bench-press',
+        'weight_kg' => 60,
+        'reps' => 10,
+    ])->assertCreated()
+        ->assertJsonCount(1, 'session.sets')
+        ->assertJsonPath('session.sets.0.weight_kg', 60)
+        ->assertJsonPath('session.sets.0.set_index', 0);
+
+    // A second log lands in the same session with the next set index.
+    $this->postJson(route('member.sessions.log-set'), [
+        'exercise_id' => 'barbell-bench-press',
+        'weight_kg' => 70,
+        'reps' => 8,
+    ])->assertCreated()
+        ->assertJsonCount(2, 'session.sets')
+        ->assertJsonPath('session.sets.1.set_index', 1);
+
+    expect($user->workoutSessions()->count())->toBe(1);
+    expect($user->workoutSessions()->first()->exercise_playlist_id)->toBeNull();
+});
+
+test('quick logging appends after a gap left by a deleted set', function () {
+    Exercise::factory()->create(['slug' => 'push-up']);
+    $user = User::factory()->create();
+    $session = WorkoutSession::factory()->for($user)->create(['date' => now()->toDateString()]);
+    // Sets at indexes 0 and 2 — index 1 was deleted, leaving a gap.
+    $session->sets()->create(['exercise_id' => 'push-up', 'set_index' => 0, 'reps' => 10]);
+    $session->sets()->create(['exercise_id' => 'push-up', 'set_index' => 2, 'reps' => 10]);
+    $this->actingAs($user);
+
+    $this->postJson(route('member.sessions.log-set'), [
+        'exercise_id' => 'push-up',
+        'reps' => 12,
+    ])->assertCreated()
+        ->assertJsonPath('session.sets.2.set_index', 3);
+});
+
+test('quick logging allows a missing weight but requires reps', function () {
+    Exercise::factory()->create(['slug' => 'push-up']);
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    // Bodyweight exercise: no weight is fine.
+    $this->postJson(route('member.sessions.log-set'), [
+        'exercise_id' => 'push-up',
+        'reps' => 12,
+    ])->assertCreated()
+        ->assertJsonPath('session.sets.0.weight_kg', null)
+        ->assertJsonPath('session.sets.0.reps', 12);
+
+    $this->postJson(route('member.sessions.log-set'), [
+        'exercise_id' => 'push-up',
+        'weight_kg' => 10,
+    ])->assertUnprocessable();
+
+    $this->postJson(route('member.sessions.log-set'), [
+        'exercise_id' => 'not-a-move',
+        'reps' => 10,
+    ])->assertUnprocessable();
+});
+
 test('users cannot modify other users sessions', function () {
     $session = WorkoutSession::factory()->create();
     $this->actingAs(User::factory()->create());
@@ -87,7 +154,9 @@ test('members can view the add-exercise page for their own session', function ()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('member/session-add-exercise')
             ->where('session.id', $session->id)
-            ->has('backUrl'));
+            ->has('backUrl')
+            ->has('bodyParts')
+            ->has('equipment'));
 });
 
 test('users cannot view the add-exercise page for other users sessions', function () {

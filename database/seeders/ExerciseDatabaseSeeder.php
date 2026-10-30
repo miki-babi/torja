@@ -53,7 +53,7 @@ class ExerciseDatabaseSeeder extends Seeder
         $rows->chunk(100)->each(fn ($chunk) => Exercise::upsert(
             $chunk->all(),
             uniqueBy: ['slug'],
-            update: ['source_id', 'name', 'name_am', 'category', 'body_part', 'equipment', 'target', 'muscle_group', 'secondary_muscles', 'instructions', 'instruction_steps', 'instructions_am', 'instruction_steps_am', 'translation_status', 'media_id', 'image_path', 'gif_path', 'attribution', 'exercise_type', 'level', 'location', 'movement_pattern', 'compound', 'isolation', 'full_body', 'women_home_friendly', 'goal_fat_loss', 'goal_muscle_gain', 'review_needed', 'review_reasons', 'source_created_at'],
+            update: ['source_id', 'name', 'name_am', 'category', 'body_part', 'equipment', 'target', 'muscle_group', 'secondary_muscles', 'instructions', 'instruction_steps', 'instructions_am', 'instruction_steps_am', 'translation_status', 'media_id', 'image_path', 'gif_path', 'exercise_type', 'level', 'location', 'movement_pattern', 'compound', 'isolation', 'full_body', 'women_home_friendly', 'goal_fat_loss', 'goal_muscle_gain', 'review_needed', 'review_reasons', 'source_created_at'],
         ));
 
         ExerciseCatalog::flush();
@@ -87,7 +87,7 @@ class ExerciseDatabaseSeeder extends Seeder
             'media_id' => $row['media_id'],
             'image_path' => 'exercises/'.ltrim($row['image'], '/'),
             'gif_path' => 'exercises/'.ltrim($row['gif_url'], '/'),
-            'attribution' => $row['attribution'],
+
             'exercise_type' => $tags['exercise_type'],
             'level' => $tags['level'],
             'location' => $tags['location'],

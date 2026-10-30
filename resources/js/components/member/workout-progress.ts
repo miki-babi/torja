@@ -7,6 +7,10 @@ export function sessionVolume(session: WorkoutSession): number {
     );
 }
 
+export function sessionExerciseCount(session: WorkoutSession): number {
+    return new Set(session.sets.map((set) => set.exercise_id)).size;
+}
+
 export function totalVolume(sessions: WorkoutSession[]): number {
     return sessions.reduce((sum, s) => sum + sessionVolume(s), 0);
 }
@@ -29,11 +33,13 @@ export function sessionsThisWeek(
 
 /**
  * Personal record per exercise: highest weight (ties broken by reps).
+ * Exercises logged without weight get a reps-only PR (weight_kg 0).
  */
 export function prByExercise(
     sessions: WorkoutSession[],
 ): Record<string, { weight_kg: number; reps: number }> {
     const prs: Record<string, { weight_kg: number; reps: number }> = {};
+    const repPrs: Record<string, number> = {};
 
     for (const session of sessions) {
         for (const set of session.sets) {
@@ -41,15 +47,22 @@ export function prByExercise(
             const reps = set.reps ?? 0;
             const current = prs[set.exercise_id];
 
-            if (
-                weight > 0 &&
-                (current === undefined ||
+            if (weight > 0) {
+                if (
+                    current === undefined ||
                     weight > current.weight_kg ||
-                    (weight === current.weight_kg && reps > current.reps))
-            ) {
-                prs[set.exercise_id] = { weight_kg: weight, reps };
+                    (weight === current.weight_kg && reps > current.reps)
+                ) {
+                    prs[set.exercise_id] = { weight_kg: weight, reps };
+                }
+            } else if (reps > (repPrs[set.exercise_id] ?? 0)) {
+                repPrs[set.exercise_id] = reps;
             }
         }
+    }
+
+    for (const [exerciseId, reps] of Object.entries(repPrs)) {
+        prs[exerciseId] ??= { weight_kg: 0, reps };
     }
 
     return prs;
@@ -111,6 +124,10 @@ export function setSummary(sets: WorkoutSetEntry[]): string {
     }
     const parts = sets
         .filter((s) => s.weight_kg !== null || s.reps !== null)
-        .map((s) => `${s.weight_kg ?? 0}kg×${s.reps ?? 0}`);
+        .map((s) =>
+            s.weight_kg === null || s.weight_kg === 0
+                ? `${s.reps ?? 0} reps`
+                : `${s.weight_kg}kg×${s.reps ?? 0}`,
+        );
     return parts.length === 0 ? '' : parts.join(', ');
 }

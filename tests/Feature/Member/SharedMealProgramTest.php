@@ -142,6 +142,21 @@ test('non-pro members cannot claim a meal program', function () {
         ->assertForbidden();
 });
 
+test('the shared meal program page exposes a home url for leaving the screen', function () {
+    $program = sharedMealProgram();
+
+    $this->get(route('meal-programs.shared.show', $program->share_token))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('homeUrl', route('explore.index')));
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('meal-programs.shared.show', $program->share_token))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('homeUrl', route('member.home')));
+});
+
 test('a successful legacy meal program payment still grants access and does not grant pro', function () {
     Http::fake([
         'https://api.chapa.co/v1/transaction/verify/*' => Http::response([

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
 use App\Services\Nutrition\NutritionTargetCalculator;
 use App\Services\Nutrition\ProfileResolver;
+use App\Support\ProPage;
 use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -41,7 +42,7 @@ class MealController extends Controller
                 ->mapWithKeys(fn (int $day) => [$day => $this->preview->for($profile, $day)])
                 ->all(),
             'unlocked' => $unlocked,
-            'price' => (int) config('plans.pro_price_etb'),
+            'price' => ProPage::price(),
             'claimedPrograms' => $request->user()->mealPlans()
                 ->with('sourceProgram')
                 ->get()

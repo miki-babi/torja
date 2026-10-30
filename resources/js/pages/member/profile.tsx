@@ -1,25 +1,37 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
+    ArrowRight,
+    BadgeCheck,
+    Crown,
+    Languages,
     LogOut,
+    Package,
     Palette,
     Send,
     Settings,
     Shield,
-    Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
 import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
 import type { DiaryEntry, NutritionTargets } from '@/components/member/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useInitials } from '@/hooks/use-initials';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { bmiCategory, calculateBmi } from '@/lib/body-metrics';
+import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as appearanceEdit } from '@/routes/appearance';
-import { wizard } from '@/routes/plan';
+import { update as localeUpdate } from '@/routes/locale';
 import {
     disconnect as telegramDisconnect,
     link as telegramLink,
@@ -69,11 +81,20 @@ export default function MemberProfile({
     body,
     activity,
     pace,
-    profileCompleted,
     targets,
     planName,
     weightLogs,
+    isPro,
+    proUrl,
+    proCard,
+    ordersUrl,
+    streak,
+    activityWeek,
 }: {
+    isPro: boolean;
+    proUrl: string;
+    ordersUrl: string;
+    proCard: { title: string; body: string; button: string | null };
     account: {
         name: string | null;
         username: string | null;
@@ -90,12 +111,14 @@ export default function MemberProfile({
     body: Record<string, unknown> | null;
     activity: Record<string, unknown> | null;
     pace: Record<string, unknown> | null;
-    profileCompleted: boolean;
     targets: NutritionTargets | null;
     planName: string | null;
     weightLogs: { id: number; logged_on: string; weight_kg: number }[];
+    streak: number;
+    activityWeek: { date: string; label: string; active: boolean }[];
 }) {
     const getInitials = useInitials();
+    const { t, locale, languages } = useTranslation();
     const [diaryByDate] = useLocalStorage<Record<string, DiaryEntry[]>>(
         'member:diary',
         {},
@@ -212,30 +235,83 @@ export default function MemberProfile({
         <MobileShell>
             <Head title="Profile" />
 
-            <div className="flex items-center gap-4">
-                <Avatar className="size-14">
-                    <AvatarFallback className="bg-lime-300/60 text-lg font-semibold text-lime-950">
+            <div className="flex items-center gap-4 pt-2">
+                <Avatar className="size-16 border-2 border-[#2E2E2E] shadow-md">
+                    <AvatarFallback className="bg-[#1F1F1F] text-xl font-bold text-[#AFFA01]">
                         {getInitials(account.name ?? '?')}
                     </AvatarFallback>
                 </Avatar>
-                <div className="min-w-0">
-                    <h1 className="truncate text-xl font-semibold tracking-tight">
+                <div className="min-w-0 flex-1">
+                    <h1 className="truncate text-xl font-bold tracking-tight text-[#F5F5F5]">
                         {account.name ?? 'Member'}
                     </h1>
-                    <p className="truncate text-sm text-muted-foreground">
+                    <p className="truncate text-xs font-medium text-[#8E8E93]">
                         {account.email ??
                             account.phone ??
                             `@${account.username}`}
                     </p>
-                    {account.member_since !== null && (
-                        <p className="text-xs text-muted-foreground">
-                            Member since {account.member_since}
-                        </p>
-                    )}
+                    <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-[#AFFA01]">
+                        <span>🔥 {streak} days streak</span>
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                        {activityWeek.map((day) => (
+                            <div
+                                key={day.date}
+                                className="flex flex-col items-center gap-0.5"
+                            >
+                                <span
+                                    className={cn(
+                                        'flex size-4 items-center justify-center rounded-full',
+                                        day.active
+                                            ? 'bg-[#AFFA01]'
+                                            : 'bg-[#2E2E2E]',
+                                    )}
+                                >
+                                    {day.active && (
+                                        <span className="size-1 rounded-full bg-black" />
+                                    )}
+                                </span>
+                                <span className="text-[9px] font-medium text-[#8E8E93]">
+                                    {day.label[0]}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
             <div className="mt-6 space-y-4">
+                <Card className="border-[#AFFA01]/30 bg-gradient-to-b from-[#1F1F1F] to-[#141414]">
+                    <CardContent className="flex items-center gap-3 pt-4">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#AFFA01] text-black">
+                            {isPro ? (
+                                <BadgeCheck className="size-5" />
+                            ) : (
+                                <Crown className="size-5" />
+                            )}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-[#F5F5F5]">
+                                {proCard.title}
+                            </p>
+                            <p className="text-xs text-[#8E8E93]">
+                                {proCard.body}
+                            </p>
+                        </div>
+                    </CardContent>
+                    {!isPro && proCard.button !== null && (
+                        <div className="px-4 pb-4">
+                            <Link
+                                href={proUrl}
+                                className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] py-2.5 text-sm font-extrabold text-black shadow-md transition-transform active:scale-[0.98]"
+                            >
+                                {proCard.button}
+                                <ArrowRight className="size-4" />
+                            </Link>
+                        </div>
+                    )}
+                </Card>
+
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-base">Your stats</CardTitle>
@@ -243,11 +319,7 @@ export default function MemberProfile({
                     <CardContent>
                         {stats.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                No stats yet —{' '}
-                                <Link href={wizard()} className="underline">
-                                    take the quiz
-                                </Link>{' '}
-                                to fill them in.
+                                No stats yet.
                             </p>
                         ) : (
                             <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -338,9 +410,6 @@ export default function MemberProfile({
                         <CardTitle className="text-base">
                             Weekly report
                         </CardTitle>
-                        {!profileCompleted && (
-                            <Badge variant="secondary">Quiz incomplete</Badge>
-                        )}
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-7 items-end gap-1.5">
@@ -457,19 +526,49 @@ export default function MemberProfile({
                             Security
                         </Link>
                         <Link
+                            href={ordersUrl}
+                            className="flex items-center gap-3 px-6 py-3 text-sm hover:bg-accent"
+                        >
+                            <Package className="size-4 text-muted-foreground" />
+                            My orders
+                        </Link>
+                        <Link
                             href={appearanceEdit()}
                             className="flex items-center gap-3 px-6 py-3 text-sm hover:bg-accent"
                         >
                             <Palette className="size-4 text-muted-foreground" />
                             Appearance
                         </Link>
-                        <Link
-                            href={wizard()}
-                            className="flex items-center gap-3 px-6 py-3 text-sm hover:bg-accent"
-                        >
-                            <Sparkles className="size-4 text-lime-600" />
-                            Retake quiz
-                        </Link>
+                        <div className="flex items-center gap-3 px-6 py-3">
+                            <Languages className="size-4 text-muted-foreground" />
+                            <span className="flex-1 text-sm">
+                                {t('settings.language')}
+                            </span>
+                            <Select
+                                value={locale}
+                                onValueChange={(value) =>
+                                    router.patch(
+                                        localeUpdate().url,
+                                        { locale: value },
+                                        { preserveScroll: true },
+                                    )
+                                }
+                            >
+                                <SelectTrigger className="h-8 w-auto min-w-28 gap-1.5 text-sm">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {languages.map((language) => (
+                                        <SelectItem
+                                            key={language.code}
+                                            value={language.code}
+                                        >
+                                            {language.native_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         {telegram.available && (
                             <button
                                 type="button"

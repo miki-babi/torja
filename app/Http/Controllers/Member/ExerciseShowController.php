@@ -39,7 +39,21 @@ class ExerciseShowController extends Controller
             ->whereHas('sets', fn ($q) => $q->where('exercise_id', $model->slug))
             ->with('sets')
             ->orderByDesc('date')
-            ->limit(20)
+            ->limit(30)
+            ->get();
+
+        $similarMuscle = Exercise::query()
+            ->where('target', $model->target)
+            ->whereKeyNot($model->id)
+            ->inRandomOrder()
+            ->limit(6)
+            ->get();
+
+        $similarEquipment = Exercise::query()
+            ->where('equipment', $model->equipment)
+            ->whereKeyNot($model->id)
+            ->inRandomOrder()
+            ->limit(6)
             ->get();
 
         app(Tracker::class)->record('exercise.viewed', subject: $model, properties: [
@@ -53,6 +67,8 @@ class ExerciseShowController extends Controller
             'exercise' => $model->toDetail(),
             'playlists' => $playlists->map->toFrontend()->all(),
             'sessions' => $sessions->map->toFrontend()->all(),
+            'similarMuscle' => $similarMuscle->map->toSummary()->all(),
+            'similarEquipment' => $similarEquipment->map->toSummary()->all(),
         ]);
     }
 }

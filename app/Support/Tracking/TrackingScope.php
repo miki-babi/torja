@@ -32,7 +32,7 @@ class TrackingScope
 
         return match (true) {
             $routeName === 'home',
-            $routeName === 'calculator',
+            str_starts_with($routeName, 'calculator'),
             str_starts_with($routeName, 'plan.'),
             str_starts_with($routeName, 'payment.') => 'marketing',
 

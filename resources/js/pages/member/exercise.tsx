@@ -1,26 +1,32 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Infinity as InfinityIcon,
+    NotebookPen,
     Search,
     SignalHigh,
     SignalLow,
     SignalMedium,
-    X,
     type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { AddToPlaylist } from '@/components/member/add-to-playlist';
+import { BmiCard } from '@/components/member/bmi-card';
+import { BodyFatCard } from '@/components/member/body-fat-card';
+import {
+    BodyPartPicker,
+    useBodyPartLabel,
+} from '@/components/member/body-part-picker';
 import { EquipmentPicker } from '@/components/member/equipment-picker';
 import {
-    bodyPartIcon,
     type ExerciseSummaries,
     type ExerciseSummary,
 } from '@/components/member/exercise-data';
 import { searchExercises } from '@/components/member/exercise-search';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { PlaylistManager } from '@/components/member/playlist-manager';
-import { SessionStart } from '@/components/member/session-start';
+import { QuickLogSet } from '@/components/member/quick-log-set';
 import { SessionSummary } from '@/components/member/session-summary';
+import { TodaysLog } from '@/components/member/todays-log';
 import type {
     ExercisePlaylist,
     WorkoutSession,
@@ -33,6 +39,7 @@ import { WorkoutSessionCard } from '@/components/member/workout-session';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { show as exerciseShow } from '@/routes/member/exercises';
 
@@ -67,10 +74,12 @@ export default function MemberExercise({
     weightLogs: WeightLogEntry[];
 }) {
     const { url } = usePage();
+    const { t, locale } = useTranslation();
+    const partLabel = useBodyPartLabel();
     const [tab, setTab] = useState<Tab>(
         url.includes('tab=track') ? 'track' : 'explore',
     );
-    const [bodyPart, setBodyPart] = useState<string[]>(['chest']);
+    const [bodyPart, setBodyPart] = useState<string[]>([]);
     const [equipmentSel, setEquipmentSel] = useState<string[]>([]);
     const [levelSel, setLevelSel] = useState<string>('');
     const [query, setQuery] = useState('');
@@ -84,13 +93,14 @@ export default function MemberExercise({
         useState<ExerciseSummaries>(initialSummaries);
     const [activeSessionId, setActiveSessionId] = useState<number | null>(
         () => {
-            const param = new URLSearchParams(window.location.search).get(
-                'session',
-            );
+            const param = new URLSearchParams(
+                url.split('?')[1] ?? '',
+            ).get('session');
             return param === null ? null : Number(param);
         },
     );
     const [createOpen, setCreateOpen] = useState(false);
+    const [logTarget, setLogTarget] = useState<ExerciseSummary | null>(null);
     const [weightLogs, setWeightLogs] =
         useState<WeightLogEntry[]>(initialWeightLogs);
     const [fallback, setFallback] = useState<ExerciseSummary[]>([]);
@@ -168,60 +178,110 @@ export default function MemberExercise({
         };
     }, [results, loading, query, bodyPart, levelSel]);
 
+    /**
+     * Translated exercise data value (equipment/body part/level/target),
+     * falling back to the raw catalog value when no line exists.
+     */
+    function tv(
+        kind: 'equipment' | 'body_part' | 'level' | 'target',
+        value: string,
+    ): string {
+        const key = `exercise_values.${kind}.${value}`;
+        const text = t(key);
+        return text === key ? value : text;
+    }
+
+    /**
+     * "Barbell · Pectorals" — recomposed from translated parts in Amharic,
+     * server-provided English detail otherwise.
+     */
+    function exerciseDetailText(ex: ExerciseSummary): string {
+        return locale === 'am'
+            ? `${tv('equipment', ex.equipment)} · ${tv('target', ex.target)}`
+            : ex.detail;
+    }
+
     const bodyPartLabel =
         bodyPart.length === 0
             ? 'matching'
             : bodyParts
                   .filter((p) => bodyPart.includes(p.id))
-                  .map((p) => p.label)
+                  .map((p) => partLabel(p.id))
                   .join(' + ');
 
-    function exerciseRow(ex: ExerciseSummary) {
+    function exerciseCard(ex: ExerciseSummary) {
+        const LevelIcon = LEVEL_ICONS[ex.level] ?? SignalLow;
         return (
             <div
                 key={ex.slug}
-                className="px-4 py-3 transition-colors hover:bg-accent/50"
+                className="flex flex-col overflow-hidden rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] transition-all hover:border-[#AFFA01]/40"
             >
-                <div className="flex items-center gap-3">
+                <Link
+                    href={exerciseShow(ex.slug).url}
+                    prefetch
+                    tabIndex={-1}
+                    className="block"
+                >
+                    <img
+                        src={ex.image_url}
+                        alt=""
+                        loading="lazy"
+                        className="aspect-square w-full object-cover"
+                    />
+                </Link>
+                <div className="flex flex-1 flex-col p-3">
                     <Link
                         href={exerciseShow(ex.slug).url}
                         prefetch
-                        tabIndex={-1}
-                        className="shrink-0"
+                        className="min-w-0"
                     >
-                        <img
-                            src={ex.image_url}
-                            alt=""
-                            loading="lazy"
-                            className="size-10 rounded-lg object-cover"
-                        />
-                    </Link>
-                    <Link
-                        href={exerciseShow(ex.slug).url}
-                        prefetch
-                        className="min-w-0 flex-1"
-                    >
-                        <p className="text-sm font-medium">{ex.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                            {ex.detail}
+                        <p className="line-clamp-2 text-sm font-bold text-[#F5F5F5] transition-colors hover:text-[#AFFA01]">
+                            {ex.name}
+                        </p>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-[#8E8E93]">
+                            {exerciseDetailText(ex)}
                         </p>
                     </Link>
-                    <AddToPlaylist
-                        playlists={playlists}
-                        exerciseId={ex.slug}
-                        exerciseName={ex.name}
-                        onChange={(updated) => {
-                            setExerciseSummaries((map) => ({
-                                ...map,
-                                [ex.slug]: {
-                                    name: ex.name,
-                                    detail: ex.detail,
-                                },
-                            }));
-                            updatePlaylist(updated);
-                        }}
-                        onCreateNew={() => setCreateOpen(true)}
-                    />
+                    <span className="mt-2 self-start rounded-lg bg-[#AFFA01] px-4 py-1 text-xs font-semibold text-[#0B1F0B] capitalize">
+                        {tv('body_part', ex.body_part)}
+                    </span>
+                    <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                        <div className="flex items-center gap-2.5 text-[11px] text-[#8E8E93]">
+                            {ex.level !== '' && (
+                                <span className="flex items-center gap-1 capitalize">
+                                    <LevelIcon className="size-3.5" />
+                                    {tv('level', ex.level)}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setLogTarget(ex)}
+                                aria-label={`Log a set of ${ex.name}`}
+                                className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-[#2E2E2E] text-[#8E8E93] transition-all hover:border-[#AFFA01]/40 hover:text-[#AFFA01]"
+                            >
+                                <NotebookPen className="size-4" />
+                            </button>
+                            <AddToPlaylist
+                                playlists={playlists}
+                                exerciseId={ex.slug}
+                                exerciseName={ex.name}
+                                onChange={(updated) => {
+                                    setExerciseSummaries((map) => ({
+                                        ...map,
+                                        [ex.slug]: {
+                                            name: ex.name,
+                                            detail: ex.detail,
+                                            equipment: ex.equipment,
+                                        },
+                                    }));
+                                    updatePlaylist(updated);
+                                }}
+                                onCreateNew={() => setCreateOpen(true)}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -263,21 +323,21 @@ export default function MemberExercise({
 
     return (
         <MobileShell>
-            <Head title="Exercise" />
-            <div className="grid grid-cols-2 rounded-full bg-muted p-1">
-                {(['explore', 'track'] as const).map((t) => (
+            <Head title={t('member.exercise.title')} />
+            <div className="grid grid-cols-2 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] p-1.5">
+                {(['explore', 'track'] as const).map((tabName) => (
                     <button
-                        key={t}
+                        key={tabName}
                         type="button"
-                        onClick={() => setTab(t)}
+                        onClick={() => setTab(tabName)}
                         className={cn(
-                            'rounded-full py-1.5 text-sm font-medium capitalize',
-                            tab === t
-                                ? 'bg-lime-400 text-lime-950'
-                                : 'text-muted-foreground',
+                            'rounded-xl py-2 text-xs font-bold tracking-wider uppercase transition-all',
+                            tab === tabName
+                                ? 'bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] text-black shadow-md'
+                                : 'text-[#8E8E93] hover:text-[#F5F5F5]',
                         )}
                     >
-                        {t}
+                        {t(`member.exercise.${tabName}`)}
                     </button>
                 ))}
             </div>
@@ -293,89 +353,31 @@ export default function MemberExercise({
                     />
 
                     <div className="relative">
-                        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-[#8E8E93]" />
                         <Input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search 1,324 exercises"
-                            className="pl-9"
+                            placeholder={t(
+                                'member.exercise.search_placeholder',
+                            )}
+                            className="pl-10"
+                        />
+                    </div>
+
+                    <div>
+                        <h2 className="mb-2.5 text-xs font-bold tracking-wider text-[#AFFA01] uppercase">
+                            {t('member.exercise.choose_body_part')}
+                        </h2>
+                        <BodyPartPicker
+                            bodyParts={bodyParts}
+                            value={bodyPart}
+                            onChange={setBodyPart}
                         />
                     </div>
 
                     <div>
                         <h2 className="mb-2 text-sm font-medium">
-                            Choose target body part
-                        </h2>
-                        <div className="grid grid-cols-5 gap-2">
-                            {bodyParts.map(({ id, label }) => {
-                                const Icon = bodyPartIcon(id);
-                                const active =
-                                    id === ''
-                                        ? bodyPart.length === 0
-                                        : bodyPart.includes(id);
-                                return (
-                                    <button
-                                        key={id}
-                                        type="button"
-                                        onClick={() =>
-                                            setBodyPart((list) =>
-                                                id === ''
-                                                    ? []
-                                                    : list.includes(id)
-                                                      ? list.filter(
-                                                            (p) => p !== id,
-                                                        )
-                                                      : [...list, id],
-                                            )
-                                        }
-                                        title={label}
-                                        className={cn(
-                                            'flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border px-1',
-                                            active
-                                                ? 'border-lime-500 bg-lime-300/40 text-lime-900 dark:text-lime-100'
-                                                : 'border-input text-muted-foreground',
-                                        )}
-                                    >
-                                        <Icon className="size-5 shrink-0" />
-                                        <span className="text-[10px] leading-none">
-                                            {label}
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        {bodyPart.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                                {bodyPart.map((id) => {
-                                    const chipLabel =
-                                        bodyParts.find((p) => p.id === id)
-                                            ?.label ?? id;
-                                    return (
-                                        <button
-                                            key={id}
-                                            type="button"
-                                            onClick={() =>
-                                                setBodyPart((list) =>
-                                                    list.filter(
-                                                        (p) => p !== id,
-                                                    ),
-                                                )
-                                            }
-                                            aria-label={`Remove ${chipLabel} filter`}
-                                            className="flex items-center gap-1 rounded-full border border-lime-500 bg-lime-300/40 px-2.5 py-1 text-xs text-lime-900 capitalize dark:text-lime-100"
-                                        >
-                                            {chipLabel}
-                                            <X className="size-3" />
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    <div>
-                        <h2 className="mb-2 text-sm font-medium">
-                            Choose equipment
+                            {t('member.exercise.choose_equipment')}
                         </h2>
                         <EquipmentPicker
                             equipment={equipment}
@@ -386,7 +388,7 @@ export default function MemberExercise({
 
                     <div>
                         <h2 className="mb-2 text-sm font-medium">
-                            Choose level
+                            {t('member.exercise.choose_level')}
                         </h2>
                         <div className="grid grid-cols-4 gap-2">
                             {['', ...levels].map((level) => {
@@ -403,13 +405,15 @@ export default function MemberExercise({
                                         className={cn(
                                             'flex h-14 flex-col items-center justify-center gap-1 rounded-xl border px-1',
                                             levelSel === level
-                                                ? 'border-lime-500 bg-lime-300/40 text-lime-900 dark:text-lime-100'
+                                                ? 'border-lime-500 bg-lime-300/40 text-[#F5F5F5]'
                                                 : 'border-input text-muted-foreground',
                                         )}
                                     >
                                         <Icon className="size-5 shrink-0" />
                                         <span className="text-[10px] leading-none capitalize">
-                                            {level === '' ? 'All' : level}
+                                            {level === ''
+                                                ? t('member.exercise.level_all')
+                                                : tv('level', level)}
                                         </span>
                                     </button>
                                 );
@@ -417,27 +421,34 @@ export default function MemberExercise({
                         </div>
                     </div>
 
-                    <Card>
-                        <CardContent className="divide-y p-0">
-                            {results.length === 0 && !loading && (
-                                <>
-                                    <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                                        No exercises match — widen the filters.
-                                    </p>
-                                    {fallback.length > 0 && (
-                                        <>
-                                            <p className="px-4 py-2 text-xs font-medium text-muted-foreground">
-                                                Try these {bodyPartLabel}{' '}
-                                                exercises instead
-                                            </p>
-                                            {fallback.map(exerciseRow)}
-                                        </>
-                                    )}
-                                </>
-                            )}
-                            {results.map(exerciseRow)}
-                        </CardContent>
-                    </Card>
+                    {results.length === 0 && !loading && (
+                        <Card>
+                            <CardContent className="p-0">
+                                <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                                    {t('member.exercise.no_results')}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {results.length === 0 &&
+                        !loading &&
+                        fallback.length > 0 && (
+                            <div>
+                                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                                    {t('member.exercise.fallback_title', {
+                                        part: bodyPartLabel,
+                                    })}
+                                </p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {fallback.map(exerciseCard)}
+                                </div>
+                            </div>
+                        )}
+
+                    <div className="grid grid-cols-2 gap-3">
+                        {results.map(exerciseCard)}
+                    </div>
 
                     {results.length < total && (
                         <Button
@@ -447,13 +458,38 @@ export default function MemberExercise({
                             onClick={loadMore}
                         >
                             {loading
-                                ? 'Loading…'
-                                : `Load more (${total - results.length} left)`}
+                                ? t('common.loading')
+                                : `${t('member.exercise.load_more')} (${total - results.length})`}
                         </Button>
                     )}
                 </div>
             ) : (
                 <div className="mt-6 space-y-4">
+                    <SessionSummary
+                        sessions={sessions}
+                        exerciseSummaries={exerciseSummaries}
+                    />
+
+                    {activeSession === null && (
+                        <TodaysLog
+                            sessions={todaysSessions}
+                            playlists={playlists}
+                            exerciseSummaries={exerciseSummaries}
+                            onOpen={(s) => setActiveSessionId(s.id)}
+                        />
+                    )}
+
+                    {activeSession !== null && (
+                        <WorkoutSessionCard
+                            session={activeSession}
+                            playlist={activePlaylist}
+                            sessions={sessions}
+                            exerciseSummaries={exerciseSummaries}
+                            onSessionChange={upsertSession}
+                            onBack={() => setActiveSessionId(null)}
+                        />
+                    )}
+
                     <WeightCard
                         logs={weightLogs}
                         onLogged={(log) =>
@@ -466,29 +502,44 @@ export default function MemberExercise({
                         }
                     />
 
-                    <SessionSummary
-                        sessions={sessions}
-                        exerciseSummaries={exerciseSummaries}
-                    />
+                    <BmiCard />
 
-                    {activeSession === null ? (
-                        <SessionStart
-                            playlists={playlists}
-                            todaysSessions={todaysSessions}
-                            onStart={upsertSession}
-                        />
-                    ) : (
-                        <WorkoutSessionCard
-                            session={activeSession}
-                            playlist={activePlaylist}
-                            sessions={sessions}
-                            exerciseSummaries={exerciseSummaries}
-                            onSessionChange={upsertSession}
-                            onBack={() => setActiveSessionId(null)}
-                        />
-                    )}
+                    <BodyFatCard />
                 </div>
             )}
+
+            <QuickLogSet
+                slug={logTarget?.slug ?? ''}
+                name={logTarget?.name ?? ''}
+                equipment={logTarget?.equipment ?? ''}
+                sessions={sessions}
+                open={logTarget !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setLogTarget(null);
+                    }
+                }}
+                onLogged={(session) => {
+                    setSessions((list) =>
+                        list.some((s) => s.id === session.id)
+                            ? list.map((s) =>
+                                  s.id === session.id ? session : s,
+                              )
+                            : [session, ...list],
+                    );
+                    if (logTarget !== null) {
+                        setExerciseSummaries((map) => ({
+                            ...map,
+                            [logTarget.slug]: {
+                                name: logTarget.name,
+                                detail: logTarget.detail,
+                                equipment: logTarget.equipment,
+                                image_url: logTarget.image_url,
+                            },
+                        }));
+                    }
+                }}
+            />
         </MobileShell>
     );
 }

@@ -159,7 +159,7 @@ class IntentScorer
                     $scores['build_muscle']++;
                 }
 
-                if (str_starts_with($route, 'member.meal') || $route === 'calculator' || $e->name === 'meal.viewed') {
+                if (str_starts_with($route, 'member.meal') || str_starts_with($route, 'calculator') || $e->name === 'meal.viewed') {
                     $scores['lose_fat']++;
                 }
             });

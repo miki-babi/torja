@@ -16,12 +16,13 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-const FEATURED: { value: string; label: string; Icon: LucideIcon }[] = [
-    { value: 'body weight', label: 'Body weight', Icon: PersonStanding },
-    { value: 'barbell', label: 'Barbell', Icon: Weight },
-    { value: 'dumbbell', label: 'Dumbbell', Icon: Dumbbell },
+const FEATURED: { value: string; Icon: LucideIcon }[] = [
+    { value: 'body weight', Icon: PersonStanding },
+    { value: 'barbell', Icon: Weight },
+    { value: 'dumbbell', Icon: Dumbbell },
 ];
 
 /**
@@ -40,12 +41,24 @@ export function EquipmentPicker({
 }) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
+    const { t } = useTranslation();
+
+    /**
+     * Translated equipment label (exercise_values.equipment.*), falling back
+     * to the raw catalog value when no line exists.
+     */
+    function labelFor(equipmentValue: string): string {
+        const key = `exercise_values.equipment.${equipmentValue}`;
+        const text = t(key);
+        return text === key ? equipmentValue : text;
+    }
 
     const featuredValues = FEATURED.map((f) => f.value);
+    const q = query.trim().toLowerCase();
     const others = equipment.filter(
         (e) =>
             !featuredValues.includes(e) &&
-            e.includes(query.trim().toLowerCase()),
+            (e.includes(q) || labelFor(e).toLowerCase().includes(q)),
     );
     const otherSelected = value.some((v) => !featuredValues.includes(v));
 
@@ -60,7 +73,7 @@ export function EquipmentPicker({
     return (
         <>
             <div className="grid grid-cols-4 gap-2">
-                {FEATURED.map(({ value: equipmentValue, label, Icon }) => (
+                {FEATURED.map(({ value: equipmentValue, Icon }) => (
                     <button
                         key={equipmentValue}
                         type="button"
@@ -68,13 +81,13 @@ export function EquipmentPicker({
                         className={cn(
                             'flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border px-1',
                             value.includes(equipmentValue)
-                                ? 'border-lime-500 bg-lime-300/40 text-lime-900 dark:text-lime-100'
+                                ? 'border-lime-500 bg-lime-300/40 text-[#F5F5F5]'
                                 : 'border-input text-muted-foreground',
                         )}
                     >
                         <Icon className="size-5 shrink-0" />
                         <span className="text-[10px] leading-none">
-                            {label}
+                            {labelFor(equipmentValue)}
                         </span>
                     </button>
                 ))}
@@ -84,12 +97,14 @@ export function EquipmentPicker({
                     className={cn(
                         'flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border px-1',
                         otherSelected
-                            ? 'border-lime-500 bg-lime-300/40 text-lime-900 dark:text-lime-100'
+                            ? 'border-lime-500 bg-lime-300/40 text-[#F5F5F5]'
                             : 'border-input text-muted-foreground',
                     )}
                 >
                     <Search className="size-5 shrink-0" />
-                    <span className="text-[10px] leading-none">Other</span>
+                    <span className="text-[10px] leading-none">
+                        {t('member.exercise.other_equipment')}
+                    </span>
                 </button>
             </div>
 
@@ -100,10 +115,10 @@ export function EquipmentPicker({
                             key={equipmentValue}
                             type="button"
                             onClick={() => toggle(equipmentValue)}
-                            aria-label={`Remove ${equipmentValue} filter`}
-                            className="flex items-center gap-1 rounded-full border border-lime-500 bg-lime-300/40 px-2.5 py-1 text-xs text-lime-900 capitalize dark:text-lime-100"
+                            aria-label={`Remove ${labelFor(equipmentValue)} filter`}
+                            className="flex items-center gap-1 rounded-full border border-lime-500 bg-lime-300/40 px-2.5 py-1 text-xs text-[#F5F5F5] capitalize"
                         >
-                            {equipmentValue}
+                            {labelFor(equipmentValue)}
                             <X className="size-3" />
                         </button>
                     ))}
@@ -121,17 +136,18 @@ export function EquipmentPicker({
             >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Other equipment</DialogTitle>
+                        <DialogTitle>
+                            {t('member.exercise.other_equipment_title')}
+                        </DialogTitle>
                         <DialogDescription>
-                            Search the remaining equipment types. Select as many
-                            as you like.
+                            {t('member.exercise.other_equipment_desc')}
                         </DialogDescription>
                     </DialogHeader>
                     <Input
                         autoFocus
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Search equipment…"
+                        placeholder={t('member.exercise.search_equipment')}
                     />
                     <div className="max-h-64 divide-y overflow-y-auto rounded-md border">
                         {others.map((e) => (
@@ -141,7 +157,7 @@ export function EquipmentPicker({
                                 onClick={() => toggle(e)}
                                 className="flex w-full items-center justify-between px-3 py-2 text-left text-sm capitalize hover:bg-accent"
                             >
-                                {e}
+                                {labelFor(e)}
                                 {value.includes(e) && (
                                     <Check className="size-4" />
                                 )}
@@ -149,7 +165,7 @@ export function EquipmentPicker({
                         ))}
                         {others.length === 0 && (
                             <p className="px-3 py-4 text-center text-sm text-muted-foreground">
-                                No equipment matches.
+                                {t('member.exercise.no_equipment_matches')}
                             </p>
                         )}
                     </div>

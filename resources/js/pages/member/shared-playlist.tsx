@@ -52,21 +52,22 @@ export default function MemberSharedPlaylist({
         <MobileShell>
             <Head title={playlist.name} />
 
-            <div className="mt-4 flex items-start gap-3">
-                <div className="min-w-0 flex-1">
-                    <h1 className="text-xl font-semibold tracking-tight">
-                        {playlist.name}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Shared by {playlist.owner} · {playlist.exercises.length}{' '}
-                        exercise
-                        {playlist.exercises.length === 1 ? '' : 's'}
-                    </p>
-                </div>
+            <div className="flex items-center justify-end">
                 <span className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground">
                     <Share2 className="size-3.5" />
                     Shared
                 </span>
+            </div>
+
+            <div className="mt-4">
+                <h1 className="text-xl font-semibold tracking-tight">
+                    {playlist.name}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                    Shared by {playlist.owner} · {playlist.exercises.length}{' '}
+                    exercise
+                    {playlist.exercises.length === 1 ? '' : 's'}
+                </p>
             </div>
 
             <Card className="mt-4">

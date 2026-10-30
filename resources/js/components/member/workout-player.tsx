@@ -1,16 +1,27 @@
-import { Check, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import {
+    Check,
+    ChevronDown,
+    ChevronUp,
+    Download,
+    ListCollapse,
+    Maximize2,
+    PlayCircle,
+    Share2,
+    Trash2,
+    X,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import type { ExerciseSummary } from '@/components/member/exercise-data';
+import {
+    tracksWeight,
+    type ExerciseSummary,
+} from '@/components/member/exercise-data';
 import { memberApi } from '@/components/member/member-api';
-import type {
-    WorkoutSession,
-    WorkoutSetEntry,
-} from '@/components/member/types';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import type { WorkoutSession } from '@/components/member/types';
+import { WorkoutShareCard } from '@/components/member/workout-share-card';
+import { Spinner } from '@/components/ui/spinner';
+import { downloadNodeAsImage, shareNodeAsImage } from '@/lib/share-image';
 import { cn } from '@/lib/utils';
 import { destroy, upsert } from '@/routes/member/sessions/sets';
 
@@ -21,6 +32,7 @@ export type PlayerExercise = ExerciseSummary & {
     gif_url: string;
     sets: number | null;
     reps: number | null;
+    instructions?: string[] | null;
 };
 
 export type PlayerWorkout = {
@@ -34,95 +46,27 @@ type Translate = (
     params?: Record<string, string | number>,
 ) => string;
 
-function parseOptional(value: string): number | null {
-    if (value.trim() === '') {
-        return null;
-    }
-    const parsed = Number.parseFloat(value);
-    return Number.isNaN(parsed) ? null : parsed;
-}
-
-function PlayerSetRow({
-    position,
-    logged,
-    targetReps,
-    onSave,
-    onRemove,
+function GlassyCircleButton({
+    icon: Icon,
+    onClick,
+    ariaLabel,
+    disabled = false,
 }: {
-    position: number;
-    logged: WorkoutSetEntry | null;
-    targetReps: number;
-    onSave: (weight: number | null, reps: number | null) => void;
-    onRemove: () => void;
+    icon: React.ComponentType<{ className?: string }>;
+    onClick: () => void;
+    ariaLabel?: string;
+    disabled?: boolean;
 }) {
-    const [weight, setWeight] = useState(
-        logged?.weight_kg == null ? '' : String(logged.weight_kg),
-    );
-    const [reps, setReps] = useState(
-        logged?.reps == null ? '' : String(logged.reps),
-    );
-
-    function commit() {
-        const nextWeight = parseOptional(weight);
-        const nextReps = parseOptional(reps);
-        if (nextWeight === null && nextReps === null) {
-            return;
-        }
-        if (
-            nextWeight === (logged?.weight_kg ?? null) &&
-            nextReps === (logged?.reps ?? null)
-        ) {
-            return;
-        }
-        onSave(nextWeight, nextReps);
-    }
-
     return (
-        <div className="flex items-center gap-2">
-            <span
-                className={cn(
-                    'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium',
-                    logged !== null
-                        ? 'bg-lime-400 text-lime-950'
-                        : 'bg-muted text-muted-foreground',
-                )}
-            >
-                {logged !== null ? <Check className="size-3.5" /> : position}
-            </span>
-            <Input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="any"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                onBlur={commit}
-                placeholder="kg"
-                aria-label={`Set ${position} weight in kg`}
-                className="h-9 flex-1 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-            <span className="text-xs text-muted-foreground">×</span>
-            <Input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                value={reps}
-                onChange={(e) => setReps(e.target.value)}
-                onBlur={commit}
-                placeholder={String(targetReps)}
-                aria-label={`Set ${position} reps`}
-                className="h-9 flex-1 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-            <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 shrink-0 text-muted-foreground"
-                onClick={onRemove}
-                aria-label={`Remove set ${position}`}
-            >
-                <X className="size-4" />
-            </Button>
-        </div>
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={ariaLabel}
+            className="flex size-9 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#1F1F1F]/90 text-[#F5F5F5] shadow-md backdrop-blur-md transition-all hover:border-[#AFFA01]/40 hover:text-[#AFFA01] active:scale-90 disabled:pointer-events-none disabled:opacity-40"
+        >
+            <Icon className="size-4" />
+        </button>
     );
 }
 
@@ -139,22 +83,74 @@ export function WorkoutPlayer({
     onExit: () => void;
     t: Translate;
 }) {
-    const [index, setIndex] = useState(0);
-    const [extraSets, setExtraSets] = useState<Record<string, number>>({});
-    const [hiddenSets, setHiddenSets] = useState<Record<string, number[]>>({});
-
     const total = workout.exercises.length;
-    const current = workout.exercises[index] ?? null;
+    const [exerciseIndex, setExerciseIndex] = useState(0);
+    const [currentSetIndex, setCurrentSetIndex] = useState(0);
+    const [weight, setWeight] = useState<number>(20);
+    const [reps, setReps] = useState<number>(10);
+    const [setJustCompleted, setSetJustCompleted] = useState(false);
+    const [completed, setCompleted] = useState(false);
+    const [durationMinutes, setDurationMinutes] = useState(0);
+    const [sharing, setSharing] = useState(false);
+    const startedAt = useRef(Date.now());
+    const cardRef = useRef<HTMLDivElement>(null);
+    const { name: appName } = usePage<{ name: string }>().props;
+    const [showHowTo, setShowHowTo] = useState(false);
+    const [showFullscreen, setShowFullscreen] = useState(false);
+    const [showSetsDrawer, setShowSetsDrawer] = useState(false);
+    const [editingMetric, setEditingMetric] = useState<
+        'weight' | 'reps' | null
+    >(null);
+    const [customValue, setCustomValue] = useState('');
 
-    function loggedFor(slug: string): WorkoutSetEntry[] {
-        return session.sets.filter((set) => set.exercise_id === slug);
+    const current = workout.exercises[exerciseIndex] ?? null;
+
+    // Logged sets for current exercise
+    const loggedSets = current
+        ? session.sets
+              .filter((s) => s.exercise_id === current.slug)
+              .sort((a, b) => a.set_index - b.set_index)
+        : [];
+
+    const targetSets = current?.sets ?? DEFAULT_SETS;
+    const targetReps = current?.reps ?? DEFAULT_REPS;
+
+    // Synchronize default weight and reps when exercise changes or when loggedSets updates
+    useEffect(() => {
+        if (!current) return;
+
+        // If current set has already been logged, load its values
+        const thisSet = loggedSets.find((s) => s.set_index === currentSetIndex);
+        if (thisSet) {
+            if (thisSet.weight_kg !== null) setWeight(thisSet.weight_kg);
+            if (thisSet.reps !== null) setReps(thisSet.reps);
+            return;
+        }
+
+        // Otherwise load from latest logged set for this exercise
+        if (loggedSets.length > 0) {
+            const last = loggedSets[loggedSets.length - 1];
+            if (last.weight_kg !== null) setWeight(last.weight_kg);
+            if (last.reps !== null) setReps(last.reps);
+        } else {
+            setWeight(20);
+            setReps(targetReps);
+        }
+    }, [exerciseIndex, currentSetIndex]);
+
+    if (!current) {
+        return null;
     }
+
+    const previousSet =
+        loggedSets.length > 0 ? loggedSets[loggedSets.length - 1] : null;
+    const unweighted = !tracksWeight(current.equipment);
 
     async function saveSet(
         slug: string,
         setIndex: number,
-        weight: number | null,
-        reps: number | null,
+        weightKg: number | null,
+        repsCount: number | null,
     ) {
         try {
             const { session: next } = await memberApi<{
@@ -162,210 +158,704 @@ export function WorkoutPlayer({
             }>(upsert({ session: session.id }).url, 'PUT', {
                 exercise_id: slug,
                 set_index: setIndex,
-                weight_kg: weight,
-                reps,
+                weight_kg: weightKg,
+                reps: repsCount,
             });
             onSessionChange(next);
+            return next;
         } catch {
             toast.error(t('shared_program.set_save_failed_toast'));
+            return null;
         }
     }
 
-    async function removeSet(slug: string, setIndex: number) {
-        const set = session.sets.find(
-            (s) => s.exercise_id === slug && s.set_index === setIndex,
-        );
-        if (set === undefined) {
-            setHiddenSets((map) => ({
-                ...map,
-                [slug]: [...(map[slug] ?? []), setIndex],
-            }));
-            return;
-        }
+    async function removeSet(setId: number) {
         try {
             const { session: next } = await memberApi<{
                 session: WorkoutSession;
-            }>(destroy({ session: session.id, set: set.id }).url, 'DELETE');
+            }>(destroy({ session: session.id, set: setId }).url, 'DELETE');
             onSessionChange(next);
+            toast.success('Set removed');
         } catch {
             toast.error(t('shared_program.set_save_failed_toast'));
         }
     }
 
-    function finish() {
-        toast.success(t('shared_program.workout_done'));
-        onExit();
+    function triggerHaptic() {
+        if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+            try {
+                navigator.vibrate(25);
+            } catch {
+                // Ignore vibration failure
+            }
+        }
     }
 
-    if (current === null) {
-        return null;
+    function finishWorkout() {
+        if (session.sets.length === 0) {
+            onExit();
+            return;
+        }
+        setDurationMinutes(
+            Math.max(1, Math.round((Date.now() - startedAt.current) / 60000)),
+        );
+        setCompleted(true);
     }
 
-    const targetSets = current.sets ?? DEFAULT_SETS;
-    const targetReps = current.reps ?? DEFAULT_REPS;
-    const logged = loggedFor(current.slug);
-    const rowCount = Math.min(
-        50,
-        Math.max(
-            targetSets,
-            logged.length === 0
-                ? 0
-                : Math.max(...logged.map((set) => set.set_index)) + 1,
-        ) + (extraSets[current.slug] ?? 0),
-    );
-    const isLast = index === total - 1;
+    const shareFileName = `${workout.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')}-workout.png`;
+
+    async function handleShare() {
+        if (!cardRef.current || sharing) {
+            return;
+        }
+        setSharing(true);
+        try {
+            await shareNodeAsImage(
+                cardRef.current,
+                shareFileName,
+                workout.title,
+            );
+        } catch (error) {
+            if ((error as DOMException).name !== 'AbortError') {
+                toast.error(t('workout_share.share_failed'));
+            }
+        } finally {
+            setSharing(false);
+        }
+    }
+
+    async function handleDownload() {
+        if (!cardRef.current || sharing) {
+            return;
+        }
+        setSharing(true);
+        try {
+            await downloadNodeAsImage(cardRef.current, shareFileName);
+        } catch {
+            toast.error(t('workout_share.share_failed'));
+        } finally {
+            setSharing(false);
+        }
+    }
+
+    async function handleCompleteSet() {
+        if (setJustCompleted) return;
+
+        triggerHaptic();
+        setSetJustCompleted(true);
+
+        // Commit current set to backend
+        await saveSet(
+            current.slug,
+            currentSetIndex,
+            unweighted ? null : weight,
+            reps,
+        );
+
+        setTimeout(() => {
+            setSetJustCompleted(false);
+
+            if (currentSetIndex + 1 < targetSets) {
+                // Next set in same exercise
+                setCurrentSetIndex((prev) => prev + 1);
+            } else if (exerciseIndex + 1 < total) {
+                // Advance to next exercise
+                setExerciseIndex((prev) => prev + 1);
+                setCurrentSetIndex(0);
+            } else {
+                // Final set of final exercise!
+                toast.success(
+                    t('shared_program.workout_done') ||
+                        'Workout completed! Great job! 🎉',
+                );
+                finishWorkout();
+            }
+        }, 450);
+    }
+
+    function handleSkipExercise() {
+        triggerHaptic();
+        if (exerciseIndex + 1 < total) {
+            setExerciseIndex((prev) => prev + 1);
+            setCurrentSetIndex(0);
+        } else {
+            toast.success(
+                t('shared_program.workout_done') || 'Workout completed!',
+            );
+            finishWorkout();
+        }
+    }
+
+    function handleOpenNumericEdit(metric: 'weight' | 'reps') {
+        setEditingMetric(metric);
+        setCustomValue(metric === 'weight' ? String(weight) : String(reps));
+    }
+
+    function handleApplyCustomValue() {
+        const parsed = Number.parseFloat(customValue);
+        if (!Number.isNaN(parsed) && parsed >= 0) {
+            if (editingMetric === 'weight') {
+                setWeight(Math.min(500, Math.round(parsed * 10) / 10));
+            } else if (editingMetric === 'reps') {
+                setReps(Math.min(150, Math.max(1, Math.round(parsed))));
+            }
+        }
+        setEditingMetric(null);
+    }
+
+    if (completed) {
+        return (
+            <div className="flex min-h-[90vh] flex-col pb-6 text-[#F5F5F5] select-none">
+                <div className="flex items-center justify-start">
+                    <button
+                        type="button"
+                        onClick={onExit}
+                        aria-label="Close"
+                        className="flex size-10 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#1F1F1F]/90 text-[#F5F5F5] backdrop-blur-md transition-all hover:border-[#AFFA01]/40 hover:text-[#AFFA01] active:scale-90"
+                    >
+                        <X className="size-5" />
+                    </button>
+                </div>
+
+                <div className="my-auto">
+                    <WorkoutShareCard
+                        ref={cardRef}
+                        appName={appName}
+                        workoutTitle={workout.title}
+                        durationMinutes={durationMinutes}
+                        session={session}
+                        labels={{
+                            duration: t('workout_share.duration'),
+                            exercises: t('workout_share.exercises'),
+                            sets: t('workout_share.sets'),
+                            volume: t('workout_share.volume'),
+                        }}
+                    />
+                </div>
+
+                <div className="mt-4 flex items-center justify-end gap-3">
+                    <button
+                        type="button"
+                        onClick={handleDownload}
+                        disabled={sharing}
+                        aria-label={t('workout_share.save_image')}
+                        className="flex size-12 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#1F1F1F]/90 text-[#F5F5F5] backdrop-blur-md transition-all hover:border-[#AFFA01]/40 hover:text-[#AFFA01] active:scale-90 disabled:pointer-events-none disabled:opacity-40"
+                    >
+                        <Download className="size-5" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleShare}
+                        disabled={sharing}
+                        aria-label={t('workout_share.share')}
+                        className="flex size-12 items-center justify-center rounded-full bg-[#AFFA01] text-[#0B1F0B] shadow-lg transition-all hover:brightness-105 active:scale-90 disabled:pointer-events-none disabled:opacity-40"
+                    >
+                        {sharing ? (
+                            <Spinner className="size-5" />
+                        ) : (
+                            <Share2 className="size-5" />
+                        )}
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="flex min-h-[70vh] flex-col">
-            <div className="flex items-center justify-between gap-2">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="-ml-2 size-8"
-                    onClick={onExit}
-                    aria-label={t('shared_program.exit_workout')}
-                >
-                    <X className="size-4" />
-                </Button>
-                <div className="min-w-0 flex-1 text-center">
-                    <p className="truncate text-sm font-medium">
+        <div className="flex min-h-[90vh] flex-col justify-between pb-6 text-[#F5F5F5] select-none">
+            {/* Top Bar Header */}
+            <div className="relative flex items-center justify-center border-b border-[#2E2E2E]/60 pb-3">
+                <div className="text-center">
+                    <p className="text-xs font-semibold tracking-wider text-[#AFFA01] uppercase">
                         {workout.title}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                        {t('shared_program.exercise_of', {
-                            current: index + 1,
-                            total,
-                        })}
+                    <h1 className="text-sm font-bold text-[#F5F5F5]">
+                        Exercise {exerciseIndex + 1} of {total}
+                    </h1>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={finishWorkout}
+                    className="absolute right-0 text-xs font-bold tracking-wider text-[#AFFA01] uppercase hover:underline"
+                >
+                    Finish
+                </button>
+            </div>
+
+            {/* Segmented Exercise Progress Track */}
+            <div className="mt-3 flex gap-1.5 px-0.5">
+                {workout.exercises.map((ex, i) => {
+                    const exLogged = session.sets.some(
+                        (s) => s.exercise_id === ex.slug,
+                    );
+                    const isCurrent = i === exerciseIndex;
+                    return (
+                        <button
+                            key={ex.slug}
+                            type="button"
+                            onClick={() => {
+                                setExerciseIndex(i);
+                                setCurrentSetIndex(0);
+                            }}
+                            className={cn(
+                                'h-1.5 flex-1 rounded-full transition-all',
+                                isCurrent
+                                    ? 'bg-[#AFFA01] shadow-[0_0_10px_rgba(175,250,1,0.5)]'
+                                    : exLogged
+                                      ? 'bg-[#AFFA01]/60'
+                                      : 'bg-[#2E2E2E]',
+                            )}
+                            aria-label={`Jump to ${ex.name}`}
+                        />
+                    );
+                })}
+            </div>
+
+            {/* Main Interactive Workout Arena */}
+            <div className="my-auto flex flex-col items-center py-4">
+                {/* Exercise Visual Container */}
+                <div className="group relative w-full max-w-[280px] overflow-hidden rounded-[22px] border border-[#E4E4E7] bg-white shadow-lg">
+                    <img
+                        key={current.slug}
+                        src={current.gif_url || current.image_url}
+                        alt={current.name}
+                        onClick={() => setShowHowTo(true)}
+                        className="aspect-[4/3] w-full cursor-pointer object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+
+                    {/* Fullscreen Button */}
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowFullscreen(true);
+                        }}
+                        className="absolute right-2.5 bottom-2.5 flex size-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-black/80 active:scale-95"
+                        aria-label="Fullscreen view"
+                    >
+                        <Maximize2 className="size-4" />
+                    </button>
+                </div>
+
+                {/* "How to do this" Button with Accent Icon */}
+                <button
+                    type="button"
+                    onClick={() => setShowHowTo(true)}
+                    className="mt-3.5 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-[#AFFA01] transition-colors hover:bg-[#AFFA01]/10 active:scale-95"
+                >
+                    <PlayCircle className="size-4 text-[#AFFA01]" />
+                    How to do this
+                </button>
+
+                {/* Exercise Title & Set Indicator */}
+                <div
+                    className={cn(
+                        'mt-3 text-center transition-transform duration-250',
+                        setJustCompleted && 'animate-pg-pulse scale-105',
+                    )}
+                >
+                    <h2
+                        onClick={() => setShowHowTo(true)}
+                        className="cursor-pointer text-2xl font-bold tracking-tight text-[#F5F5F5] transition-colors hover:text-[#AFFA01]"
+                    >
+                        {current.name}
+                    </h2>
+
+                    <p className="mt-1 text-sm font-semibold tracking-wide text-[#8E8E93]">
+                        Set {currentSetIndex + 1} of {targetSets}
+                    </p>
+
+                    <p className="mt-1 text-xs text-[#666666]">
+                        {previousSet
+                            ? previousSet.weight_kg
+                                ? `Previous: ${previousSet.weight_kg} kg × ${previousSet.reps ?? targetReps} reps`
+                                : `Previous: ${previousSet.reps ?? targetReps} reps`
+                            : `Target: ${targetReps} reps · ${current.body_part || 'Full body'}`}
                     </p>
                 </div>
-                <div className="size-8" />
-            </div>
 
-            <div className="mt-3 flex gap-1">
-                {workout.exercises.map((ex, i) => (
-                    <button
-                        key={ex.slug}
-                        type="button"
-                        onClick={() => setIndex(i)}
-                        aria-label={ex.name}
-                        className={cn(
-                            'h-1.5 flex-1 rounded-full transition-colors',
-                            i === index
-                                ? 'bg-lime-500'
-                                : loggedFor(ex.slug).length > 0
-                                  ? 'bg-lime-300 dark:bg-lime-700'
-                                  : 'bg-muted',
-                        )}
-                    />
-                ))}
-            </div>
+                {/* PrimeGym Metric Steppers Row */}
+                <div className="mt-6 flex w-full max-w-sm items-center justify-between gap-3 px-2">
+                    {/* Weight Metric Stepper */}
+                    {!unweighted && (
+                        <>
+                            <div className="flex-1">
+                                <span className="block text-center text-[11px] font-bold tracking-wider text-[#8E8E93] uppercase">
+                                    Weight (kg)
+                                </span>
+                                <div className="mt-2 flex items-center gap-1.5">
+                                    {/* Up/Down Chevrons on Left */}
+                                    <div className="flex flex-col gap-1.5">
+                                        <GlassyCircleButton
+                                            icon={ChevronUp}
+                                            onClick={() => {
+                                                triggerHaptic();
+                                                setWeight((w) =>
+                                                    Math.min(
+                                                        500,
+                                                        Math.round(
+                                                            (w + 2.5) * 10,
+                                                        ) / 10,
+                                                    ),
+                                                );
+                                            }}
+                                            ariaLabel="Increase weight"
+                                        />
+                                        <GlassyCircleButton
+                                            icon={ChevronDown}
+                                            onClick={() => {
+                                                triggerHaptic();
+                                                setWeight((w) =>
+                                                    Math.max(
+                                                        0,
+                                                        Math.round(
+                                                            (w - 2.5) * 10,
+                                                        ) / 10,
+                                                    ),
+                                                );
+                                            }}
+                                            ariaLabel="Decrease weight"
+                                        />
+                                    </div>
 
-            <Card className="mt-4 overflow-hidden">
-                <img
-                    key={current.slug}
-                    src={current.gif_url}
-                    alt={`${current.name} demo`}
-                    className="aspect-square w-full bg-muted object-cover"
-                />
-                <CardContent className="space-y-3 p-4">
-                    <div>
-                        <h2 className="text-lg font-semibold capitalize">
-                            {current.name}
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                            {current.detail}
-                        </p>
-                    </div>
-                    <Badge
-                        variant="secondary"
-                        className="bg-lime-100 text-lime-900 dark:bg-lime-900/40 dark:text-lime-200"
-                    >
-                        {t('shared_program.target_sets_reps', {
-                            sets: targetSets,
-                            reps: targetReps,
-                        })}
-                    </Badge>
+                                    {/* Large Tactile Display Box */}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleOpenNumericEdit('weight')
+                                        }
+                                        className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] py-5 shadow-sm transition-all hover:border-[#AFFA01]/40 active:scale-[0.98]"
+                                    >
+                                        <span className="font-mono text-2xl font-bold tracking-tight text-[#F5F5F5]">
+                                            {weight % 1 === 0
+                                                ? weight
+                                                : weight.toFixed(1)}
+                                        </span>
+                                        <span className="text-[10px] font-semibold text-[#8E8E93] uppercase">
+                                            kg
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
 
-                    <div className="space-y-2" key={`${current.slug}-sets`}>
-                        {Array.from(
-                            { length: rowCount },
-                            (_, setIndex) => setIndex,
-                        )
-                            .filter(
-                                (setIndex) =>
-                                    !(hiddenSets[current.slug] ?? []).includes(
-                                        setIndex,
-                                    ),
-                            )
-                            .map((setIndex, position) => (
-                                <PlayerSetRow
-                                    key={`${current.slug}-${setIndex}-${session.id}`}
-                                    position={position + 1}
-                                    logged={
-                                        logged.find(
-                                            (set) => set.set_index === setIndex,
-                                        ) ?? null
-                                    }
-                                    targetReps={targetReps}
-                                    onSave={(weight, reps) =>
-                                        saveSet(
-                                            current.slug,
-                                            setIndex,
-                                            weight,
-                                            reps,
-                                        )
-                                    }
-                                    onRemove={() =>
-                                        removeSet(current.slug, setIndex)
-                                    }
+                            {/* Central Multiplication Sign */}
+                            <div className="pt-6 text-2xl font-bold text-[#555555]">
+                                ×
+                            </div>
+                        </>
+                    )}
+
+                    {/* Reps Metric Stepper */}
+                    <div className="flex-1">
+                        <span className="block text-center text-[11px] font-bold tracking-wider text-[#8E8E93] uppercase">
+                            Reps
+                        </span>
+                        <div className="mt-2 flex items-center gap-1.5">
+                            {/* Large Tactile Display Box */}
+                            <button
+                                type="button"
+                                onClick={() => handleOpenNumericEdit('reps')}
+                                className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] py-5 shadow-sm transition-all hover:border-[#AFFA01]/40 active:scale-[0.98]"
+                            >
+                                <span className="font-mono text-2xl font-bold tracking-tight text-[#F5F5F5]">
+                                    {reps}
+                                </span>
+                                <span className="text-[10px] font-semibold text-[#8E8E93] uppercase">
+                                    reps
+                                </span>
+                            </button>
+
+                            {/* Up/Down Chevrons on Right */}
+                            <div className="flex flex-col gap-1.5">
+                                <GlassyCircleButton
+                                    icon={ChevronUp}
+                                    onClick={() => {
+                                        triggerHaptic();
+                                        setReps((r) => Math.min(100, r + 1));
+                                    }}
+                                    ariaLabel="Increase reps"
                                 />
-                            ))}
+                                <GlassyCircleButton
+                                    icon={ChevronDown}
+                                    onClick={() => {
+                                        triggerHaptic();
+                                        setReps((r) => Math.max(1, r - 1));
+                                    }}
+                                    ariaLabel="Decrease reps"
+                                />
+                            </div>
+                        </div>
                     </div>
+                </div>
 
-                    {rowCount < 50 && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full"
-                            onClick={() =>
-                                setExtraSets((map) => ({
-                                    ...map,
-                                    [current.slug]:
-                                        (map[current.slug] ?? 0) + 1,
-                                }))
-                            }
-                        >
-                            <Plus className="size-4" />
-                            {t('shared_program.add_set')}
-                        </Button>
-                    )}
-                </CardContent>
-            </Card>
-
-            <div className="mt-auto flex items-center gap-3 pt-4">
-                <Button
-                    variant="outline"
-                    className="flex-1"
-                    disabled={index === 0}
-                    onClick={() => setIndex((i) => Math.max(0, i - 1))}
-                >
-                    <ChevronLeft className="size-4" />
-                    {t('shared_program.previous')}
-                </Button>
-                <Button
-                    className="flex-1 bg-lime-400 text-lime-950 hover:bg-lime-500"
-                    onClick={() => (isLast ? finish() : setIndex((i) => i + 1))}
-                >
-                    {isLast
-                        ? t('shared_program.finish')
-                        : t('shared_program.next')}
-                    {isLast ? (
-                        <Check className="size-4" />
-                    ) : (
-                        <ChevronRight className="size-4" />
-                    )}
-                </Button>
+                {/* Logged Sets Mini Drawer Pill */}
+                {loggedSets.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={() => setShowSetsDrawer(true)}
+                        className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-[#2E2E2E] bg-[#1F1F1F]/60 px-3 py-1 text-xs text-[#8E8E93] transition-colors hover:border-[#AFFA01]/30 hover:text-[#F5F5F5]"
+                    >
+                        <ListCollapse className="size-3.5 text-[#AFFA01]" />
+                        <span>
+                            {loggedSets.length} set
+                            {loggedSets.length > 1 ? 's' : ''} logged for this
+                            exercise
+                        </span>
+                    </button>
+                )}
             </div>
+
+            {/* Bottom Actions Bar */}
+            <div className="flex items-center gap-3 pt-2">
+                {/* Skip Exercise (Secondary Variant) */}
+                <button
+                    type="button"
+                    disabled={setJustCompleted}
+                    onClick={handleSkipExercise}
+                    className="flex h-14 flex-1 items-center justify-center rounded-2xl border border-[#AFFA01]/30 bg-[#AFFA01]/10 px-4 text-sm font-bold text-[#F5F5F5] transition-all hover:bg-[#AFFA01]/20 active:scale-[0.98] disabled:opacity-40"
+                >
+                    Skip
+                </button>
+
+                {/* Complete Set (Primary Fit Green Gradient Variant) */}
+                <button
+                    type="button"
+                    disabled={setJustCompleted}
+                    onClick={handleCompleteSet}
+                    className={cn(
+                        'flex h-14 flex-[2] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-6 text-base font-bold text-black shadow-[0_8px_24px_rgba(175,250,1,0.28)] transition-all active:scale-[0.98] disabled:opacity-80',
+                        setJustCompleted && 'scale-[1.02] bg-[#AFFA01]',
+                    )}
+                >
+                    {setJustCompleted ? (
+                        <>
+                            <Check className="size-5 stroke-[3]" />
+                            <span>Nice!</span>
+                        </>
+                    ) : (
+                        <span>Complete Set</span>
+                    )}
+                </button>
+            </div>
+
+            {/* Numeric Edit Modal Dialog */}
+            {editingMetric && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-xs rounded-[24px] border border-[#2E2E2E] bg-[#1F1F1F] p-6 shadow-2xl">
+                        <h3 className="text-center text-base font-bold text-[#F5F5F5]">
+                            Edit{' '}
+                            {editingMetric === 'weight'
+                                ? 'Weight (kg)'
+                                : 'Reps'}
+                        </h3>
+                        <div className="mt-4">
+                            <input
+                                type="number"
+                                step={editingMetric === 'weight' ? '0.5' : '1'}
+                                min="0"
+                                autoFocus
+                                value={customValue}
+                                onChange={(e) => setCustomValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter')
+                                        handleApplyCustomValue();
+                                }}
+                                className="w-full rounded-xl border border-[#2E2E2E] bg-[#121212] px-4 py-3 text-center font-mono text-2xl font-bold text-[#F5F5F5] outline-none focus:border-[#AFFA01]"
+                            />
+                        </div>
+                        <div className="mt-5 flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setEditingMetric(null)}
+                                className="flex-1 rounded-xl border border-[#2E2E2E] bg-[#242424] py-2.5 text-xs font-semibold text-[#A1A1AA] hover:text-[#F5F5F5]"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleApplyCustomValue}
+                                className="flex-1 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] py-2.5 text-xs font-bold text-black shadow-md"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* "How to do this" Modal / Slide-up Sheet */}
+            {showHowTo && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm">
+                    <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-[28px] border-t border-[#2E2E2E] bg-[#1F1F1F] p-6 shadow-2xl">
+                        {/* Drag Handle */}
+                        <div className="mx-auto h-1 w-10 rounded-full bg-[#3E3E3E]" />
+
+                        <div className="mt-4 flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-[#F5F5F5]">
+                                {current.name}
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowHowTo(false)}
+                                className="flex size-8 items-center justify-center rounded-full bg-[#2A2A2A] text-[#A1A1AA] hover:text-[#F5F5F5]"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        {/* Media Visual */}
+                        <div className="mt-4 overflow-hidden rounded-2xl border border-[#E4E4E7] bg-white">
+                            <img
+                                src={current.gif_url || current.image_url}
+                                alt={current.name}
+                                className="aspect-video w-full object-contain"
+                            />
+                        </div>
+
+                        {/* Target Chips */}
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            {current.body_part && (
+                                <span className="rounded-full border border-[#AFFA01]/30 bg-[#AFFA01]/10 px-3 py-1 text-xs font-semibold text-[#AFFA01]">
+                                    {current.body_part}
+                                </span>
+                            )}
+                            {current.equipment && (
+                                <span className="rounded-full border border-[#2E2E2E] bg-[#2A2A2A] px-3 py-1 text-xs font-medium text-[#F5F5F5]">
+                                    {current.equipment}
+                                </span>
+                            )}
+                            {current.target && (
+                                <span className="rounded-full border border-[#2E2E2E] bg-[#2A2A2A] px-3 py-1 text-xs font-medium text-[#A1A1AA]">
+                                    Target: {current.target}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Instructions */}
+                        <div className="mt-5">
+                            <h4 className="text-sm font-bold tracking-wider text-[#AFFA01] uppercase">
+                                Instructions
+                            </h4>
+                            <p className="mt-2 text-sm leading-relaxed text-[#D4D4D8]">
+                                {current.detail ||
+                                    'Perform with controlled tempo. Focus on muscle contraction and keep your core braced throughout the movement.'}
+                            </p>
+                        </div>
+
+                        {/* Form Tips */}
+                        <div className="mt-5 rounded-2xl border border-[#2E2E2E] bg-[#141414] p-4">
+                            <h4 className="text-xs font-bold tracking-wider text-[#AFFA01] uppercase">
+                                Form Tips
+                            </h4>
+                            <ul className="mt-2 space-y-1.5 text-xs text-[#A1A1AA]">
+                                <li>
+                                    • Keep a neutral spine and inhale on
+                                    eccentric, exhale on concentric.
+                                </li>
+                                <li>
+                                    • Avoid using momentum to lift the weight.
+                                </li>
+                                <li>
+                                    • Control the descent for maximum
+                                    hypertrophy benefit.
+                                </li>
+                            </ul>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowHowTo(false)}
+                            className="mt-6 w-full rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] py-3.5 text-sm font-bold text-black shadow-lg"
+                        >
+                            Got It
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Fullscreen Video/GIF Viewer */}
+            {showFullscreen && (
+                <div
+                    onClick={() => setShowFullscreen(false)}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-md"
+                >
+                    <button
+                        type="button"
+                        onClick={() => setShowFullscreen(false)}
+                        className="absolute top-6 right-6 flex size-10 items-center justify-center rounded-full bg-[#1F1F1F] text-white"
+                        aria-label="Close fullscreen"
+                    >
+                        <X className="size-5" />
+                    </button>
+                    <img
+                        src={current.gif_url || current.image_url}
+                        alt={current.name}
+                        className="max-h-[85vh] max-w-full rounded-2xl bg-white object-contain shadow-2xl"
+                    />
+                </div>
+            )}
+
+            {/* Logged Sets Drawer */}
+            {showSetsDrawer && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm">
+                    <div className="max-h-[70vh] w-full max-w-md overflow-y-auto rounded-t-[28px] border-t border-[#2E2E2E] bg-[#1F1F1F] p-6 shadow-2xl">
+                        <div className="mx-auto h-1 w-10 rounded-full bg-[#3E3E3E]" />
+
+                        <div className="mt-4 flex items-center justify-between">
+                            <h3 className="text-base font-bold text-[#F5F5F5]">
+                                Logged Sets — {current.name}
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowSetsDrawer(false)}
+                                className="flex size-8 items-center justify-center rounded-full bg-[#2A2A2A] text-[#A1A1AA]"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <div className="mt-4 divide-y divide-[#2E2E2E]">
+                            {loggedSets.map((s, idx) => (
+                                <div
+                                    key={s.id}
+                                    className="flex items-center justify-between py-3"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="flex size-6 items-center justify-center rounded-full bg-[#AFFA01] text-xs font-bold text-black">
+                                            {idx + 1}
+                                        </span>
+                                        <span className="font-mono text-sm font-semibold text-[#F5F5F5]">
+                                            {s.weight_kg
+                                                ? `${s.weight_kg} kg × ${s.reps ?? targetReps} reps`
+                                                : `${s.reps ?? targetReps} reps`}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeSet(s.id)}
+                                        className="p-1 text-[#8E8E93] transition-colors hover:text-[#FF6B6B]"
+                                        aria-label={`Remove set ${idx + 1}`}
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowSetsDrawer(false)}
+                            className="mt-6 w-full rounded-2xl bg-[#2A2A2A] py-3 text-xs font-bold tracking-wider text-[#F5F5F5] uppercase"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

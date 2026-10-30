@@ -49,7 +49,7 @@ class ExerciseProgramFactory extends Factory
     }
 
     /**
-     * Listed in the public /programs catalog.
+     * Listed in the public /explore catalog.
      */
     public function published(): static
     {

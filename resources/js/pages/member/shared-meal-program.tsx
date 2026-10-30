@@ -62,6 +62,7 @@ export default function MemberSharedMealProgram({
     alreadyClaimed,
     saveUrl,
     proUrl,
+    homeUrl,
     editUrl,
     claimedPlanUrl,
 }: {
@@ -71,6 +72,7 @@ export default function MemberSharedMealProgram({
     alreadyClaimed: boolean;
     saveUrl: string;
     proUrl: string;
+    homeUrl: string;
     editUrl: string | null;
     claimedPlanUrl: string | null;
 }) {
@@ -320,7 +322,7 @@ export default function MemberSharedMealProgram({
                 </p>
             )}
 
-            <div className="h-24" />
+            <div className="h-40" />
 
             <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur">
                 <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
@@ -359,18 +361,14 @@ export default function MemberSharedMealProgram({
                             </Button>
                         </>
                     ) : (
-                        <>
-                            <div className="shrink-0">
-                                <p className="text-lg leading-none font-bold">
-                                    {t('shared_meal_program.pro_badge')}
-                                </p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    {t('shared_meal_program.pro_included')}
-                                </p>
-                            </div>
+                        <div className="min-w-0 flex-1 space-y-2">
+                            <p className="text-center text-xs text-muted-foreground">
+                                {t('shared_meal_program.pro_badge')} ·{' '}
+                                {t('shared_meal_program.pro_included')}
+                            </p>
                             {isGuest ? (
                                 <Button
-                                    className="flex-1 bg-lime-400 text-lime-950 hover:bg-lime-500"
+                                    className="w-full rounded-full"
                                     asChild
                                 >
                                     <Link href={login()}>
@@ -379,7 +377,7 @@ export default function MemberSharedMealProgram({
                                 </Button>
                             ) : isPro ? (
                                 <Button
-                                    className="flex-1 bg-lime-400 text-lime-950 hover:bg-lime-500"
+                                    className="w-full rounded-full"
                                     disabled={saving}
                                     onClick={save}
                                 >
@@ -391,7 +389,7 @@ export default function MemberSharedMealProgram({
                                 </Button>
                             ) : (
                                 <Button
-                                    className="flex-1 bg-lime-400 text-lime-950 hover:bg-lime-500"
+                                    className="w-full rounded-full"
                                     asChild
                                 >
                                     <Link href={proUrl}>
@@ -401,7 +399,16 @@ export default function MemberSharedMealProgram({
                                     </Link>
                                 </Button>
                             )}
-                        </>
+                            <Button
+                                variant="outline"
+                                className="w-full rounded-full"
+                                asChild
+                            >
+                                <Link href={homeUrl}>
+                                    {t('shared_program.back_to_app')}
+                                </Link>
+                            </Button>
+                        </div>
                     )}
                 </div>
             </div>

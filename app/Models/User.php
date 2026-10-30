@@ -296,4 +296,69 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             ->where('purpose', 'pro')
             ->exists();
     }
+
+    /**
+     * Consecutive days with any recorded activity — a workout session or a
+     * habit log. If today has none yet, the streak counts from yesterday.
+     */
+    public function activityStreak(): int
+    {
+        $lookup = $this->activityDateLookup();
+        $streak = 0;
+        $day = today()->copy();
+
+        if (! isset($lookup[$day->toDateString()])) {
+            $day = $day->subDay();
+        }
+        while (isset($lookup[$day->toDateString()])) {
+            $streak++;
+            $day = $day->subDay();
+        }
+
+        return $streak;
+    }
+
+    /**
+     * The last seven days, oldest first, flagging the ones with activity.
+     *
+     * @return array<int, array{date: string, label: string, active: bool}>
+     */
+    public function activityWeek(): array
+    {
+        $lookup = $this->activityDateLookup();
+
+        return collect(range(6, 0))
+            ->map(function (int $offset) use ($lookup): array {
+                $day = today()->subDays($offset);
+
+                return [
+                    'date' => $day->toDateString(),
+                    'label' => $day->format('D'),
+                    'active' => isset($lookup[$day->toDateString()]),
+                ];
+            })
+            ->all();
+    }
+
+    /**
+     * Lookup set of every date with recorded activity — a workout session
+     * or a habit log.
+     *
+     * @return array<string, true>
+     */
+    private function activityDateLookup(): array
+    {
+        $dates = $this->workoutSessions()->pluck('date')
+            ->merge(
+                HabitLog::query()
+                    ->whereIn('habit_id', $this->habits()->select('id'))
+                    ->pluck('date')
+            )
+            ->map(fn ($date) => Carbon::parse($date)->toDateString())
+            ->unique()
+            ->values()
+            ->all();
+
+        return array_fill_keys($dates, true);
+    }
 }

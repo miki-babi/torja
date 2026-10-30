@@ -62,6 +62,12 @@ export default function MemberMealProgram({ plan, days }: Props) {
         <MobileShell>
             <Head title={plan.name} />
 
+            <div className="mb-3 flex items-center justify-end">
+                <span className="inline-flex items-center rounded-full border border-[#AFFA01]/30 bg-[#AFFA01]/10 px-3 py-1 text-xs font-semibold text-[#AFFA01]">
+                    Meal Plan
+                </span>
+            </div>
+
             <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                     <h1 className="truncate text-xl font-semibold tracking-tight">

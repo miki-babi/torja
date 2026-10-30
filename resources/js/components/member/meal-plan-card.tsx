@@ -8,7 +8,6 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { meal } from '@/routes/member';
 import { show as mealShow } from '@/routes/member/meals';
-import { wizard } from '@/routes/plan';
 
 export function MealPlanCard({ planDay }: { planDay: PlanDay | null }) {
     if (planDay === null || planDay.meals.length === 0) {
@@ -19,11 +18,7 @@ export function MealPlanCard({ planDay }: { planDay: PlanDay | null }) {
                         Today's meal plan
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                        No meal plan yet.{' '}
-                        <Link href={wizard()} className="underline">
-                            Take the quiz
-                        </Link>{' '}
-                        to get one.
+                        No meal plan yet.
                     </p>
                 </CardContent>
             </Card>
@@ -32,10 +27,10 @@ export function MealPlanCard({ planDay }: { planDay: PlanDay | null }) {
 
     return (
         <Card>
-            <CardContent className="divide-y p-0">
-                <div className="px-4 py-3">
-                    <h2 className="text-sm font-medium text-muted-foreground">
-                        Today's meal plan
+            <CardContent className="divide-y divide-[#2E2E2E] p-0">
+                <div className="px-5 py-4">
+                    <h2 className="text-sm font-semibold tracking-wider text-[#AFFA01] uppercase">
+                        Today's Meal Plan
                     </h2>
                 </div>
                 {planDay.meals.map((m, index) => (
@@ -44,17 +39,17 @@ export function MealPlanCard({ planDay }: { planDay: PlanDay | null }) {
                         href={
                             m.id !== undefined ? mealShow(m.id).url : meal().url
                         }
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50"
+                        className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-[#262626]"
                     >
                         <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium">
+                            <p className="text-sm font-semibold text-[#F5F5F5]">
                                 {mealTypeLabel(m.type)}
                             </p>
-                            <p className="truncate text-xs text-muted-foreground">
+                            <p className="truncate text-xs text-[#A1A1AA]">
                                 {mealItemSummary(m)}
                             </p>
                         </div>
-                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                        <ChevronRight className="size-4 shrink-0 text-[#666666]" />
                     </Link>
                 ))}
             </CardContent>

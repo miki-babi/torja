@@ -30,7 +30,10 @@ class NudgeRegistry
      */
     public static function slugs(): array
     {
-        return array_keys(self::DEFINITIONS);
+        // wizard_abandoned is paused while the quiz is hidden from users.
+        return array_values(
+            array_diff(array_keys(self::DEFINITIONS), ['wizard_abandoned']),
+        );
     }
 
     /**

@@ -5,7 +5,6 @@ use App\Jobs\SendNudge;
 use App\Models\Exercise;
 use App\Models\ExercisePlaylist;
 use App\Models\NutritionProfile;
-use App\Models\Payment;
 use App\Models\ShortLink;
 use App\Models\TrackedEvent;
 use App\Models\User;
@@ -160,7 +159,7 @@ test('traits carry channel, wizard state and goal source', function () {
         ->and($traits->wizard_step)->toBe(6);
 });
 
-test('the in-app nudge surfaces for stalled users and hides once paid', function () {
+test('wizard nudges are suppressed while the quiz is hidden', function () {
     $user = User::factory()->create();
     NutritionProfile::factory()->create([
         'user_id' => $user->id,
@@ -168,13 +167,6 @@ test('the in-app nudge surfaces for stalled users and hides once paid', function
         'current_step' => 5,
         'goal' => ['primary_goal' => 'lose_fat'],
     ]);
-
-    $this->actingAs($user)->get(route('member.home'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('nudge.slug', 'wizard_abandoned')
-            ->where('nudge.url', route('plan.wizard')));
-
-    Payment::factory()->successful()->create(['user_id' => $user->id]);
 
     $this->actingAs($user)->get(route('member.home'))
         ->assertInertia(fn (Assert $page) => $page->where('nudge', null));

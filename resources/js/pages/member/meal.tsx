@@ -1,6 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
 import {
-    Camera,
     ChevronLeft,
     ChevronRight,
     Lock,
@@ -21,7 +20,6 @@ import {
     type PlanDay,
     type PlanMeal,
 } from '@/components/member/types';
-import { WaterCard } from '@/components/member/water-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -31,7 +29,6 @@ import {
     index as diaryIndex,
     store as storeDiaryEntry,
 } from '@/routes/member/diary';
-import { wizard } from '@/routes/plan';
 import { show as pro } from '@/routes/pro';
 
 function newId(): string {
@@ -257,34 +254,16 @@ export default function MemberMeal({
                 </div>
             </div>
 
-            <div className="mt-4">
-                <Button
-                    onClick={() => setLogOpen(true)}
-                    className="w-full bg-lime-400 text-lime-950 hover:bg-lime-500"
-                >
-                    <Camera className="size-4" />
-                    Log food
-                </Button>
-                <p className="mt-1 text-center text-xs text-muted-foreground">
-                    take a photo or search the database
-                </p>
-            </div>
-
             <div className="mt-4 space-y-4">
-                {targets === null ? (
-                    <Card>
-                        <CardContent className="p-4 text-sm text-muted-foreground">
-                            Complete the quiz to get your daily targets.{' '}
-                            <Link href={wizard()} className="underline">
-                                Take the quiz
-                            </Link>
-                        </CardContent>
-                    </Card>
-                ) : (
+                <FoodDiaryCard
+                    entries={entries}
+                    onLogFood={() => setLogOpen(true)}
+                    onRemove={removeEntry}
+                />
+
+                {targets !== null && (
                     <TargetsCard targets={targets} consumed={consumed} />
                 )}
-
-                <WaterCard dateKey={dateKey} />
 
                 {planDay !== null ? (
                     <PlanMealsCard
@@ -305,10 +284,7 @@ export default function MemberMeal({
                                     Unlock all 7 days of meals for{' '}
                                     {price.toLocaleString()} ETB.
                                 </p>
-                                <Button
-                                    asChild
-                                    className="mt-1 bg-lime-400 text-lime-950 hover:bg-lime-500"
-                                >
+                                <Button asChild className="mt-2">
                                     <Link href={pro()}>Go Pro</Link>
                                 </Button>
                             </CardContent>
@@ -357,12 +333,6 @@ export default function MemberMeal({
                         </CardContent>
                     </Card>
                 )}
-
-                <FoodDiaryCard
-                    entries={entries}
-                    onLogFood={() => setLogOpen(true)}
-                    onRemove={removeEntry}
-                />
             </div>
 
             <LogFoodDialog

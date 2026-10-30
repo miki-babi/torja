@@ -70,7 +70,7 @@ class WorkoutSession extends Model
     /**
      * Frontend payload for the member exercise page.
      *
-     * @return array{id: int, exercise_playlist_id: int|null, date: string, sets: array<int, array{id: int, exercise_id: string, set_index: int, weight_kg: float|null, reps: int|null}>}
+     * @return array{id: int, exercise_playlist_id: int|null, date: string, sets: array<int, array{id: int, workout_session_id: int, exercise_id: string, set_index: int, weight_kg: float|null, reps: int|null}>}
      */
     public function toFrontend(): array
     {
@@ -81,6 +81,7 @@ class WorkoutSession extends Model
             'sets' => $this->sets
                 ->map(fn (WorkoutSet $set): array => [
                     'id' => $set->id,
+                    'workout_session_id' => $set->workout_session_id,
                     'exercise_id' => $set->exercise_id,
                     'set_index' => $set->set_index,
                     'weight_kg' => $set->weight_kg === null ? null : (float) $set->weight_kg,

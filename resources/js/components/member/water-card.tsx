@@ -23,20 +23,38 @@ export function WaterCard({ dateKey }: { dateKey: string }) {
         });
     };
 
+    const percentage = Math.min(100, Math.round((ml / GOAL_ML) * 100));
+
     return (
         <Card>
-            <CardHeader className="flex-row items-center justify-between">
-                <CardTitle className="text-base">Water</CardTitle>
-                <span className="text-xs text-muted-foreground">
+            <CardHeader className="flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-bold text-[#F5F5F5]">Water</CardTitle>
+                <span className="text-xs font-semibold text-[#AFFA01]">
                     {ml}ml / {GOAL_ML / 1000}L
                 </span>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+                {/* Progress Bar */}
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[#2E2E2E]">
+                    <div
+                        className="h-full rounded-full bg-gradient-to-r from-[#D7F457] to-[#AFFA01] transition-all duration-300"
+                        style={{ width: `${percentage}%` }}
+                    />
+                </div>
+
                 <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" onClick={() => addWater(250)}>
+                    <Button
+                        variant="secondary"
+                        onClick={() => addWater(250)}
+                        className="h-10 text-xs font-bold"
+                    >
                         +250 ml
                     </Button>
-                    <Button variant="outline" onClick={() => addWater(500)}>
+                    <Button
+                        variant="secondary"
+                        onClick={() => addWater(500)}
+                        className="h-10 text-xs font-bold"
+                    >
                         +500 ml
                     </Button>
                 </div>

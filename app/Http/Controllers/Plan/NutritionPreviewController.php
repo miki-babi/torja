@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
 use App\Services\Nutrition\NutritionTargetCalculator;
 use App\Services\Nutrition\ProfileResolver;
+use App\Support\ProPage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,7 +33,7 @@ class NutritionPreviewController extends Controller
             'warnings' => $targets['warnings'] ?? [],
             'sampleDay' => $this->preview->for($profile),
             'unlocked' => $request->user()->isPro(),
-            'price' => (int) config('plans.pro_price_etb'),
+            'price' => ProPage::price(),
         ]);
     }
 }

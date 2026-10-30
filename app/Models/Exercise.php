@@ -34,7 +34,6 @@ use Illuminate\Support\Facades\Storage;
  * @property string $media_id
  * @property string $image_path
  * @property string $gif_path
- * @property string $attribution
  * @property string $exercise_type
  * @property string $level
  * @property string $location
@@ -53,7 +52,7 @@ use Illuminate\Support\Facades\Storage;
  * @property-read string $image_url
  * @property-read string $gif_url
  */
-#[Fillable(['source_id', 'slug', 'name', 'name_am', 'category', 'body_part', 'equipment', 'target', 'muscle_group', 'secondary_muscles', 'instructions', 'instruction_steps', 'instructions_am', 'instruction_steps_am', 'translation_status', 'media_id', 'image_path', 'gif_path', 'attribution', 'exercise_type', 'level', 'location', 'movement_pattern', 'compound', 'isolation', 'full_body', 'women_home_friendly', 'goal_fat_loss', 'goal_muscle_gain', 'review_needed', 'review_reasons', 'source_created_at'])]
+#[Fillable(['source_id', 'slug', 'name', 'name_am', 'category', 'body_part', 'equipment', 'target', 'muscle_group', 'secondary_muscles', 'instructions', 'instruction_steps', 'instructions_am', 'instruction_steps_am', 'translation_status', 'media_id', 'image_path', 'gif_path', 'exercise_type', 'level', 'location', 'movement_pattern', 'compound', 'isolation', 'full_body', 'women_home_friendly', 'goal_fat_loss', 'goal_muscle_gain', 'review_needed', 'review_reasons', 'source_created_at'])]
 class Exercise extends Model
 {
     /** @use HasFactory<ExerciseFactory> */
@@ -184,7 +183,6 @@ class Exercise extends Model
             'location' => $this->location,
             'exercise_type' => $this->exercise_type,
             'movement_pattern' => $this->movement_pattern,
-            'attribution' => $this->attribution,
         ];
     }
 }

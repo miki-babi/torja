@@ -29,3 +29,29 @@ test('search returns foods matching the query', function () {
             Str::lower($food['name_en']), Str::lower($term),
         )))->toBeTrue();
 });
+
+test('search matches transliterated amharic names', function () {
+    $this->seed(FoodDatabaseSeeder::class);
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->get(route('member.foods.search', ['q' => 'dirkosh']))
+        ->assertOk();
+
+    expect(collect($response->json('foods'))->pluck('name_en'))
+        ->toContain('Ferfer from dried white enjera with tomato, onion, oil, red pepper spice blend, garlic and salt');
+});
+
+test('search expands transliteration aliases', function () {
+    $this->seed(FoodDatabaseSeeder::class);
+
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->get(route('member.foods.search', ['q' => 'injera']))
+        ->assertOk();
+
+    expect(collect($response->json('foods'))->pluck('name_en'))
+        ->toContain('Enjera, teff, white');
+});

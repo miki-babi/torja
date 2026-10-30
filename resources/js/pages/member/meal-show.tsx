@@ -1,11 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
-import {
-    Check,
-    ChevronLeft,
-    ChevronRight,
-    Plus,
-    UtensilsCrossed,
-} from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { Check, ChevronRight, Plus, UtensilsCrossed } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { deleteDiaryEntry, logDiaryEntry } from '@/components/member/diary';
@@ -231,14 +225,7 @@ export default function MemberMealShow({
     return (
         <MobileShell>
             <Head title={label} />
-            <Button variant="ghost" size="sm" asChild className="-ml-2">
-                <Link href={meal()}>
-                    <ChevronLeft className="size-4" />
-                    Nutrition
-                </Link>
-            </Button>
-
-            <div className="mt-4">
+            <div>
                 <h1 className="text-xl font-semibold tracking-tight">
                     {label}
                     {time !== undefined && (

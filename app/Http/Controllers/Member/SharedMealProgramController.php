@@ -65,6 +65,7 @@ class SharedMealProgramController extends Controller
             'alreadyClaimed' => $claimedPlan !== null || ($user !== null && $this->grants->hasAccess($user, $mealProgram)),
             'saveUrl' => route('meal-programs.shared.save', $mealProgram->share_token),
             'proUrl' => route('pro.show'),
+            'homeUrl' => $user !== null ? route('member.home') : route('explore.index'),
             'editUrl' => $user?->isAdmin() ? route('admin.meal-programs.edit', $mealProgram) : null,
             'claimedPlanUrl' => $claimedPlan !== null
                 ? route('member.meal-programs.show', $claimedPlan)

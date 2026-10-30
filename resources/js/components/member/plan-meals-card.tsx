@@ -31,37 +31,37 @@ export function PlanMealsCard({
                 <CardTitle className="text-base">Your plan</CardTitle>
                 <CardDescription>{planName}</CardDescription>
             </CardHeader>
-            <CardContent className="divide-y p-0">
+            <CardContent className="divide-y divide-[#2E2E2E] p-0">
                 {meals.map((m, index) => (
                     <div
                         key={`${m.type}-${index}`}
-                        className="flex items-start gap-3 px-6 py-3"
+                        className="flex items-start gap-3 px-6 py-3 transition-colors hover:bg-[#262626]"
                     >
-                        <span className="mt-1.5 size-2 shrink-0 rounded-full bg-lime-400" />
+                        <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[#AFFA01] shadow-[0_0_6px_rgba(175,250,1,0.6)]" />
                         <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium">
+                            <p className="text-sm font-semibold text-[#F5F5F5]">
                                 {m.id !== undefined ? (
                                     <Link
                                         href={mealShow(m.id).url}
-                                        className="hover:underline"
+                                        className="hover:text-[#AFFA01] transition-colors"
                                     >
                                         {mealTypeLabel(m.type)}
                                     </Link>
                                 ) : (
                                     mealTypeLabel(m.type)
                                 )}{' '}
-                                <span className="font-normal text-muted-foreground">
+                                <span className="font-normal text-[#A1A1AA]">
                                     {MEAL_TYPE_TIMES[m.type] ?? ''}
                                 </span>
                             </p>
-                            <p className="truncate text-xs text-muted-foreground">
+                            <p className="truncate text-xs text-[#A1A1AA]">
                                 {mealItemSummary(m)}
                             </p>
                         </div>
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="size-7 shrink-0"
+                            className="size-7 shrink-0 text-[#A1A1AA] hover:text-[#AFFA01]"
                             onClick={() => onAdd(m)}
                             aria-label={`Log ${mealTypeLabel(m.type)}`}
                         >

@@ -8,6 +8,9 @@ use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\MealProgramController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProgramController;
+use App\Http\Controllers\Admin\ProPageController;
+use App\Http\Controllers\Admin\ShopOrderController;
+use App\Http\Controllers\Admin\ShopProductController;
 use App\Http\Controllers\Admin\TrackingIntegrationController;
 use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\UserController;
@@ -28,6 +31,19 @@ Route::middleware(['auth', 'verified', 'admin'])
             ->name('payments.verify');
         Route::post('payments/{payment}/refund', [PaymentController::class, 'refund'])
             ->name('payments.refund');
+
+        Route::get('pro-page', [ProPageController::class, 'edit'])->name('pro-page.edit');
+        Route::put('pro-page', [ProPageController::class, 'update'])->name('pro-page.update');
+        Route::delete('pro-page', [ProPageController::class, 'destroy'])->name('pro-page.reset');
+
+        Route::post('shop-products/upload-image', [ShopProductController::class, 'uploadImage'])
+            ->name('shop-products.upload-image');
+        Route::resource('shop-products', ShopProductController::class)
+            ->except(['show', 'destroy'])
+            ->parameters(['shop-products' => 'shopProduct']);
+        Route::resource('shop-orders', ShopOrderController::class)
+            ->only(['index', 'show', 'update'])
+            ->parameters(['shop-orders' => 'shopOrder']);
 
         Route::resource('programs', ProgramController::class)
             ->except(['show']);

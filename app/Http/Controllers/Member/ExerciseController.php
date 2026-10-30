@@ -40,38 +40,17 @@ class ExerciseController extends Controller
             'playlists' => $playlists->map->toFrontend()->all(),
             'sessions' => $sessions->map->toFrontend()->all(),
             'exerciseSummaries' => ExerciseCatalog::namesFor($exerciseIds),
-            'bodyParts' => collect(ExerciseCatalog::BODY_PARTS)
-                ->reject(fn (string $part): bool => $part === 'lower arms')
-                ->map(fn (string $part): array => $part === 'upper arms'
-                    ? [
-                        'id' => 'arms',
-                        'label' => 'Arms',
-                        'count' => count(ExerciseCatalog::idsFor('upper arms'))
-                            + count(ExerciseCatalog::idsFor('lower arms')),
-                    ]
-                    : [
-                        'id' => $part,
-                        'label' => ExerciseCatalog::label($part),
-                        'count' => count(ExerciseCatalog::idsFor($part)),
-                    ])
-                ->prepend([
-                    'id' => '',
-                    'label' => 'Full body',
-                    'count' => Exercise::count(),
-                ])
-                ->values()
-                ->all(),
+            'bodyParts' => ExerciseCatalog::bodyPartFilters(),
             'equipment' => Exercise::query()->distinct()->orderBy('equipment')->pluck('equipment')->all(),
             'levels' => ['beginner', 'intermediate', 'advanced'],
             'initialExercises' => Exercise::query()
-                ->where('body_part', 'chest')
                 ->orderBy('name')
                 ->limit(30)
                 ->get()
                 ->map->toSummary()
                 ->all(),
-            'initialTotal' => count(ExerciseCatalog::idsFor('chest')),
-            'weightLogs' => $user->weightLogs()->limit(10)->get(),
+            'initialTotal' => Exercise::count(),
+            'weightLogs' => $user->weightLogs()->limit(60)->get(),
         ]);
     }
 }

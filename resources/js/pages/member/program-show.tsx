@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { ChevronRight, Play } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { ExerciseSummaries } from '@/components/member/exercise-data';
@@ -11,10 +11,8 @@ import type {
     WorkoutSession,
 } from '@/components/member/types';
 import { WorkoutSessionCard } from '@/components/member/workout-session';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { exercise } from '@/routes/member';
 import { show as playlistShow } from '@/routes/member/playlists';
 import { store as storeSession } from '@/routes/member/sessions';
 
@@ -80,14 +78,10 @@ export default function MemberProgramShow({
     return (
         <MobileShell>
             <Head title={program.name} />
-            <div className="flex items-center justify-between">
-                <Button variant="ghost" size="sm" asChild className="-ml-2">
-                    <Link href={exercise()}>
-                        <ChevronLeft className="size-4" />
-                        Exercise
-                    </Link>
-                </Button>
-                <Badge variant="secondary">program</Badge>
+            <div className="flex items-center justify-end">
+                <span className="inline-flex items-center rounded-full border border-[#AFFA01]/30 bg-[#AFFA01]/10 px-3 py-1 text-xs font-semibold text-[#AFFA01]">
+                    Program
+                </span>
             </div>
 
             <h1 className="mt-2 text-xl font-semibold tracking-tight">
@@ -116,9 +110,9 @@ export default function MemberProgramShow({
                                 Workouts
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="divide-y p-0">
+                        <CardContent className="divide-y divide-[#2E2E2E] p-0">
                             {workouts.length === 0 && (
-                                <p className="px-6 py-3 text-sm text-muted-foreground">
+                                <p className="px-6 py-3 text-sm text-[#A1A1AA]">
                                     No workouts copied yet.
                                 </p>
                             )}
@@ -133,9 +127,9 @@ export default function MemberProgramShow({
                                 return (
                                     <div
                                         key={playlist.id}
-                                        className="flex items-center gap-3 px-6 py-3"
+                                        className="flex items-center gap-3 px-6 py-3 transition-colors hover:bg-[#262626]"
                                     >
-                                        <span className="w-5 text-center text-xs text-muted-foreground tabular-nums">
+                                        <span className="w-5 text-center text-xs font-semibold text-[#A1A1AA] tabular-nums">
                                             {index + 1}
                                         </span>
                                         <div className="min-w-0 flex-1">
@@ -144,12 +138,12 @@ export default function MemberProgramShow({
                                                     playlistShow(playlist.id)
                                                         .url
                                                 }
-                                                className="block truncate text-sm font-medium hover:underline"
+                                                className="block truncate text-sm font-semibold text-[#F5F5F5] transition-colors hover:text-[#AFFA01]"
                                             >
                                                 {playlist.workout_title ??
                                                     playlist.name}
                                             </Link>
-                                            <p className="text-xs text-muted-foreground">
+                                            <p className="text-xs text-[#A1A1AA]">
                                                 {playlist.exercise_ids.length}{' '}
                                                 exercise
                                                 {playlist.exercise_ids
@@ -163,19 +157,15 @@ export default function MemberProgramShow({
                                             variant={
                                                 existing === null
                                                     ? 'default'
-                                                    : 'outline'
+                                                    : 'secondary'
                                             }
-                                            className={
-                                                existing === null
-                                                    ? 'shrink-0 bg-lime-400 text-lime-950 hover:bg-lime-500'
-                                                    : 'shrink-0'
-                                            }
+                                            className="shrink-0 gap-1.5"
                                             disabled={busyId !== null}
                                             onClick={() =>
                                                 startSession(playlist)
                                             }
                                         >
-                                            <Play className="size-3.5" />
+                                            <Play className="size-3.5 fill-current" />
                                             {existing === null
                                                 ? 'Start'
                                                 : `Continue · ${existing.sets.length}`}
@@ -183,7 +173,7 @@ export default function MemberProgramShow({
                                         <Link
                                             href={playlistShow(playlist.id).url}
                                             aria-label={`View ${playlist.workout_title ?? playlist.name}`}
-                                            className="flex size-7 shrink-0 items-center justify-center rounded-full border text-muted-foreground"
+                                            className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#1F1F1F] text-[#A1A1AA] transition-colors hover:text-[#AFFA01]"
                                         >
                                             <ChevronRight className="size-4" />
                                         </Link>

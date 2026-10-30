@@ -29,18 +29,20 @@ export function SessionSummary({
                 <CardTitle className="text-base">Progress</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-2 text-center">
-                    <div className="rounded-lg bg-muted/60 py-3">
-                        <p className="text-xl font-semibold">{weekCount}</p>
-                        <p className="text-xs text-muted-foreground">
+                <div className="grid grid-cols-2 gap-2.5 text-center">
+                    <div className="rounded-2xl border border-[#2E2E2E] bg-[#262626] py-3.5">
+                        <p className="text-2xl font-black text-[#AFFA01]">
+                            {weekCount}
+                        </p>
+                        <p className="mt-0.5 text-xs font-medium text-[#A1A1AA]">
                             sessions this week
                         </p>
                     </div>
-                    <div className="rounded-lg bg-muted/60 py-3">
-                        <p className="text-xl font-semibold">
+                    <div className="rounded-2xl border border-[#2E2E2E] bg-[#262626] py-3.5">
+                        <p className="text-2xl font-black text-[#F5F5F5]">
                             {Math.round(volume).toLocaleString()}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="mt-0.5 text-xs font-medium text-[#A1A1AA]">
                             kg total volume
                         </p>
                     </div>
@@ -48,23 +50,25 @@ export function SessionSummary({
 
                 {prs.length > 0 && (
                     <div>
-                        <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-                            Personal records
+                        <p className="mb-2 text-xs font-semibold tracking-wider text-[#A1A1AA] uppercase">
+                            Personal records 🏆
                         </p>
-                        <div className="divide-y">
+                        <div className="divide-y divide-[#2E2E2E]">
                             {prs.map(([exerciseId, pr]) => (
                                 <div
                                     key={exerciseId}
-                                    className="flex items-center justify-between py-1.5 text-sm"
+                                    className="flex items-center justify-between py-2 text-sm"
                                 >
-                                    <span>
+                                    <span className="font-medium text-[#F5F5F5]">
                                         {exerciseName(
                                             exerciseSummaries,
                                             exerciseId,
                                         )}
                                     </span>
-                                    <span className="text-muted-foreground">
-                                        {pr.weight_kg}kg × {pr.reps}
+                                    <span className="font-semibold text-[#AFFA01]">
+                                        {pr.weight_kg > 0
+                                            ? `${pr.weight_kg}kg × ${pr.reps}`
+                                            : `${pr.reps} reps`}
                                     </span>
                                 </div>
                             ))}

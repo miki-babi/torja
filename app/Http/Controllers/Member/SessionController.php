@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\Exercise;
 use App\Models\ExercisePlaylist;
 use App\Models\WorkoutSession;
 use App\Models\WorkoutSet;
@@ -94,6 +95,62 @@ class SessionController extends Controller
     }
 
     /**
+     * Quick-log one set for an exercise into today's free session, creating
+     * the session on demand. Backs the "Log a set" shortcut on the explore
+     * and exercise detail screens so a set can be saved without starting a
+     * session first.
+     */
+    public function logSet(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'exercise_id' => ['required', 'string', 'max:100'],
+            'weight_kg' => ['nullable', 'numeric', 'min:0', 'max:1000'],
+            'reps' => ['required', 'integer', 'min:1', 'max:1000'],
+        ]);
+
+        $data['exercise_id'] = ExerciseCatalog::resolve($data['exercise_id']);
+
+        validator($data, [
+            'exercise_id' => [Rule::exists('exercises', 'slug')],
+        ])->validate();
+
+        $session = WorkoutSession::where('user_id', $request->user()->id)
+            ->whereDate('date', now()->toDateString())
+            ->whereNull('exercise_playlist_id')
+            ->first();
+
+        $session ??= WorkoutSession::create([
+            'user_id' => $request->user()->id,
+            'date' => now()->toDateString(),
+            'exercise_playlist_id' => null,
+        ]);
+
+        // Sets keep their index after mid-list deletes, so the next index is
+        // max + 1 rather than count — count would collide on the unique key.
+        $maxIndex = $session->sets()
+            ->where('exercise_id', $data['exercise_id'])
+            ->max('set_index');
+
+        $nextIndex = $maxIndex === null ? 0 : $maxIndex + 1;
+
+        $session->sets()->create([
+            'exercise_id' => $data['exercise_id'],
+            'set_index' => $nextIndex,
+            'weight_kg' => $data['weight_kg'] ?? null,
+            'reps' => $data['reps'],
+        ]);
+
+        app(Tracker::class)->record('workout.set_logged', subject: $session, properties: [
+            'exercise_id' => $data['exercise_id'],
+            'quick' => true,
+            'has_weight' => ($data['weight_kg'] ?? null) !== null,
+            'has_reps' => true,
+        ]);
+
+        return response()->json(['session' => $session->refresh()->toFrontend()], 201);
+    }
+
+    /**
      * "Add exercise" picker page for an active session: search the catalog and
      * pick one to log a set against, then return to the referring screen.
      */
@@ -106,6 +163,8 @@ class SessionController extends Controller
         return Inertia::render('member/session-add-exercise', [
             'session' => $session->load('sets')->toFrontend(),
             'backUrl' => str_starts_with($back, '/') ? $back : route('member.exercise'),
+            'bodyParts' => ExerciseCatalog::bodyPartFilters(),
+            'equipment' => Exercise::query()->distinct()->orderBy('equipment')->pluck('equipment')->all(),
         ]);
     }
 

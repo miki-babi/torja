@@ -42,6 +42,9 @@ Route::post('locale', [LocalizationController::class, 'update'])
     ->name('locale.set');
 
 Route::inertia('calculator', 'calculator')->name('calculator');
+Route::inertia('calculator/bmi', 'calculator/bmi')->name('calculator.bmi');
+Route::inertia('calculator/body-fat', 'calculator/body-fat')
+    ->name('calculator.body-fat');
 
 Route::get('plan/wizard', [NutritionWizardController::class, 'edit'])->name('plan.wizard');
 Route::patch('plan/wizard/{section}', [NutritionWizardController::class, 'update'])
@@ -64,7 +67,9 @@ Route::post('webhooks/jami', [JamiWebhookController::class, 'store'])
     ->middleware('throttle:60,1')
     ->name('payment.jami.webhook');
 
-Route::get('programs', Member\ProgramCatalogController::class)->name('programs.index');
+Route::get('explore', Member\ExploreController::class)->name('explore.index');
+Route::get('shop/products/{product}', [Member\ExploreController::class, 'product'])
+    ->name('shop.products.show');
 
 Route::get('shared/playlists/{playlist:share_token}', [Member\SharedPlaylistController::class, 'show'])
     ->name('playlists.shared.show');
@@ -149,6 +154,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.playlists.exercises.destroy');
     Route::post('member/sessions', [Member\SessionController::class, 'store'])
         ->name('member.sessions.store');
+    Route::post('member/sessions/log-set', [Member\SessionController::class, 'logSet'])
+        ->name('member.sessions.log-set');
     Route::get('member/sessions/{session}/exercises', [Member\SessionController::class, 'exercises'])
         ->name('member.sessions.exercises');
     Route::put('member/sessions/{session}/sets', [Member\SessionController::class, 'upsertSet'])
@@ -172,6 +179,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.weight-logs.store');
     Route::delete('member/weight-logs/{weightLog}', [Member\WeightLogController::class, 'destroy'])
         ->name('member.weight-logs.destroy');
+    Route::get('member/orders', [Member\ShopOrderController::class, 'index'])
+        ->name('member.orders.index');
+    Route::post('member/orders', [Member\ShopOrderController::class, 'store'])
+        ->name('member.orders.store');
+    Route::post('member/orders/{order}/cancel', [Member\ShopOrderController::class, 'cancel'])
+        ->name('member.orders.cancel');
     Route::get('member/diary', [Member\FoodDiaryController::class, 'index'])
         ->name('member.diary.index');
     Route::post('member/diary', [Member\FoodDiaryController::class, 'store'])

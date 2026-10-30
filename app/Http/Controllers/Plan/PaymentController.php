@@ -13,6 +13,7 @@ use App\Services\Payments\ChapaService;
 use App\Services\Payments\JamiService;
 use App\Services\Payments\PaymentSynchronizer;
 use App\Services\Payments\VerifyCheckoutService;
+use App\Support\ProPage;
 use App\Support\Tracking\Tracker;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\JsonResponse;
@@ -61,7 +62,7 @@ class PaymentController extends Controller
             'provider' => $validated['provider'],
             'tx_ref' => "tp-{$user->id}-".Str::uuid(),
             'idempotency_key' => 'checkout_'.Str::uuid(),
-            'amount' => config('plans.pro_price_etb'),
+            'amount' => ProPage::price(),
             'currency' => 'ETB',
             'status' => 'pending',
             'purpose' => 'pro',

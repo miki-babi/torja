@@ -217,7 +217,7 @@ class MealProgramController extends Controller
     }
 
     /**
-     * List the meal program in the public /programs catalog, minting a
+     * List the meal program in the public /explore catalog, minting a
      * share token when needed so the catalog cards have a detail URL.
      */
     public function publish(MealProgram $mealProgram): JsonResponse

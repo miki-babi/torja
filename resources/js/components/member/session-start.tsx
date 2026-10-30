@@ -80,13 +80,13 @@ export function SessionStart({
                     <Button
                         key={p.id}
                         variant="outline"
-                        className="w-full justify-start"
+                        className="w-full justify-start h-12 rounded-2xl border-[#2E2E2E] bg-[#1A1A1A] hover:border-[#AFFA01]/40 hover:bg-[#222222]"
                         onClick={() => start(p.id)}
                         disabled={busy}
                     >
-                        <Play className="size-4 text-lime-600" />
-                        {p.name}
-                        <span className="ml-auto text-xs text-muted-foreground">
+                        <Play className="size-4 text-[#AFFA01] fill-[#AFFA01]" />
+                        <span className="font-semibold text-[#F5F5F5]">{p.name}</span>
+                        <span className="ml-auto text-xs text-[#8E8E93]">
                             {p.exercise_ids.length} exercise
                             {p.exercise_ids.length === 1 ? '' : 's'}
                         </span>
@@ -95,12 +95,12 @@ export function SessionStart({
 
                 <Button
                     variant="outline"
-                    className="w-full justify-start"
+                    className="w-full justify-start h-12 rounded-2xl border-[#2E2E2E] bg-[#1A1A1A] hover:border-[#AFFA01]/40 hover:bg-[#222222]"
                     onClick={() => start(null)}
                     disabled={busy}
                 >
-                    <Play className="size-4" />
-                    Free session
+                    <Play className="size-4 text-[#AFFA01]" />
+                    <span className="font-semibold text-[#F5F5F5]">Free session</span>
                 </Button>
             </CardContent>
         </Card>
