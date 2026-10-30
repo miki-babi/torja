@@ -365,7 +365,7 @@ export function WorkoutPlayer({
     }
 
     return (
-        <div className="flex min-h-[90vh] flex-col justify-between pb-6 text-[#F5F5F5] select-none">
+        <div className="flex min-h-[90vh] flex-col justify-between pb-28 text-[#F5F5F5] select-none">
             {/* Top Bar Header */}
             <div className="relative flex items-center justify-center border-b border-[#2E2E2E]/60 pb-3">
                 <div className="text-center">
@@ -609,37 +609,39 @@ export function WorkoutPlayer({
                 )}
             </div>
 
-            {/* Bottom Actions Bar */}
-            <div className="flex items-center gap-3 pt-2">
-                {/* Skip Exercise (Secondary Variant) */}
-                <button
-                    type="button"
-                    disabled={setJustCompleted}
-                    onClick={handleSkipExercise}
-                    className="flex h-14 flex-1 items-center justify-center rounded-2xl border border-[#AFFA01]/30 bg-[#AFFA01]/10 px-4 text-sm font-bold text-[#F5F5F5] transition-all hover:bg-[#AFFA01]/20 active:scale-[0.98] disabled:opacity-40"
-                >
-                    Skip
-                </button>
+            {/* Bottom Actions Bar — pinned to the viewport */}
+            <div className="fixed inset-x-0 bottom-0 z-40">
+                <div className="mx-auto flex w-full max-w-md items-center gap-3 bg-gradient-to-t from-black via-black/95 to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                    {/* Skip Exercise (Secondary Variant) */}
+                    <button
+                        type="button"
+                        disabled={setJustCompleted}
+                        onClick={handleSkipExercise}
+                        className="flex h-14 flex-1 items-center justify-center rounded-2xl border border-[#AFFA01]/30 bg-[#AFFA01]/10 px-4 text-sm font-bold text-[#F5F5F5] transition-all hover:bg-[#AFFA01]/20 active:scale-[0.98] disabled:opacity-40"
+                    >
+                        Skip
+                    </button>
 
-                {/* Complete Set (Primary Fit Green Gradient Variant) */}
-                <button
-                    type="button"
-                    disabled={setJustCompleted}
-                    onClick={handleCompleteSet}
-                    className={cn(
-                        'flex h-14 flex-[2] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-6 text-base font-bold text-black shadow-[0_8px_24px_rgba(175,250,1,0.28)] transition-all active:scale-[0.98] disabled:opacity-80',
-                        setJustCompleted && 'scale-[1.02] bg-[#AFFA01]',
-                    )}
-                >
-                    {setJustCompleted ? (
-                        <>
-                            <Check className="size-5 stroke-[3]" />
-                            <span>Nice!</span>
-                        </>
-                    ) : (
-                        <span>Complete Set</span>
-                    )}
-                </button>
+                    {/* Complete Set (Primary Fit Green Gradient Variant) */}
+                    <button
+                        type="button"
+                        disabled={setJustCompleted}
+                        onClick={handleCompleteSet}
+                        className={cn(
+                            'flex h-14 flex-[2] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-6 text-base font-bold text-black shadow-[0_8px_24px_rgba(175,250,1,0.28)] transition-all active:scale-[0.98] disabled:opacity-80',
+                            setJustCompleted && 'scale-[1.02] bg-[#AFFA01]',
+                        )}
+                    >
+                        {setJustCompleted ? (
+                            <>
+                                <Check className="size-5 stroke-[3]" />
+                                <span>Nice!</span>
+                            </>
+                        ) : (
+                            <span>Complete Set</span>
+                        )}
+                    </button>
+                </div>
             </div>
 
             {/* Numeric Edit Modal Dialog */}
