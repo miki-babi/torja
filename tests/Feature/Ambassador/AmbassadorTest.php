@@ -85,6 +85,31 @@ test('clicking your own invite link does not self-refer', function () {
     expect($ambassador->fresh()->referred_by_id)->toBeNull();
 });
 
+test('the invite url is a telegram mini app link when the bot is configured', function () {
+    config()->set('services.telegram.bot_username', 'trainpro_bot');
+    config()->set('services.telegram.mini_app_name', 'trainpro');
+
+    $user = User::factory()->create();
+    $user->ensureReferralCode();
+
+    expect($user->inviteUrl())
+        ->toBe("https://t.me/trainpro_bot/trainpro?startapp=ref_{$user->referral_code}");
+
+    config()->set('services.telegram.mini_app_name', null);
+
+    expect($user->inviteUrl())
+        ->toBe("https://t.me/trainpro_bot?startapp=ref_{$user->referral_code}");
+});
+
+test('the invite url falls back to the web route without a telegram bot', function () {
+    config()->set('services.telegram.bot_username', null);
+
+    $user = User::factory()->create();
+    $user->ensureReferralCode();
+
+    expect($user->inviteUrl())->toBe(route('invite.show', $user->referral_code));
+});
+
 test('a successful pro payment creates a pending commission for the referrer', function () {
     $ambassador = User::factory()->create();
     $buyer = User::factory()->create(['referred_by_id' => $ambassador->id]);

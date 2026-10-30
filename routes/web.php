@@ -38,9 +38,6 @@ Route::middleware('guest')->group(function () {
     Route::post('auth/telegram/complete', [TelegramLoginController::class, 'complete'])
         ->middleware('throttle:20,1')
         ->name('telegram.login.complete');
-    Route::post('auth/telegram/webapp', [TelegramLoginController::class, 'webapp'])
-        ->middleware('throttle:20,1')
-        ->name('telegram.login.webapp');
     Route::inertia('admin/login', 'auth/admin-login', [
         'canResetPassword' => Features::enabled(Features::resetPasswords()),
     ])->name('admin.login');
@@ -48,6 +45,12 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:60,1')
         ->name('telegram.login.debug');
 });
+
+// Outside the guest group: already-authenticated Mini App sessions also
+// post here so a `startapp=ref_<code>` invite binds their referrer.
+Route::post('auth/telegram/webapp', [TelegramLoginController::class, 'webapp'])
+    ->middleware('throttle:20,1')
+    ->name('telegram.login.webapp');
 
 Route::post('locale', [LocalizationController::class, 'update'])
     ->name('locale.set');

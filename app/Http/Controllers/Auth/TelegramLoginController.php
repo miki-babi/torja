@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Responses\Concerns\RedirectsUsersByRole;
+use App\Listeners\BindReferrer;
 use App\Models\User;
 use App\Support\Telegram\InitData;
 use App\Support\Telegram\UserResolver;
+use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +24,9 @@ use Illuminate\Support\Str;
  *
  * `webapp` serves the Mini App flow: the auth screen detects signed
  * `initData`, posts it here, and the verified Telegram user is signed in
- * (creating an account on the fly when unknown) with no round-trip.
+ * (creating an account on the fly when unknown) with no round-trip. An
+ * ambassador `startapp=ref_<code>` start param binds the referrer, both
+ * on sign-in and for already-authenticated Mini App sessions.
  */
 class TelegramLoginController extends Controller
 {
@@ -140,12 +144,41 @@ class TelegramLoginController extends Controller
             'created' => $user->wasRecentlyCreated,
         ]);
 
-        Auth::guard('web')->login($user);
-        $request->session()->regenerate();
+        $this->bindInvite($initData, $user);
+
+        if (! $request->user()?->is($user)) {
+            Auth::guard('web')->login($user);
+            $request->session()->regenerate();
+        }
 
         return response()->json([
             'redirect' => redirect()->intended($this->homeFor($user))->getTargetUrl(),
         ]);
+    }
+
+    /**
+     * Bind the ambassador behind a `ref_<code>` Mini App start param —
+     * the Mini App equivalent of the `/r/{code}` web invite link.
+     */
+    private function bindInvite(InitData $initData, User $user): void
+    {
+        $param = $initData->startParam();
+
+        if ($param === null || preg_match('/^ref_([\w-]{1,512})$/', $param, $matches) !== 1) {
+            return;
+        }
+
+        $referrer = User::query()->where('referral_code', $matches[1])->first();
+
+        if ($referrer === null) {
+            return;
+        }
+
+        app(Tracker::class)->record('ambassador.clicked', $user, [
+            'referrer_id' => $referrer->id,
+        ], $referrer);
+
+        app(BindReferrer::class)->bind($user, $matches[1]);
     }
 
     /**

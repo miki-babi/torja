@@ -338,7 +338,10 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * The shareable invite URL carrying this user's referral code.
+     * The shareable invite URL carrying this user's referral code — a
+     * Telegram Mini App link (`t.me/<bot>[/<app>]?startapp=ref_<code>`)
+     * when the bot is configured, falling back to the web `/r/{code}`
+     * route otherwise.
      */
     public function inviteUrl(): ?string
     {
@@ -346,7 +349,16 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             return null;
         }
 
-        return route('invite.show', $this->referral_code);
+        $bot = config('services.telegram.bot_username');
+
+        if (! is_string($bot) || $bot === '') {
+            return route('invite.show', $this->referral_code);
+        }
+
+        $app = config('services.telegram.mini_app_name');
+        $app = is_string($app) && $app !== '' ? "/{$app}" : '';
+
+        return "https://t.me/{$bot}{$app}?startapp=ref_{$this->referral_code}";
     }
 
     /**

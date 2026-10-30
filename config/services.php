@@ -58,6 +58,7 @@ return [
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),
+        'mini_app_name' => env('TELEGRAM_MINI_APP_NAME'),
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
     ],
 

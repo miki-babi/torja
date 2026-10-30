@@ -6,6 +6,9 @@ declare global {
         Telegram?: {
             WebApp?: {
                 initData?: string;
+                initDataUnsafe?: {
+                    start_param?: string;
+                };
                 ready?: () => void;
                 expand?: () => void;
             };
@@ -36,9 +39,42 @@ export function telegramInitData(): {
 
     const fromHash = hashParams().get('tgWebAppData');
 
-    return fromHash !== null && fromHash !== ''
+    return typeof fromHash === 'string' && fromHash !== ''
         ? { initData: fromHash, source: 'hash' }
         : null;
+}
+
+/**
+ * The `startapp` parameter the Mini App was opened with — from the SDK's
+ * `initDataUnsafe` when available, else decoded out of the raw initData
+ * query string.
+ */
+export function telegramStartParam(initData: string): string | null {
+    const fromSdk = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+
+    if (typeof fromSdk === 'string' && fromSdk !== '') {
+        return fromSdk;
+    }
+
+    for (const pair of initData.split('&')) {
+        const index = pair.indexOf('=');
+
+        if (index === -1) {
+            continue;
+        }
+
+        try {
+            if (decodeURIComponent(pair.slice(0, index)) === 'start_param') {
+                const value = decodeURIComponent(pair.slice(index + 1));
+
+                return value === '' ? null : value;
+            }
+        } catch {
+            // Keep malformed pairs out rather than aborting the parse.
+        }
+    }
+
+    return null;
 }
 
 /**

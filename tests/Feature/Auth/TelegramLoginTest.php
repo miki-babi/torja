@@ -13,7 +13,7 @@ beforeEach(function () {
     Http::fake();
 });
 
-function signedInitData(array $user = [], ?int $authDate = null): string
+function signedInitData(array $user = [], ?int $authDate = null, ?string $startParam = null): string
 {
     $data = [
         'auth_date' => (string) ($authDate ?? time()),
@@ -27,6 +27,10 @@ function signedInitData(array $user = [], ?int $authDate = null): string
             ...$user,
         ]),
     ];
+
+    if ($startParam !== null) {
+        $data['start_param'] = $startParam;
+    }
 
     $pairs = [];
 
@@ -208,6 +212,70 @@ test('webapp signs in an existing telegram user without duplicating', function (
     $this->assertAuthenticatedAs($user);
 
     expect(User::where('telegram_id', 555001)->count())->toBe(1);
+});
+
+test('webapp binds the ambassador from a ref start param on sign-in', function () {
+    $ambassador = User::factory()->create();
+    $ambassador->ensureReferralCode();
+
+    $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(startParam: "ref_{$ambassador->referral_code}"),
+    ])->assertOk();
+
+    $user = User::firstWhere('telegram_id', 555001);
+
+    expect($user->referred_by_id)->toBe($ambassador->id);
+});
+
+test('webapp binds an existing telegram member from a ref start param', function () {
+    $ambassador = User::factory()->create();
+    $ambassador->ensureReferralCode();
+    $member = User::factory()->withTelegram()->create(['telegram_id' => 555001]);
+
+    $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(startParam: "ref_{$ambassador->referral_code}"),
+    ])->assertOk();
+
+    expect($member->fresh()->referred_by_id)->toBe($ambassador->id);
+});
+
+test('webapp ignores unknown and self invite start params', function () {
+    $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(startParam: 'ref_nosuchcode'),
+    ])->assertOk();
+
+    $user = User::firstWhere('telegram_id', 555001);
+    expect($user->referred_by_id)->toBeNull();
+
+    $user->ensureReferralCode();
+    $this->post(route('logout'));
+
+    $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(startParam: "ref_{$user->referral_code}"),
+    ])->assertOk();
+
+    expect($user->fresh()->referred_by_id)->toBeNull();
+});
+
+test('an authenticated mini app session rebinds the referrer without a new login', function () {
+    $first = User::factory()->create();
+    $first->ensureReferralCode();
+    $second = User::factory()->create();
+    $second->ensureReferralCode();
+
+    $member = User::factory()->withTelegram()->create([
+        'telegram_id' => 555001,
+        'referred_by_id' => $first->id,
+    ]);
+
+    $this->actingAs($member)
+        ->postJson(route('telegram.login.webapp'), [
+            'init_data' => signedInitData(startParam: "ref_{$second->referral_code}"),
+        ])
+        ->assertOk();
+
+    expect($member->fresh()->referred_by_id)->toBe($second->id)
+        ->and(auth()->id())->toBe($member->id);
 });
 
 test('webapp rejects a tampered signature', function () {

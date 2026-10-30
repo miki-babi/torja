@@ -89,4 +89,15 @@ class InitData
 
         return is_array($user) && isset($user['id']) ? $user : null;
     }
+
+    /**
+     * The `startapp` parameter the Mini App was opened with
+     * (`t.me/<bot>[/<app>]?startapp=<param>`), or null when absent.
+     */
+    public function startParam(): ?string
+    {
+        $param = $this->data['start_param'] ?? null;
+
+        return is_string($param) && $param !== '' ? $param : null;
+    }
 }
