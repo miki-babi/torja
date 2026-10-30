@@ -36,6 +36,8 @@
 
         @fonts
 
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>

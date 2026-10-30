@@ -3,6 +3,7 @@
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
@@ -238,6 +239,27 @@ test('webapp fails when telegram is not configured', function () {
     $this->postJson(route('telegram.login.webapp'), [
         'init_data' => signedInitData(),
     ])->assertStatus(503);
+});
+
+test('debug endpoint records client-reported events', function () {
+    Log::spy();
+
+    $this->postJson(route('telegram.login.debug'), [
+        'event' => 'webapp-failed',
+        'context' => ['status' => 503],
+    ])->assertOk()->assertJson(['ok' => true]);
+
+    Log::shouldHaveReceived('info')
+        ->with('telegram.webapp.client', [
+            'event' => 'webapp-failed',
+            'context' => ['status' => 503],
+        ]);
+});
+
+test('debug endpoint rejects malformed event names', function () {
+    $this->postJson(route('telegram.login.debug'), [
+        'event' => 'not a valid event!',
+    ])->assertStatus(422);
 });
 
 test('link token flow still binds telegram chat id and stores identity', function () {

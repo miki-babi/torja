@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -107,9 +108,13 @@ class TelegramLoginController extends Controller
      */
     public function webapp(Request $request): JsonResponse
     {
+        Log::info('telegram.webapp hit', ['has_init_data' => $request->filled('init_data')]);
+
         $botToken = config('services.telegram.bot_token');
 
         if (empty($botToken)) {
+            Log::warning('telegram.webapp rejected: bot token not configured');
+
             return response()->json(['error' => 'Telegram login is not configured.'], 503);
         }
 
@@ -117,13 +122,23 @@ class TelegramLoginController extends Controller
             'init_data' => ['required', 'string', 'max:8192'],
         ]);
 
-        $from = InitData::verify($validated['init_data'], $botToken)?->user();
+        $initData = InitData::verify($validated['init_data'], $botToken, $failure);
+        $from = $initData?->user();
 
         if ($from === null || app(UserResolver::class)->telegramId($from) === null) {
+            Log::warning('telegram.webapp rejected: invalid init data', [
+                'reason' => $from === null ? ($failure ?? 'no-user') : 'no-telegram-id',
+            ]);
+
             return response()->json(['status' => 'invalid'], 401);
         }
 
         $user = app(UserResolver::class)->resolve($from);
+
+        Log::info('telegram.webapp signed in', [
+            'user_id' => $user->id,
+            'created' => $user->wasRecentlyCreated,
+        ]);
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
@@ -131,6 +146,23 @@ class TelegramLoginController extends Controller
         return response()->json([
             'redirect' => redirect()->intended($this->homeFor($user))->getTargetUrl(),
         ]);
+    }
+
+    /**
+     * Fire-and-forget client log sink: the auth screen reports what it saw
+     * (payload found, sign-in failure status) so Mini App sign-in attempts
+     * leave a trail in the log.
+     */
+    public function debug(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'event' => ['required', 'string', 'max:60', 'regex:/^[a-z0-9_.-]{2,60}$/'],
+            'context' => ['nullable', 'array', 'max:20'],
+        ]);
+
+        Log::info('telegram.webapp.client', $validated);
+
+        return response()->json(['ok' => true]);
     }
 
     /**

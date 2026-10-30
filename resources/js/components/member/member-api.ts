@@ -1,4 +1,4 @@
-function xsrfToken(): string {
+export function xsrfToken(): string {
     const cookie = document.cookie
         .split('; ')
         .find((c) => c.startsWith('XSRF-TOKEN='));

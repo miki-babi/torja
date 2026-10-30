@@ -39,6 +39,9 @@ Route::middleware('guest')->group(function () {
     Route::post('auth/telegram/webapp', [TelegramLoginController::class, 'webapp'])
         ->middleware('throttle:20,1')
         ->name('telegram.login.webapp');
+    Route::post('auth/telegram/debug', [TelegramLoginController::class, 'debug'])
+        ->middleware('throttle:60,1')
+        ->name('telegram.login.debug');
 });
 
 Route::post('locale', [LocalizationController::class, 'update'])

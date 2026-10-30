@@ -26,15 +26,18 @@ class InitData
 
     /**
      * Parse and verify a raw initData query string. Returns null when the
-     * signature is invalid, the payload is stale, or fields are malformed.
+     * signature is invalid, the payload is stale, or fields are malformed;
+     * `$failure` then reports which gate rejected it.
      */
-    public static function verify(string $initData, string $botToken): ?self
+    public static function verify(string $initData, string $botToken, ?string &$failure = null): ?self
     {
         parse_str($initData, $data);
 
         $hash = $data['hash'] ?? null;
 
         if (! is_string($hash) || $hash === '') {
+            $failure = 'no-hash';
+
             return null;
         }
 
@@ -44,6 +47,8 @@ class InitData
 
         foreach ($data as $key => $value) {
             if (! is_string($value)) {
+                $failure = 'malformed';
+
                 return null;
             }
 
@@ -56,12 +61,16 @@ class InitData
         $expected = hash_hmac('sha256', implode("\n", $pairs), $secret);
 
         if (! hash_equals($expected, $hash)) {
+            $failure = 'bad-signature';
+
             return null;
         }
 
         $authDate = (int) ($data['auth_date'] ?? 0);
 
         if ($authDate <= 0 || abs(time() - $authDate) > self::MAX_AGE) {
+            $failure = 'stale-auth-date';
+
             return null;
         }
 
