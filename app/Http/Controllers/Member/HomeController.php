@@ -46,6 +46,7 @@ class HomeController extends Controller
                 'title' => $playlist->name,
                 'muscle' => $muscle,
                 'exerciseCount' => $playlist->items->count(),
+                'playUrl' => route('member.playlists.play', $playlist),
             ],
             'streak' => $request->user()->activityStreak(),
         ]);

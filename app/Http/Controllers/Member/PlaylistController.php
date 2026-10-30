@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\Exercise;
 use App\Models\ExercisePlaylist;
+use App\Models\ExercisePlaylistItem;
 use App\Models\ShortLink;
+use App\Models\WorkoutSession;
 use App\Support\ExerciseCatalog;
 use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -41,6 +45,78 @@ class PlaylistController extends Controller
             'playlist' => $playlist->load(['items', 'program'])->toFrontend(),
             'sessions' => $sessions->map->toFrontend()->all(),
             'exerciseSummaries' => ExerciseCatalog::namesFor($exerciseIds),
+        ]);
+    }
+
+    /**
+     * Guided workout player for one playlist: opens (or resumes) today's
+     * session logged against it. Set/rep targets come from the source
+     * program workout when the playlist was copied from one.
+     */
+    public function play(Request $request, ExercisePlaylist $playlist): Response|RedirectResponse
+    {
+        $this->authorizeOwnership($request, $playlist);
+
+        $user = $request->user();
+
+        $playlist->load(['items', 'program', 'programWorkout.items']);
+
+        if ($playlist->items->isEmpty()) {
+            return to_route('member.today');
+        }
+
+        $session = WorkoutSession::where('user_id', $user->id)
+            ->whereDate('date', now()->toDateString())
+            ->where('exercise_playlist_id', $playlist->id)
+            ->first();
+
+        $resumed = $session !== null;
+
+        $session ??= WorkoutSession::create([
+            'user_id' => $user->id,
+            'date' => now()->toDateString(),
+            'exercise_playlist_id' => $playlist->id,
+        ]);
+
+        $targets = $playlist->programWorkout?->items->keyBy('exercise_id') ?? collect();
+
+        $exercises = Exercise::query()
+            ->whereIn('slug', $playlist->items->pluck('exercise_id'))
+            ->get()
+            ->keyBy('slug');
+
+        app(Tracker::class)->record('session.started', subject: $session, properties: [
+            'playlist_id' => $playlist->id,
+            'resumed' => $resumed,
+            'player' => true,
+        ]);
+
+        $back = (string) $request->query('back', '');
+
+        return Inertia::render('member/workout-player', [
+            'program' => [
+                'name' => $playlist->program?->localizedName() ?? 'Today',
+            ],
+            'workout' => [
+                'id' => $playlist->id,
+                'title' => $playlist->programWorkout?->title ?? $playlist->name,
+                'exercises' => $playlist->items
+                    ->map(function (ExercisePlaylistItem $item) use ($exercises, $targets): ?array {
+                        $exercise = $exercises->get($item->exercise_id);
+
+                        return $exercise === null ? null : [
+                            ...$exercise->toSummary(),
+                            'gif_url' => $exercise->gif_url,
+                            'sets' => $targets->get($item->exercise_id)?->sets,
+                            'reps' => $targets->get($item->exercise_id)?->reps,
+                        ];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all(),
+            ],
+            'session' => $session->load('sets')->toFrontend(),
+            'backUrl' => str_starts_with($back, '/') ? $back : route('member.home'),
         ]);
     }
 

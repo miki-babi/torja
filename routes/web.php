@@ -124,6 +124,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.meals.items.swap.destroy');
     Route::get('playlists/{playlist}', [Member\PlaylistController::class, 'show'])
         ->name('member.playlists.show');
+    Route::get('member/playlists/{playlist}/play', [Member\PlaylistController::class, 'play'])
+        ->name('member.playlists.play');
     Route::get('profile', Member\ProfileController::class)->name('member.profile');
     Route::post('member/telegram/link', [Member\TelegramController::class, 'link'])
         ->name('member.telegram.link');

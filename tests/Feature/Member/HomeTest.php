@@ -36,7 +36,8 @@ test('home generates todays workout playlist', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->has('todayWorkout.title')
             ->has('todayWorkout.muscle')
-            ->has('todayWorkout.exerciseCount'));
+            ->has('todayWorkout.exerciseCount')
+            ->has('todayWorkout.playUrl'));
 
     expect(ExercisePlaylist::where('user_id', $user->id)
         ->whereDate('generated_for', today())

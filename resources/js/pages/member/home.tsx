@@ -29,6 +29,7 @@ export default function MemberHome({
         title: string;
         muscle: string | null;
         exerciseCount: number;
+        playUrl: string;
     };
     streak: number;
 }) {
@@ -84,7 +85,7 @@ export default function MemberHome({
                     title={workoutTitle}
                     subtitle={workoutSubtitle}
                     ctaLabel={t('member.home.start_workout')}
-                    href={today()}
+                    href={todayWorkout.playUrl}
                 />
             </section>
 
