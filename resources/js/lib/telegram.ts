@@ -24,6 +24,10 @@ export function telegramInitData(): {
     initData: string;
     source: 'sdk' | 'hash';
 } | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
     const fromSdk = window.Telegram?.WebApp?.initData;
 
     if (typeof fromSdk === 'string' && fromSdk !== '') {
