@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -38,10 +39,12 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $telegram_link_token
  * @property int|null $telegram_id
  * @property string|null $telegram_username
+ * @property string|null $referral_code
+ * @property int|null $referred_by_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username'])]
+#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'telegram_link_token', 'attribution'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -274,6 +277,89 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function foodDiaryEntries(): HasMany
     {
         return $this->hasMany(FoodDiaryEntry::class);
+    }
+
+    /**
+     * The ambassador who referred this user, if any.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function referrer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by_id');
+    }
+
+    /**
+     * Users this ambassador referred.
+     *
+     * @return HasMany<User, $this>
+     */
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(User::class, 'referred_by_id');
+    }
+
+    /**
+     * Commissions this ambassador earned from referred Pro purchases.
+     *
+     * @return HasMany<ReferralCommission, $this>
+     */
+    public function referralCommissions(): HasMany
+    {
+        return $this->hasMany(ReferralCommission::class, 'affiliate_user_id');
+    }
+
+    /**
+     * This ambassador's payout requests.
+     *
+     * @return HasMany<ReferralPayout, $this>
+     */
+    public function referralPayouts(): HasMany
+    {
+        return $this->hasMany(ReferralPayout::class);
+    }
+
+    /**
+     * The user's ambassador invite code, minted on first use.
+     */
+    public function ensureReferralCode(): string
+    {
+        if ($this->referral_code !== null) {
+            return $this->referral_code;
+        }
+
+        do {
+            $code = Str::lower(Str::random(8));
+        } while (self::query()->where('referral_code', $code)->exists());
+
+        $this->forceFill(['referral_code' => $code])->save();
+
+        return $code;
+    }
+
+    /**
+     * The shareable invite URL carrying this user's referral code.
+     */
+    public function inviteUrl(): ?string
+    {
+        if ($this->referral_code === null) {
+            return null;
+        }
+
+        return route('invite.show', $this->referral_code);
+    }
+
+    /**
+     * Approved-but-unpaid commission total — the ambassador's payable
+     * wallet balance. Commissions locked into an open payout request are
+     * excluded so they can't be requested twice.
+     */
+    public function ambassadorBalance(): float
+    {
+        return (float) $this->referralCommissions()
+            ->where('status', 'approved')
+            ->whereNull('payout_id')
+            ->sum('amount');
     }
 
     /**

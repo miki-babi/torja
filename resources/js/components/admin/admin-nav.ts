@@ -8,6 +8,7 @@ import {
     Crown,
     Dumbbell,
     Globe,
+    HandCoins,
     Languages,
     LayoutDashboard,
     Package,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { analytics, dashboard } from '@/routes/admin';
+import { index as ambassadorsIndex } from '@/routes/admin/ambassadors';
 import { index as foodsIndex } from '@/routes/admin/foods';
 import { index as ingredientsIndex } from '@/routes/admin/ingredients';
 import { index as languagesIndex } from '@/routes/admin/languages';
@@ -63,6 +65,7 @@ export const adminNavGroups: AdminNavGroup[] = [
         label: 'Sales',
         items: [
             { title: 'Payments', href: paymentsIndex(), icon: CreditCard },
+            { title: 'Ambassadors', href: ambassadorsIndex(), icon: HandCoins },
             { title: 'Pro page', href: proPageEdit(), icon: Crown },
         ],
     },

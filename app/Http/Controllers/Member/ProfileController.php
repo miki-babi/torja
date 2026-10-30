@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
 use App\Services\Nutrition\NutritionTargetCalculator;
 use App\Services\Nutrition\ProfileResolver;
+use App\Support\AmbassadorProgram;
 use App\Support\ProPage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -33,6 +34,12 @@ class ProfileController extends Controller
             'isPro' => $isPro,
             'proUrl' => route('pro.show'),
             'ordersUrl' => route('member.orders.index'),
+            'ambassador' => [
+                'enabled' => AmbassadorProgram::isEnabled(),
+                'url' => route('member.ambassador'),
+                'balance' => $user?->ambassadorBalance() ?? 0,
+                'commission_etb' => AmbassadorProgram::commissionEtb(),
+            ],
             'proCard' => [
                 'title' => $isPro ? $copy['pro_title'] : $copy['card_title'],
                 'body' => $isPro ? $copy['pro_body'] : $copy['card_body'],

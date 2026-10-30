@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AmbassadorCommissionController;
+use App\Http\Controllers\Admin\AmbassadorController;
+use App\Http\Controllers\Admin\AmbassadorPayoutController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\FoodController;
 use App\Http\Controllers\Admin\IngredientController;
@@ -35,6 +38,14 @@ Route::middleware(['auth', 'verified', 'admin'])
         Route::get('pro-page', [ProPageController::class, 'edit'])->name('pro-page.edit');
         Route::put('pro-page', [ProPageController::class, 'update'])->name('pro-page.update');
         Route::delete('pro-page', [ProPageController::class, 'destroy'])->name('pro-page.reset');
+
+        Route::get('ambassadors', [AmbassadorController::class, 'index'])->name('ambassadors.index');
+        Route::get('ambassadors/settings', [AmbassadorController::class, 'editSettings'])->name('ambassadors.settings.edit');
+        Route::put('ambassadors/settings', [AmbassadorController::class, 'updateSettings'])->name('ambassadors.settings.update');
+        Route::post('ambassadors/commissions/{commission}/approve', [AmbassadorCommissionController::class, 'approve'])->name('ambassadors.commissions.approve');
+        Route::post('ambassadors/commissions/{commission}/void', [AmbassadorCommissionController::class, 'void'])->name('ambassadors.commissions.void');
+        Route::post('ambassadors/payouts/{payout}/paid', [AmbassadorPayoutController::class, 'markPaid'])->name('ambassadors.payouts.paid');
+        Route::post('ambassadors/payouts/{payout}/reject', [AmbassadorPayoutController::class, 'reject'])->name('ambassadors.payouts.reject');
 
         Route::post('shop-products/upload-image', [ShopProductController::class, 'uploadImage'])
             ->name('shop-products.upload-image');

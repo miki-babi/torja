@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\WizardSection;
+use App\Http\Controllers\AmbassadorRedirectController;
 use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\Member;
 use App\Http\Controllers\Plan\JamiWebhookController;
@@ -87,6 +88,8 @@ Route::get('shared/meal-programs/{mealProgram:share_token}', [Member\SharedMealP
     ->name('meal-programs.shared.show');
 
 Route::get('s/{code}', ShortLinkController::class)->name('links.resolve');
+
+Route::get('r/{code}', AmbassadorRedirectController::class)->name('invite.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('pro', [ProController::class, 'show'])->name('pro.show');
@@ -199,6 +202,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.diary.store');
     Route::delete('member/diary/{foodDiaryEntry}', [Member\FoodDiaryController::class, 'destroy'])
         ->name('member.diary.destroy');
+    Route::get('ambassador', [Member\AmbassadorController::class, 'show'])
+        ->name('member.ambassador');
+    Route::post('ambassador/payouts', [Member\AmbassadorController::class, 'storePayout'])
+        ->name('member.ambassador.payouts.store');
 });
 
 require __DIR__.'/settings.php';

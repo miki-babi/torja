@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Services\Payments\ChapaService;
 use App\Services\Payments\PaymentSynchronizer;
+use App\Services\Referrals\ReferralCommissioner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -95,7 +96,8 @@ class PaymentController extends Controller
 
             Inertia::flash('toast', [
                 'type' => 'success',
-                'message' => __('Payment marked as refunded. Refund the buyer manually from your provider dashboard or wallet.'),
+                'message' => __('Payment marked as refunded. Refund the buyer manually from your provider dashboard or wallet.')
+                    .$this->clawbackCommissions($payment),
             ]);
 
             return back();
@@ -120,9 +122,25 @@ class PaymentController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('Payment marked as refunded. If Chapa requires it, complete the refund from their dashboard.'),
+            'message' => __('Payment marked as refunded. If Chapa requires it, complete the refund from their dashboard.')
+                .$this->clawbackCommissions($payment),
         ]);
 
         return back();
+    }
+
+    /**
+     * Void unpaid ambassador commissions tied to a refunded payment.
+     * Returns a warning suffix for the toast when an already-paid
+     * commission exists — that money is out the door and needs a manual
+     * follow-up with the ambassador.
+     */
+    private function clawbackCommissions(Payment $payment): string
+    {
+        $paid = app(ReferralCommissioner::class)->voidFor($payment);
+
+        return $paid
+            ? ' '.__('Note: a commission on this payment was already paid out.')
+            : '';
     }
 }

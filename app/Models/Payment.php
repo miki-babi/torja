@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\Programs\MealProgramAccessGranter;
 use App\Services\Programs\ProgramAccessGranter;
+use App\Services\Referrals\ReferralCommissioner;
 use App\Support\Tracking\Tracker;
 use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -157,5 +158,7 @@ class Payment extends Model
         } elseif ($payable instanceof MealProgram) {
             app(MealProgramAccessGranter::class)->grant($this->user, $payable, $this);
         }
+
+        app(ReferralCommissioner::class)->grant($this);
     }
 }
