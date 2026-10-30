@@ -6,19 +6,32 @@ import {
     type PlanDay,
 } from '@/components/member/types';
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from '@/lib/i18n';
 import { meal } from '@/routes/member';
 import { show as mealShow } from '@/routes/member/meals';
 
 export function MealPlanCard({ planDay }: { planDay: PlanDay | null }) {
+    const { t } = useTranslation();
+
+    /**
+     * Translated meal-type label (meal_type.*), falling back to the English
+     * catalog label when no language line exists.
+     */
+    function typeLabel(type: string): string {
+        const key = `meal_type.${type}`;
+        const text = t(key);
+        return text === key ? mealTypeLabel(type) : text;
+    }
+
     if (planDay === null || planDay.meals.length === 0) {
         return (
             <Card>
                 <CardContent className="flex flex-col gap-2 p-4">
                     <h2 className="text-sm font-medium text-muted-foreground">
-                        Today's meal plan
+                        {t('member.home.todays_meal_plan')}
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                        No meal plan yet.
+                        {t('member.home.no_meal_plan')}
                     </p>
                 </CardContent>
             </Card>
@@ -30,7 +43,7 @@ export function MealPlanCard({ planDay }: { planDay: PlanDay | null }) {
             <CardContent className="divide-y divide-[#2E2E2E] p-0">
                 <div className="px-5 py-4">
                     <h2 className="text-sm font-semibold tracking-wider text-[#AFFA01] uppercase">
-                        Today's Meal Plan
+                        {t('member.home.todays_meal_plan')}
                     </h2>
                 </div>
                 {planDay.meals.map((m, index) => (
@@ -43,7 +56,7 @@ export function MealPlanCard({ planDay }: { planDay: PlanDay | null }) {
                     >
                         <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-[#F5F5F5]">
-                                {mealTypeLabel(m.type)}
+                                {typeLabel(m.type)}
                             </p>
                             <p className="truncate text-xs text-[#A1A1AA]">
                                 {mealItemSummary(m)}

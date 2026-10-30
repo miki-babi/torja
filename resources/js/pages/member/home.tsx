@@ -10,11 +10,11 @@ import { useTranslation } from '@/lib/i18n';
 import { exercise, meal, today } from '@/routes/member';
 import { index as exploreIndex } from '@/routes/explore';
 
-function getGreeting(): string {
+function greetingKey(): string {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'greeting_morning';
+    if (hour < 17) return 'greeting_afternoon';
+    return 'greeting_evening';
 }
 
 export default function MemberHome({
@@ -25,15 +25,42 @@ export default function MemberHome({
 }: {
     userName: string;
     planDay: PlanDay | null;
-    todayWorkout: { title: string; subtitle: string };
+    todayWorkout: {
+        title: string;
+        muscle: string | null;
+        exerciseCount: number;
+    };
     streak: number;
 }) {
     const { t } = useTranslation();
-    const greeting = getGreeting();
+    const greeting = t(`member.home.${greetingKey()}`);
+
+    /**
+     * Translated body-part label (exercise_values.body_part.*), falling back
+     * to the raw catalog value when no language line exists.
+     */
+    function tv(value: string): string {
+        const key = `exercise_values.body_part.${value}`;
+        const text = t(key);
+        return text === key ? value : text;
+    }
+
+    const muscleLabel =
+        todayWorkout.muscle === null
+            ? t('member.home.full_body')
+            : tv(todayWorkout.muscle);
+    const workoutTitle =
+        todayWorkout.muscle === null
+            ? todayWorkout.title
+            : t('member.home.focus_title', { muscle: muscleLabel });
+    const workoutSubtitle = t('member.home.workout_subtitle', {
+        muscle: muscleLabel,
+        count: todayWorkout.exerciseCount,
+    });
 
     return (
         <MobileShell>
-            <Head title="Home" />
+            <Head title={t('member.home.title')} />
 
             {/* PrimeGym Header */}
             <div className="flex items-center justify-between pt-2">
@@ -43,7 +70,9 @@ export default function MemberHome({
                     </h1>
                     <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-[#AFFA01]">
                         <Flame className="size-3.5 fill-[#AFFA01] text-[#AFFA01]" />
-                        <span>{streak} day streak</span>
+                        <span>
+                            {t('member.home.day_streak', { count: streak })}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -51,10 +80,10 @@ export default function MemberHome({
             {/* PrimeGym Hero Today's Workout Card */}
             <section className="mt-5">
                 <TodaysWorkoutCard
-                    todayLabel="TODAY"
-                    title={todayWorkout.title}
-                    subtitle={todayWorkout.subtitle || '0 / 1 workout'}
-                    ctaLabel="Start Workout"
+                    todayLabel={t('member.home.today')}
+                    title={workoutTitle}
+                    subtitle={workoutSubtitle}
+                    ctaLabel={t('member.home.start_workout')}
                     href={today()}
                 />
             </section>
@@ -66,28 +95,28 @@ export default function MemberHome({
                     className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] px-3.5 py-2 text-xs font-semibold text-[#F5F5F5] transition-colors hover:border-[#AFFA01]/30"
                 >
                     <Sparkles className="size-3.5 text-[#AFFA01]" />
-                    <span>Exercises</span>
+                    <span>{t('member.home.chip_exercises')}</span>
                 </Link>
                 <Link
                     href={today()}
                     className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-[#AFFA01]/30 bg-[#1F1F1F] px-3.5 py-2 text-xs font-semibold text-[#F5F5F5] transition-colors hover:border-[#AFFA01]/60"
                 >
                     <Dumbbell className="size-3.5 text-[#AFFA01]" />
-                    <span>Workout</span>
+                    <span>{t('member.home.chip_workout')}</span>
                 </Link>
                 <Link
                     href={meal()}
                     className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] px-3.5 py-2 text-xs font-semibold text-[#F5F5F5] transition-colors hover:border-[#AFFA01]/30"
                 >
                     <Utensils className="size-3.5 text-[#AFFA01]" />
-                    <span>Meal Plan</span>
+                    <span>{t('member.home.chip_meal_plan')}</span>
                 </Link>
                 <Link
                     href={exploreIndex()}
                     className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] px-3.5 py-2 text-xs font-semibold text-[#F5F5F5] transition-colors hover:border-[#AFFA01]/30"
                 >
                     <Compass className="size-3.5 text-[#AFFA01]" />
-                    <span>Programs</span>
+                    <span>{t('member.home.chip_programs')}</span>
                 </Link>
             </div>
 

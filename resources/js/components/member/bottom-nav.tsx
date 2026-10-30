@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Compass, Dumbbell, House, User, UtensilsCrossed } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { exercise, home, meal, profile } from '@/routes/member';
 import { index as exploreIndex } from '@/routes/explore';
@@ -25,6 +26,7 @@ const TABS = [
 export function BottomNav() {
     const { url } = usePage();
     const { auth } = usePage().props;
+    const { t } = useTranslation();
 
     if (!auth.user) {
         return null;
@@ -60,7 +62,7 @@ export function BottomNav() {
                                     active ? 'font-bold' : 'font-medium',
                                 )}
                             >
-                                {label}
+                                {t(`nav.${label}`)}
                             </span>
                         </Link>
                     );

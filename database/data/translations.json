@@ -37,6 +37,28 @@
             "am": "ልምምድ"
         }
     },
+    "nav": {
+        "home": {
+            "en": "Home",
+            "am": "መነሻ"
+        },
+        "exercise": {
+            "en": "Exercise",
+            "am": "ልምምድ"
+        },
+        "meal": {
+            "en": "Meals",
+            "am": "ምግብ"
+        },
+        "explore": {
+            "en": "Explore",
+            "am": "ያስሱ"
+        },
+        "profile": {
+            "en": "Profile",
+            "am": "መገለጫ"
+        }
+    },
     "settings": {
         "language": {
             "en": "Language",
@@ -127,6 +149,66 @@
         "full_body": {
             "en": "Full body",
             "am": "ሙሉ አካል"
+        },
+        "title": {
+            "en": "Home",
+            "am": "መነሻ"
+        },
+        "greeting_morning": {
+            "en": "Good morning",
+            "am": "እንደምን አደሩ"
+        },
+        "greeting_afternoon": {
+            "en": "Good afternoon",
+            "am": "እንደምን ዋሉ"
+        },
+        "greeting_evening": {
+            "en": "Good evening",
+            "am": "እንደምን አመሹ"
+        },
+        "day_streak": {
+            "en": ":count day streak",
+            "am": ":count ቀን ተከታታይ"
+        },
+        "today": {
+            "en": "Today",
+            "am": "ዛሬ"
+        },
+        "start_workout": {
+            "en": "Start workout",
+            "am": "ልምምድ ይጀምሩ"
+        },
+        "focus_title": {
+            "en": ":muscle focus",
+            "am": "የ:muscle ልምምድ"
+        },
+        "workout_subtitle": {
+            "en": ":muscle · :count exercises",
+            "am": ":muscle · :count ልምምዶች"
+        },
+        "chip_exercises": {
+            "en": "Exercises",
+            "am": "ልምምዶች"
+        },
+        "chip_workout": {
+            "en": "Workout",
+            "am": "ልምምድ"
+        },
+        "chip_meal_plan": {
+            "en": "Meal plan",
+            "am": "የምግብ እቅድ"
+        },
+        "chip_programs": {
+            "en": "Programs",
+            "am": "ፕሮግራሞች"
+        },
+        "todays_meal_plan": {
+            "en": "Today's meal plan",
+            "am": "የዛሬ የምግብ እቅድ"
+        },
+        "no_meal_plan": {
+            "en": "No meal plan yet.",
+            "am": "እስካሁን የምግብ እቅድ የለም።"
         }
     },
     "member.today": {
@@ -741,6 +823,32 @@
         "log_failed_toast": {
             "en": "Could not log meal",
             "am": "ምግቡን ማስቀመጥ አልተቻለም"
+        }
+    },
+    "meal_type": {
+        "breakfast": {
+            "en": "Breakfast",
+            "am": "ቁርስ"
+        },
+        "snack": {
+            "en": "Snack",
+            "am": "መክሰስ"
+        },
+        "lunch": {
+            "en": "Lunch",
+            "am": "ምሳ"
+        },
+        "post_workout": {
+            "en": "Post-workout",
+            "am": "ከልምምድ በኋላ"
+        },
+        "dinner": {
+            "en": "Dinner",
+            "am": "እራት"
+        },
+        "before_bed": {
+            "en": "Before bed",
+            "am": "ከመተኛት በፊት"
         }
     },
     "exercise_values": {

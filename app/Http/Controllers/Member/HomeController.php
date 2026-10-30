@@ -44,8 +44,8 @@ class HomeController extends Controller
             'planDay' => $this->preview->for($profile, $day),
             'todayWorkout' => [
                 'title' => $playlist->name,
-                'subtitle' => ($muscle === null ? 'Full body' : ExerciseCatalog::label($muscle))
-                    .' · '.$playlist->items->count().' exercises',
+                'muscle' => $muscle,
+                'exerciseCount' => $playlist->items->count(),
             ],
             'streak' => $request->user()->activityStreak(),
         ]);
