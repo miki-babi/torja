@@ -12,6 +12,35 @@ beforeEach(function () {
     Http::fake();
 });
 
+function signedInitData(array $user = [], ?int $authDate = null): string
+{
+    $data = [
+        'auth_date' => (string) ($authDate ?? time()),
+        'query_id' => 'AAHdF6IQAAAAAN0XohDhrOrc',
+        'user' => json_encode([
+            'id' => 555001,
+            'username' => 'janedoe',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
+            'language_code' => 'en',
+            ...$user,
+        ]),
+    ];
+
+    $pairs = [];
+
+    foreach ($data as $key => $value) {
+        $pairs[$key] = "{$key}={$value}";
+    }
+
+    ksort($pairs);
+
+    $secret = hash_hmac('sha256', 'test-token', 'WebAppData', true);
+    $data['hash'] = hash_hmac('sha256', implode("\n", $pairs), $secret);
+
+    return http_build_query($data);
+}
+
 function telegramUpdate(string $text, array $from = [], int $chatId = 12345): array
 {
     return [
@@ -147,6 +176,68 @@ test('webhook ignores login starts in group chats', function () {
 
     expect(Cache::get("tg-login:{$token}"))->toBe(['user_id' => null]);
     expect(User::count())->toBe(0);
+});
+
+test('webapp signs in a verified mini app user and creates the account', function () {
+    $response = $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(),
+    ]);
+
+    $response->assertOk()->assertJsonStructure(['redirect']);
+
+    $user = User::firstWhere('telegram_id', 555001);
+
+    expect($user)->not->toBeNull()
+        ->and($user->name)->toBe('Jane Doe')
+        ->and($user->username)->toBe('janedoe')
+        ->and($user->telegram_username)->toBe('janedoe')
+        ->and($user->telegram_chat_id)->toBeNull();
+
+    $this->assertAuthenticatedAs($user);
+});
+
+test('webapp signs in an existing telegram user without duplicating', function () {
+    $user = User::factory()->withTelegram()->create(['telegram_id' => 555001]);
+
+    $response = $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(),
+    ]);
+
+    $response->assertOk();
+    $this->assertAuthenticatedAs($user);
+
+    expect(User::where('telegram_id', 555001)->count())->toBe(1);
+});
+
+test('webapp rejects a tampered signature', function () {
+    $initData = signedInitData();
+    $initData = str_replace('auth_date=', 'auth_date=1', $initData);
+
+    $this->postJson(route('telegram.login.webapp'), ['init_data' => $initData])
+        ->assertStatus(401);
+
+    $this->assertGuest();
+    expect(User::count())->toBe(0);
+});
+
+test('webapp rejects a stale payload', function () {
+    $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(authDate: time() - 90000),
+    ])->assertStatus(401);
+
+    $this->assertGuest();
+});
+
+test('webapp requires the init data field', function () {
+    $this->postJson(route('telegram.login.webapp'))->assertStatus(422);
+});
+
+test('webapp fails when telegram is not configured', function () {
+    config()->set('services.telegram.bot_token', null);
+
+    $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(),
+    ])->assertStatus(503);
 });
 
 test('link token flow still binds telegram chat id and stores identity', function () {
