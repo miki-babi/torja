@@ -20,6 +20,7 @@ use App\Support\Telegram\BroadcastSender;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -55,6 +56,12 @@ class TelegramBroadcastController extends Controller
         $broadcast = TelegramBroadcast::create(
             $request->payload() + ['created_by' => $request->user()->id],
         );
+
+        Log::info('broadcast.saved', [
+            'broadcast_id' => $broadcast->id,
+            'action' => 'created',
+            'send_mode' => (string) $request->input('send_mode', 'draft'),
+        ]);
 
         $this->applySendMode($broadcast, (string) $request->input('send_mode', 'draft'));
 
@@ -159,6 +166,12 @@ class TelegramBroadcastController extends Controller
 
         $broadcast->forceFill(['status' => 'sending'])->save();
         DispatchTelegramBroadcast::dispatch($broadcast->id, 'manual');
+
+        Log::info('broadcast.queued', [
+            'broadcast_id' => $broadcast->id,
+            'trigger' => 'manual',
+            'queue' => config('queue.default'),
+        ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Broadcast queued for sending.')]);
 
@@ -348,6 +361,12 @@ class TelegramBroadcastController extends Controller
      */
     private function applySendMode(TelegramBroadcast $broadcast, string $sendMode): void
     {
+        Log::info('broadcast.send_mode', [
+            'broadcast_id' => $broadcast->id,
+            'send_mode' => $sendMode,
+            'queue' => config('queue.default'),
+        ]);
+
         if ($sendMode === 'now') {
             $broadcast->forceFill(['status' => 'sending'])->save();
             DispatchTelegramBroadcast::dispatch($broadcast->id, 'manual');

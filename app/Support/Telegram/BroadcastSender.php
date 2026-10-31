@@ -4,6 +4,7 @@ namespace App\Support\Telegram;
 
 use App\Enums\TelegramBroadcastType;
 use App\Models\TelegramBroadcast;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -38,6 +39,15 @@ class BroadcastSender
                 $chatId, $broadcast->poll ?? [], $markup, $flags,
             ),
         };
+
+        if (! $result->ok) {
+            Log::warning('broadcast.send_failed', [
+                'broadcast_id' => $broadcast->id,
+                'type' => $broadcast->type->value,
+                'error_code' => $result->errorCode,
+                'description' => $result->description,
+            ]);
+        }
 
         if ($result->ok && $result->fileIds !== []) {
             $this->cacheFileIds($broadcast, $result->fileIds);

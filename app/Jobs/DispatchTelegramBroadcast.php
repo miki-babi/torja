@@ -7,6 +7,7 @@ use App\Support\Telegram\BroadcastAudience;
 use App\Support\Telegram\SendsBroadcasts;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Kicks off one run of a broadcast: resolves the audience, creates the
@@ -29,6 +30,26 @@ class DispatchTelegramBroadcast implements ShouldQueue
      * Build the run and queue the send chunks.
      */
     public function handle(): void
+    {
+        Log::info('broadcast.dispatch_started', [
+            'broadcast_id' => $this->broadcastId,
+            'trigger' => $this->trigger,
+        ]);
+
+        try {
+            $this->dispatchRun();
+        } catch (\Throwable $e) {
+            Log::error('broadcast.dispatch_failed', [
+                'broadcast_id' => $this->broadcastId,
+                'trigger' => $this->trigger,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    private function dispatchRun(): void
     {
         $broadcast = TelegramBroadcast::query()->find($this->broadcastId);
 
@@ -73,9 +94,21 @@ class DispatchTelegramBroadcast implements ShouldQueue
 
         $run->update(['recipients_count' => $recipients]);
 
+        Log::info('broadcast.audience_resolved', [
+            'broadcast_id' => $broadcast->id,
+            'run_id' => $run->id,
+            'recipients' => $recipients,
+            'chunks' => $chunkIndex,
+        ]);
+
         // Nobody to send to — finish immediately rather than leaving the
         // broadcast stuck in `sending`.
         if ($recipients === 0) {
+            Log::warning('broadcast.no_recipients', [
+                'broadcast_id' => $broadcast->id,
+                'run_id' => $run->id,
+            ]);
+
             $run->update(['finished_at' => now()]);
             app(SendsBroadcasts::class)->finalize($broadcast, $run);
         }

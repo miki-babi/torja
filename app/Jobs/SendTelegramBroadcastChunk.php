@@ -8,6 +8,7 @@ use App\Support\Telegram\BroadcastSender;
 use App\Support\Telegram\SendsBroadcasts;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Sends one slice of a run's deliveries. Already-resolved deliveries are
@@ -32,9 +33,16 @@ class SendTelegramBroadcastChunk implements ShouldQueue
      */
     public function handle(BroadcastSender $sender, SendsBroadcasts $runs): void
     {
+        Log::info('broadcast.chunk_started', [
+            'run_id' => $this->runId,
+            'deliveries' => count($this->deliveryIds),
+        ]);
+
         $run = TelegramBroadcastRun::query()->with('broadcast')->find($this->runId);
 
         if ($run === null || $run->broadcast === null) {
+            Log::warning('broadcast.chunk_orphaned', ['run_id' => $this->runId]);
+
             return;
         }
 
@@ -86,8 +94,21 @@ class SendTelegramBroadcastChunk implements ShouldQueue
                         ->delay(now()->addSeconds(max(1, $result->retryAfter ?? 10)));
                 }
 
+                Log::info('broadcast.rate_limited', [
+                    'run_id' => $this->runId,
+                    'remaining' => count($remaining),
+                    'retry_after' => $result->retryAfter,
+                ]);
+
                 return;
             }
+
+            Log::warning('broadcast.delivery_failed', [
+                'delivery_id' => $delivery->id,
+                'chat_id' => $delivery->chat_id,
+                'error_code' => $result->errorCode,
+                'description' => $result->description,
+            ]);
 
             $delivery->update([
                 'status' => $result->isBlocked() ? 'blocked' : 'failed',

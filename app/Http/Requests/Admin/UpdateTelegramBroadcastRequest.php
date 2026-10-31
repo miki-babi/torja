@@ -8,6 +8,7 @@ use App\Support\Segments;
 use App\Support\Telegram\TelegramHtml;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 /**
@@ -287,5 +288,19 @@ class UpdateTelegramBroadcastRequest extends FormRequest
         unset($data['send_mode']);
 
         return $data;
+    }
+
+    /**
+     * Surface silent 422s — the composer may not render every error key,
+     * so rejections are recorded in the log for diagnosis.
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        Log::warning('broadcast.validation_failed', [
+            'route' => $this->route()?->getName(),
+            'errors' => $validator->errors()->toArray(),
+        ]);
+
+        parent::failedValidation($validator);
     }
 }
