@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\DispatchTelegramBroadcast;
 use App\Models\TelegramBroadcast;
+use App\Support\Telegram\BroadcastQueue;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -27,7 +28,7 @@ class DispatchDueTelegramBroadcasts extends Command
         foreach ($due as $broadcast) {
             $trigger = $broadcast->last_run_at === null ? 'schedule' : 'recurrence';
 
-            DispatchTelegramBroadcast::dispatch($broadcast->id, $trigger);
+            BroadcastQueue::dispatch(new DispatchTelegramBroadcast($broadcast->id, $trigger));
 
             Log::info('broadcast.due_dispatched', [
                 'broadcast_id' => $broadcast->id,

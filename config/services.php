@@ -60,6 +60,8 @@ return [
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),
         'mini_app_name' => env('TELEGRAM_MINI_APP_NAME'),
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+        // Run broadcast jobs inline in the request — no queue worker.
+        'broadcast_sync' => env('TELEGRAM_BROADCAST_SYNC', false),
     ],
 
 ];

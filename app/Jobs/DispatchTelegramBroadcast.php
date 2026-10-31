@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\TelegramBroadcast;
 use App\Support\Telegram\BroadcastAudience;
+use App\Support\Telegram\BroadcastQueue;
 use App\Support\Telegram\SendsBroadcasts;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -87,8 +88,10 @@ class DispatchTelegramBroadcast implements ShouldQueue
                 }
 
                 foreach (array_chunk($deliveryIds, self::CHUNK_SIZE) as $ids) {
-                    SendTelegramBroadcastChunk::dispatch($run->id, $ids)
-                        ->delay(now()->addSeconds($chunkIndex++));
+                    BroadcastQueue::dispatch(
+                        new SendTelegramBroadcastChunk($run->id, $ids),
+                        $chunkIndex++,
+                    );
                 }
             });
 

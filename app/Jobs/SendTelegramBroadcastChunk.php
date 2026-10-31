@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\TelegramBroadcastDelivery;
 use App\Models\TelegramBroadcastRun;
+use App\Support\Telegram\BroadcastQueue;
 use App\Support\Telegram\BroadcastSender;
 use App\Support\Telegram\SendsBroadcasts;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -90,8 +91,10 @@ class SendTelegramBroadcastChunk implements ShouldQueue
                     ->all();
 
                 if ($remaining !== []) {
-                    self::dispatch($this->runId, $remaining)
-                        ->delay(now()->addSeconds(max(1, $result->retryAfter ?? 10)));
+                    BroadcastQueue::dispatch(
+                        new self($this->runId, $remaining),
+                        max(1, $result->retryAfter ?? 10),
+                    );
                 }
 
                 Log::info('broadcast.rate_limited', [

@@ -16,6 +16,7 @@ use App\Models\TelegramBroadcastRun;
 use App\Models\User;
 use App\Support\Segments;
 use App\Support\Telegram\BroadcastAudience;
+use App\Support\Telegram\BroadcastQueue;
 use App\Support\Telegram\BroadcastSender;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -165,12 +166,13 @@ class TelegramBroadcastController extends Controller
         abort_unless($broadcast->isEditable(), 403);
 
         $broadcast->forceFill(['status' => 'sending'])->save();
-        DispatchTelegramBroadcast::dispatch($broadcast->id, 'manual');
+        BroadcastQueue::dispatch(new DispatchTelegramBroadcast($broadcast->id, 'manual'));
 
         Log::info('broadcast.queued', [
             'broadcast_id' => $broadcast->id,
             'trigger' => 'manual',
             'queue' => config('queue.default'),
+            'sync' => (bool) config('services.telegram.broadcast_sync'),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Broadcast queued for sending.')]);
@@ -235,8 +237,10 @@ class TelegramBroadcastController extends Controller
 
         $delay = 0;
         foreach ($ids->chunk(25) as $chunk) {
-            SendTelegramBroadcastChunk::dispatch($run->id, $chunk->all())
-                ->delay(now()->addSeconds($delay++));
+            BroadcastQueue::dispatch(
+                new SendTelegramBroadcastChunk($run->id, $chunk->all()),
+                $delay++,
+            );
         }
 
         $run->update(['finished_at' => null]);
@@ -267,8 +271,10 @@ class TelegramBroadcastController extends Controller
 
         $delay = 0;
         foreach ($ids->chunk(25) as $chunk) {
-            RecallTelegramBroadcastRun::dispatch($run->id, $chunk->all())
-                ->delay(now()->addSeconds($delay++));
+            BroadcastQueue::dispatch(
+                new RecallTelegramBroadcastRun($run->id, $chunk->all()),
+                $delay++,
+            );
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Recalling :count messages.', ['count' => $ids->count()])]);
@@ -369,7 +375,7 @@ class TelegramBroadcastController extends Controller
 
         if ($sendMode === 'now') {
             $broadcast->forceFill(['status' => 'sending'])->save();
-            DispatchTelegramBroadcast::dispatch($broadcast->id, 'manual');
+            BroadcastQueue::dispatch(new DispatchTelegramBroadcast($broadcast->id, 'manual'));
 
             return;
         }

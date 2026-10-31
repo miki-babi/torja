@@ -187,6 +187,28 @@ test('send now dispatches the broadcast job', function () {
     Bus::assertDispatched(DispatchTelegramBroadcast::class);
 });
 
+test('send now can run the whole send inline without a queue worker', function () {
+    config()->set('services.telegram.broadcast_sync', true);
+
+    Http::fake([
+        'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 9]]),
+    ]);
+
+    User::factory()->create(['telegram_id' => 777]);
+    $broadcast = TelegramBroadcast::factory()->create([
+        'audience' => ['everyone' => true, 'segments' => [], 'user_ids' => []],
+    ]);
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.broadcasts.send-now', $broadcast))
+        ->assertRedirect();
+
+    $delivery = TelegramBroadcastDelivery::sole();
+
+    expect($delivery->status)->toBe('sent')
+        ->and($delivery->chat_id)->toBe('777');
+});
+
 test('send test posts the message to the admin chat', function () {
     Http::fake([
         'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 7]]),
