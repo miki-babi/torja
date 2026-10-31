@@ -28,7 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { reset, update, uploadImage } from '@/routes/admin/home-banners';
 
-type BannerRow = { image: string; url: string };
+type BannerRow = { image: string; url: string; cta: string };
 type FormData = { banners: BannerRow[] };
 
 const MAX_BANNERS = 6;
@@ -92,7 +92,10 @@ export default function AdminHomeBannersEdit({
     }
 
     function addBanner() {
-        form.setData('banners', [...form.data.banners, { image: '', url: '' }]);
+        form.setData('banners', [
+            ...form.data.banners,
+            { image: '', url: '', cta: '' },
+        ]);
     }
 
     async function upload(index: number, file: File) {
@@ -156,6 +159,7 @@ export default function AdminHomeBannersEdit({
         .map(({ row, index }) => ({
             image: previewImage(row, index),
             url: row.url,
+            cta: row.cta,
             external: row.url.startsWith('http'),
         }));
 
@@ -355,6 +359,26 @@ export default function AdminHomeBannersEdit({
                                                 }
                                             />
                                         </div>
+
+                                        <div className="grid gap-1.5">
+                                            <Label>CTA label</Label>
+                                            <Input
+                                                placeholder="Learn more"
+                                                value={row.cta}
+                                                onChange={(e) =>
+                                                    setBanner(index, {
+                                                        cta: e.target.value,
+                                                    })
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    errors[
+                                                        `banners.${index}.cta`
+                                                    ]
+                                                }
+                                            />
+                                        </div>
                                     </div>
                                 ))}
 
@@ -389,7 +413,7 @@ export default function AdminHomeBannersEdit({
                             {previewBanners.length > 0 ? (
                                 <BannerCarousel banners={previewBanners} />
                             ) : (
-                                <div className="grid aspect-[16/7] place-items-center rounded-[24px] border border-dashed text-sm text-muted-foreground">
+                                <div className="grid aspect-[32/7] place-items-center rounded-[24px] border border-dashed text-sm text-muted-foreground">
                                     Nothing to preview
                                 </div>
                             )}

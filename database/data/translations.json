@@ -213,6 +213,10 @@
         "sponsored": {
             "en": "Sponsored",
             "am": "ማስታወቂያ"
+        },
+        "learn_more": {
+            "en": "Learn more",
+            "am": "ተጨማሪ ይወቁ"
         }
     },
     "member.today": {

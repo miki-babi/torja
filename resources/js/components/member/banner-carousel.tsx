@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 export type HomeBanner = {
     image: string;
     url: string;
+    cta: string;
     external: boolean;
 };
 
@@ -90,12 +91,13 @@ export function BannerCarousel({ banners }: { banners: HomeBanner[] }) {
                 {banners.map((banner, index) => (
                     <div
                         key={`${banner.image}-${index}`}
-                        className="w-full shrink-0 snap-center"
+                        className="w-full shrink-0 snap-center bg-black"
                     >
                         <BannerSlide
                             banner={banner}
                             index={index}
                             label={t('member.home.sponsored')}
+                            fallbackCta={t('member.home.learn_more')}
                         />
                     </div>
                 ))}
@@ -127,22 +129,29 @@ function BannerSlide({
     banner,
     index,
     label,
+    fallbackCta,
 }: {
     banner: HomeBanner;
     index: number;
     label: string;
+    fallbackCta: string;
 }) {
     function clicked() {
         track('home_banner.clicked', { index, url: banner.url });
     }
 
-    const image = (
-        <img
-            src={banner.image}
-            alt={label}
-            draggable={false}
-            className="aspect-[16/7] w-full object-cover"
-        />
+    const content = (
+        <span className="relative block aspect-[32/7] w-full">
+            <img
+                src={banner.image}
+                alt={label}
+                draggable={false}
+                className="absolute inset-0 size-full object-contain"
+            />
+            <span className="absolute right-3 bottom-2.5 rounded-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-3 py-1.5 text-xs font-bold tracking-wide text-black uppercase shadow-[0_2px_10px_rgba(175,250,1,0.3)]">
+                {banner.cta !== '' ? banner.cta : fallbackCta}
+            </span>
+        </span>
     );
 
     if (banner.external) {
@@ -154,14 +163,14 @@ function BannerSlide({
                 onClick={clicked}
                 className="block"
             >
-                {image}
+                {content}
             </a>
         );
     }
 
     return (
         <Link href={banner.url} onClick={clicked} className="block">
-            {image}
+            {content}
         </Link>
     );
 }

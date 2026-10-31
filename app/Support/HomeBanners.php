@@ -9,9 +9,10 @@ use Illuminate\Support\Str;
 
 /**
  * Admin-managed ad banners for the member home carousel. Each banner is an
- * {image, url} pair: the image is an uploaded public-disk path or a full
- * URL, the url is an in-app path (`/...`) or an external http(s) link.
- * An empty list hides the carousel on the home screen.
+ * {image, url, cta} row: the image is an uploaded public-disk path or a
+ * full URL, the url is an in-app path (`/...`) or an external http(s)
+ * link, and cta is the pill label shown over the slide. An empty list
+ * hides the carousel on the home screen.
  */
 class HomeBanners
 {
@@ -20,7 +21,7 @@ class HomeBanners
     /**
      * The stored banner rows as the admin saved them.
      *
-     * @return array<int, array{image: string, url: string}>
+     * @return array<int, array{image: string, url: string, cta: string}>
      */
     public static function banners(): array
     {
@@ -39,7 +40,7 @@ class HomeBanners
      * Banners resolved for the member screen: storage paths become public
      * URLs and `external` marks links that leave the app.
      *
-     * @return array<int, array{image: string, url: string, external: bool}>
+     * @return array<int, array{image: string, url: string, cta: string, external: bool}>
      */
     public static function forMember(): array
     {
@@ -47,6 +48,7 @@ class HomeBanners
             fn (array $row): array => [
                 'image' => self::imageUrl($row['image']),
                 'url' => $row['url'],
+                'cta' => (string) ($row['cta'] ?? ''),
                 'external' => Str::startsWith($row['url'], 'http'),
             ],
             self::banners(),
@@ -69,6 +71,7 @@ class HomeBanners
                 'max:2048',
                 fn (string $attribute, mixed $value, Closure $fail) => self::validateUrl($value, $fail),
             ],
+            'banners.*.cta' => ['required', 'string', 'max:40'],
         ];
     }
 

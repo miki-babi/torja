@@ -49,8 +49,8 @@ test('home generates todays workout playlist', function () {
 test('home exposes the configured ad banners', function () {
     Setting::set(HomeBanners::SETTING_KEY, [
         'banners' => [
-            ['image' => 'https://cdn.example.com/a.jpg', 'url' => 'https://example.com/offer'],
-            ['image' => 'home-banners/b.jpg', 'url' => '/pro'],
+            ['image' => 'https://cdn.example.com/a.jpg', 'url' => 'https://example.com/offer', 'cta' => 'Shop now'],
+            ['image' => 'home-banners/b.jpg', 'url' => '/pro', 'cta' => 'Go Pro'],
         ],
     ]);
 
@@ -60,6 +60,7 @@ test('home exposes the configured ad banners', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('banners.0.image', 'https://cdn.example.com/a.jpg')
             ->where('banners.0.url', 'https://example.com/offer')
+            ->where('banners.0.cta', 'Shop now')
             ->where('banners.0.external', true)
             ->where('banners.1.url', '/pro')
             ->where('banners.1.external', false));

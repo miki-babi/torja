@@ -18,7 +18,7 @@ test('non-admins cannot manage home banners', function () {
 
 test('admins see the saved banners on the editor', function () {
     Setting::set(HomeBanners::SETTING_KEY, [
-        'banners' => [['image' => 'home-banners/a.jpg', 'url' => '/pro']],
+        'banners' => [['image' => 'home-banners/a.jpg', 'url' => '/pro', 'cta' => 'Go Pro']],
     ]);
 
     $this->actingAs(User::factory()->admin()->create())
@@ -28,6 +28,8 @@ test('admins see the saved banners on the editor', function () {
             ->component('admin/home-banners/edit')
             ->where('banners.0.image', 'home-banners/a.jpg')
             ->where('banners.0.url', '/pro')
+            ->where('banners.0.cta', 'Go Pro')
+            ->where('resolved.0.cta', 'Go Pro')
             ->where('resolved.0.external', false)
             ->has('resolved.0.image'));
 });
@@ -35,8 +37,8 @@ test('admins see the saved banners on the editor', function () {
 test('admins can save home banners', function () {
     $payload = [
         'banners' => [
-            ['image' => 'https://cdn.example.com/a.jpg', 'url' => 'https://example.com/offer'],
-            ['image' => 'home-banners/b.jpg', 'url' => '/pro'],
+            ['image' => 'https://cdn.example.com/a.jpg', 'url' => 'https://example.com/offer', 'cta' => 'Shop now'],
+            ['image' => 'home-banners/b.jpg', 'url' => '/pro', 'cta' => 'Go Pro'],
         ],
     ];
 
@@ -55,27 +57,33 @@ test('invalid banners are rejected', function () {
 
     $this->actingAs($admin)
         ->put(route('admin.home-banners.update'), [
-            'banners' => [['image' => '', 'url' => '/pro']],
+            'banners' => [['image' => '', 'url' => '/pro', 'cta' => 'Go']],
         ])
         ->assertSessionHasErrors('banners.0.image');
 
     $this->actingAs($admin)
         ->put(route('admin.home-banners.update'), [
-            'banners' => [['image' => 'a.jpg', 'url' => 'example.com/no-scheme']],
+            'banners' => [['image' => 'a.jpg', 'url' => 'example.com/no-scheme', 'cta' => 'Go']],
         ])
         ->assertSessionHasErrors('banners.0.url');
 
     $this->actingAs($admin)
         ->put(route('admin.home-banners.update'), [
-            'banners' => [['image' => 'a.jpg', 'url' => 'javascript:alert(1)']],
+            'banners' => [['image' => 'a.jpg', 'url' => 'javascript:alert(1)', 'cta' => 'Go']],
         ])
         ->assertSessionHasErrors('banners.0.url');
 
     $this->actingAs($admin)
         ->put(route('admin.home-banners.update'), [
-            'banners' => [['image' => 'a.jpg', 'url' => '//protocol-relative.example.com']],
+            'banners' => [['image' => 'a.jpg', 'url' => '//protocol-relative.example.com', 'cta' => 'Go']],
         ])
         ->assertSessionHasErrors('banners.0.url');
+
+    $this->actingAs($admin)
+        ->put(route('admin.home-banners.update'), [
+            'banners' => [['image' => 'a.jpg', 'url' => '/pro']],
+        ])
+        ->assertSessionHasErrors('banners.0.cta');
 });
 
 test('admins can clear the home banners', function () {
