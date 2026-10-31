@@ -274,7 +274,7 @@ export default function AdminHomeBannersEdit({
                                                         index,
                                                     )}
                                                     alt=""
-                                                    className="aspect-[16/7] w-full max-w-xs rounded-md border object-cover"
+                                                    className="aspect-[2/1] w-full max-w-xs rounded-md border object-cover"
                                                 />
                                             )}
                                             <div className="flex flex-wrap items-center gap-2">
@@ -413,7 +413,7 @@ export default function AdminHomeBannersEdit({
                             {previewBanners.length > 0 ? (
                                 <BannerCarousel banners={previewBanners} />
                             ) : (
-                                <div className="grid aspect-[32/7] place-items-center rounded-[24px] border border-dashed text-sm text-muted-foreground">
+                                <div className="grid aspect-[2/1] place-items-center rounded-[24px] border border-dashed text-sm text-muted-foreground">
                                     Nothing to preview
                                 </div>
                             )}
