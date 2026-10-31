@@ -278,6 +278,24 @@ test('an authenticated mini app session rebinds the referrer without a new login
         ->and(auth()->id())->toBe($member->id);
 });
 
+test('webapp stores the chat id when the member allowed bot messages', function () {
+    $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(['allows_write_to_pm' => true]),
+    ])->assertOk();
+
+    expect(User::firstWhere('telegram_id', 555001)->telegram_chat_id)
+        ->toBe('555001');
+});
+
+test('webapp leaves the chat id empty without write permission', function () {
+    $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(['allows_write_to_pm' => false]),
+    ])->assertOk();
+
+    expect(User::firstWhere('telegram_id', 555001)->telegram_chat_id)
+        ->toBeNull();
+});
+
 test('webapp rejects a tampered signature', function () {
     $initData = signedInitData();
     $initData = str_replace('auth_date=', 'auth_date=1', $initData);

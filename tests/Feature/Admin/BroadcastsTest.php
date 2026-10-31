@@ -129,6 +129,33 @@ test('users search only returns telegram-linked users', function () {
         ->assertJsonPath('users.0.detail', '@abebe');
 });
 
+test('members with only a telegram id count and send as reachable', function () {
+    $miniAppUser = User::factory()->create(['name' => 'Mini App User', 'telegram_id' => 777]);
+
+    $this->actingAs($this->admin)
+        ->postJson(route('admin.broadcasts.audience-count'), [
+            'audience' => ['everyone' => true],
+        ])
+        ->assertJson(['count' => 1]);
+
+    $this->actingAs($this->admin)
+        ->getJson(route('admin.broadcasts.users-search', ['q' => 'Mini App']))
+        ->assertJsonCount(1, 'users');
+
+    Bus::fake([SendTelegramBroadcastChunk::class]);
+
+    $broadcast = TelegramBroadcast::factory()->create([
+        'audience' => ['everyone' => true, 'segments' => [], 'user_ids' => []],
+    ]);
+
+    (new DispatchTelegramBroadcast($broadcast->id))->handle();
+
+    $delivery = TelegramBroadcastDelivery::sole();
+
+    expect($delivery->user_id)->toBe($miniAppUser->id)
+        ->and($delivery->chat_id)->toBe('777');
+});
+
 test('send now dispatches the broadcast job', function () {
     Bus::fake();
 
@@ -158,6 +185,22 @@ test('send test posts the message to the admin chat', function () {
         && $request['chat_id'] === '555'
         && $request['text'] === 'Hi <b>test</b>'
         && $request['parse_mode'] === 'HTML');
+});
+
+test('send test falls back to the telegram id when no chat is linked', function () {
+    Http::fake([
+        'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 7]]),
+    ]);
+
+    $this->admin->forceFill(['telegram_id' => 555])->save();
+    $broadcast = TelegramBroadcast::factory()->create();
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.broadcasts.test', $broadcast))
+        ->assertRedirect();
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'sendMessage')
+        && $request['chat_id'] === '555');
 });
 
 test('test send fails gracefully without a linked chat', function () {

@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -447,6 +448,30 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         }
 
         return $this->isGrantedPro() ? 'granted' : null;
+    }
+
+    /**
+     * Users the bot can reach by DM — a linked private chat, or a
+     * Telegram identity (a private chat_id equals the user id) whose
+     * message permission we may not have recorded yet.
+     */
+    public function scopeTelegramReachable(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $inner) => $inner
+            ->whereNotNull('telegram_chat_id')
+            ->orWhereNotNull('telegram_id'));
+    }
+
+    /**
+     * The chat id the bot should DM this user on — the linked private
+     * chat when known, else the Telegram user id (identical for 1:1
+     * chats).
+     */
+    public function telegramRecipientId(): ?string
+    {
+        $id = $this->telegram_chat_id ?? $this->telegram_id;
+
+        return $id === null ? null : (string) $id;
     }
 
     /**

@@ -130,7 +130,7 @@ class TelegramBroadcastController extends Controller
      */
     public function sendTest(Request $request, TelegramBroadcast $broadcast, BroadcastSender $sender): RedirectResponse
     {
-        $chatId = $request->user()->telegram_chat_id;
+        $chatId = $request->user()->telegramRecipientId();
 
         if ($chatId === null) {
             Inertia::flash('toast', [
@@ -288,7 +288,7 @@ class TelegramBroadcastController extends Controller
         $q = trim($request->string('q')->toString());
 
         $users = User::query()
-            ->whereNotNull('telegram_chat_id')
+            ->telegramReachable()
             ->when($q !== '', function ($query) use ($q): void {
                 $query->where(function ($inner) use ($q): void {
                     $inner->where('name', 'like', "%{$q}%")
@@ -381,7 +381,7 @@ class TelegramBroadcastController extends Controller
                 'count' => Segments::query($key)->count(),
             ])->values()->all();
 
-        $linkedCount = User::query()->whereNotNull('telegram_chat_id')->count();
+        $linkedCount = User::query()->telegramReachable()->count();
 
         $pickedUsers = $broadcast === null
             ? []

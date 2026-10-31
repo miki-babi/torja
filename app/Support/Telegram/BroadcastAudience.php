@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Resolves a broadcast's `audience` config — `{everyone, segments[],
- * user_ids[]}` — to the query of Telegram-linked users it should hit.
+ * user_ids[]}` — to the query of Telegram-reachable users it should hit.
  * Segment and hand-picked ids union; `everyone` short-circuits to every
- * user with a linked chat.
+ * user with a Telegram identity.
  */
 class BroadcastAudience
 {
@@ -22,7 +22,7 @@ class BroadcastAudience
      */
     public static function query(array $audience): Builder
     {
-        $query = User::query()->whereNotNull('telegram_chat_id');
+        $query = User::query()->telegramReachable();
 
         if ($audience['everyone'] ?? false) {
             return $query;

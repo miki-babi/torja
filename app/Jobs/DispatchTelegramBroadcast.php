@@ -50,7 +50,7 @@ class DispatchTelegramBroadcast implements ShouldQueue
         $recipients = 0;
 
         BroadcastAudience::query($broadcast->audience ?? [])
-            ->select('id', 'telegram_chat_id')
+            ->select('id', 'telegram_chat_id', 'telegram_id')
             ->orderBy('id')
             ->chunk(500, function ($users) use ($broadcast, $run, &$chunkIndex, &$recipients): void {
                 $deliveryIds = [];
@@ -59,7 +59,7 @@ class DispatchTelegramBroadcast implements ShouldQueue
                     $deliveryIds[] = $run->deliveries()->create([
                         'broadcast_id' => $broadcast->id,
                         'user_id' => $user->id,
-                        'chat_id' => (string) $user->telegram_chat_id,
+                        'chat_id' => $user->telegramRecipientId(),
                         'status' => 'pending',
                     ])->id;
                     $recipients++;

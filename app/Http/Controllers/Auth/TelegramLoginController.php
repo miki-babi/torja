@@ -129,7 +129,9 @@ class TelegramLoginController extends Controller
         $initData = InitData::verify($validated['init_data'], $botToken, $failure);
         $from = $initData?->user();
 
-        if ($from === null || app(UserResolver::class)->telegramId($from) === null) {
+        $resolver = app(UserResolver::class);
+
+        if ($from === null || $resolver->telegramId($from) === null) {
             Log::warning('telegram.webapp rejected: invalid init data', [
                 'reason' => $from === null ? ($failure ?? 'no-user') : 'no-telegram-id',
             ]);
@@ -137,7 +139,14 @@ class TelegramLoginController extends Controller
             return response()->json(['status' => 'invalid'], 401);
         }
 
-        $user = app(UserResolver::class)->resolve($from);
+        // initData carries no chat id — but a private chat_id equals the
+        // user id, so when the member allowed bot DMs we can persist the
+        // recipient address for broadcasts and reminders right away.
+        $chatId = ($from['allows_write_to_pm'] ?? false) === true
+            ? (string) $resolver->telegramId($from)
+            : null;
+
+        $user = $resolver->resolve($from, $chatId);
 
         Log::info('telegram.webapp signed in', [
             'user_id' => $user->id,
