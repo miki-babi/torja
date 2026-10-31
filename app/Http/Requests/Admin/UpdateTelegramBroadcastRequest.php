@@ -84,6 +84,40 @@ class UpdateTelegramBroadcastRequest extends FormRequest
     }
 
     /**
+     * Drop payload sections the selected type can't use before rules run
+     * — the composer keeps a poll/media draft in state when the type
+     * changes away, and posts it along. Without this, a text broadcast
+     * carrying an empty poll fails `poll.options.*` rules. Also strips
+     * empty button rows (mirroring {@see payload()}) so an untouched row
+     * doesn't trip the `text` requirement.
+     */
+    protected function prepareForValidation(): void
+    {
+        $type = TelegramBroadcastType::tryFrom((string) $this->input('type'));
+
+        $merge = [
+            'buttons' => collect((array) $this->input('buttons', []))
+                ->map(fn (mixed $row): array => array_values(array_filter(
+                    (array) $row,
+                    fn (mixed $button): bool => trim((string) ($button['text'] ?? '')) !== '',
+                )))
+                ->filter(fn (array $row): bool => $row !== [])
+                ->values()
+                ->all(),
+        ];
+
+        if ($type !== null && $type !== TelegramBroadcastType::Poll) {
+            $merge['poll'] = null;
+        }
+
+        if ($type !== null && ! $type->isSingleMedia() && $type !== TelegramBroadcastType::MediaGroup) {
+            $merge['media'] = null;
+        }
+
+        $this->merge($merge);
+    }
+
+    /**
      * Post-validation: per-type content requirements, converted-text
      * length budgets, album sizes, and an effective (non-empty) audience.
      */

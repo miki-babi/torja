@@ -183,7 +183,13 @@ export default function BroadcastEdit({
     }
 
     function save(mode: BroadcastForm['send_mode']) {
-        form.setData('send_mode', mode);
+        // Poll state is kept for UX when the type changes away — don't
+        // post it for types that can't use it.
+        form.transform((data) => ({
+            ...data,
+            send_mode: mode,
+            poll: data.type === 'poll' ? data.poll : null,
+        }));
         if (isNew) {
             form.post(store().url, { preserveScroll: true });
         } else {

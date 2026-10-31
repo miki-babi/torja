@@ -86,6 +86,24 @@ test('store validates poll shape', function () {
         ->assertSessionHasErrors(['poll.question', 'poll.options']);
 });
 
+test('store ignores stale poll, media and empty button rows on non-poll types', function () {
+    $this->actingAs($this->admin)
+        ->post(route('admin.broadcasts.store'), validBroadcastPayload([
+            'type' => 'text',
+            'poll' => ['question' => '', 'options' => ['', ''], 'type' => 'regular'],
+            'media' => [['kind' => 'photo', 'source' => 'url', 'value' => '']],
+            'buttons' => [[['text' => '', 'kind' => 'url', 'url' => null]]],
+        ]))
+        ->assertRedirect();
+
+    $broadcast = TelegramBroadcast::query()->sole();
+
+    expect($broadcast->type->value)->toBe('text')
+        ->and($broadcast->poll)->toBeNull()
+        ->and($broadcast->media)->toBe([])
+        ->and($broadcast->buttons)->toBeNull();
+});
+
 test('store requires an effective audience', function () {
     $this->actingAs($this->admin)
         ->post(route('admin.broadcasts.store'), validBroadcastPayload([
