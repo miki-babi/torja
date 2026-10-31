@@ -15,12 +15,13 @@ const AUTOPLAY_MS = 5000;
 const RESUME_AFTER_INTERACTION_MS = 12000;
 
 /**
- * Ad banner carousel for the member home screen. Native scroll-snap
- * handles swiping; a timer advances to the next slide (wrapping around)
- * unless the user recently interacted or prefers reduced motion. Each
- * slide links in-app (`/...`) or externally (`http...`, new tab), and a
- * click is beaconed as `home_banner.clicked`. Renders nothing when the
- * admin hasn't configured any banners.
+ * Ad banner carousel for the member home screen. Slides are 80% wide and
+ * snap to the center so the previous and next cards peek at the screen
+ * edges — a visual cue that the row scrolls. A timer advances the center
+ * slide (wrapping around) unless the user recently interacted or prefers
+ * reduced motion. Each slide links in-app (`/...`) or externally
+ * (`http...`, new tab), and a click is beaconed as `home_banner.clicked`.
+ * Renders nothing when the admin hasn't configured any banners.
  */
 export function BannerCarousel({ banners }: { banners: HomeBanner[] }) {
     const { t } = useTranslation();
@@ -48,10 +49,7 @@ export function BannerCarousel({ banners }: { banners: HomeBanner[] }) {
                 return;
             }
 
-            const next =
-                (Math.round(el.scrollLeft / el.clientWidth) + 1) %
-                banners.length;
-            el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' });
+            scrollToSlide(el, (centerIndex(el) + 1) % banners.length);
         }, AUTOPLAY_MS);
 
         return () => clearInterval(id);
@@ -70,28 +68,34 @@ export function BannerCarousel({ banners }: { banners: HomeBanner[] }) {
         if (el === null || el.clientWidth === 0) {
             return;
         }
-        setActive(Math.round(el.scrollLeft / el.clientWidth));
+        setActive(centerIndex(el));
     }
 
     function goTo(index: number) {
         pause();
         const el = scroller.current;
-        el?.scrollTo({ left: index * el.clientWidth, behavior: 'smooth' });
+        if (el !== null) {
+            scrollToSlide(el, index);
+        }
     }
 
     return (
-        <div className="relative overflow-hidden rounded-[24px] border border-[#2E2E2E]">
+        <div>
             <div
                 ref={scroller}
                 onScroll={handleScroll}
                 onPointerDown={pause}
                 onTouchStart={pause}
-                className="flex snap-x snap-mandatory scrollbar-none overflow-x-auto"
+                className="relative -mx-4 flex snap-x snap-mandatory scrollbar-none gap-3 overflow-x-auto"
             >
                 {banners.map((banner, index) => (
                     <div
                         key={`${banner.image}-${index}`}
-                        className="w-full shrink-0 snap-center bg-black"
+                        className={cn(
+                            'w-[80%] shrink-0 snap-center',
+                            index === 0 && 'ml-[10%]',
+                            index === banners.length - 1 && 'mr-[10%]',
+                        )}
                     >
                         <BannerSlide
                             banner={banner}
@@ -104,7 +108,7 @@ export function BannerCarousel({ banners }: { banners: HomeBanner[] }) {
             </div>
 
             {multiple && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-2.5 flex justify-center gap-1.5">
+                <div className="mt-2 flex justify-center gap-1.5">
                     {banners.map((banner, index) => (
                         <button
                             key={`${banner.image}-dot-${index}`}
@@ -112,10 +116,10 @@ export function BannerCarousel({ banners }: { banners: HomeBanner[] }) {
                             aria-label={`${t('member.home.sponsored')} ${index + 1}`}
                             onClick={() => goTo(index)}
                             className={cn(
-                                'pointer-events-auto size-1.5 rounded-full transition-colors',
+                                'size-1.5 rounded-full transition-colors',
                                 index === active
                                     ? 'bg-[#AFFA01]'
-                                    : 'bg-white/40',
+                                    : 'bg-[#3A3A3A]',
                             )}
                         />
                     ))}
@@ -123,6 +127,38 @@ export function BannerCarousel({ banners }: { banners: HomeBanner[] }) {
             )}
         </div>
     );
+}
+
+/** Index of the slide whose center is nearest the scrollport center. */
+function centerIndex(el: HTMLDivElement): number {
+    const center = el.scrollLeft + el.clientWidth / 2;
+    let best = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    for (const [index, slide] of Array.from(el.children).entries()) {
+        const item = slide as HTMLElement;
+        const distance = Math.abs(
+            item.offsetLeft + item.offsetWidth / 2 - center,
+        );
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            best = index;
+        }
+    }
+
+    return best;
+}
+
+/** Smooth-scroll so the given slide sits centered in the scrollport. */
+function scrollToSlide(el: HTMLDivElement, index: number): void {
+    const slide = el.children[index] as HTMLElement | undefined;
+    if (slide === undefined) {
+        return;
+    }
+    el.scrollTo({
+        left: slide.offsetLeft - (el.clientWidth - slide.offsetWidth) / 2,
+        behavior: 'smooth',
+    });
 }
 
 function BannerSlide({
@@ -141,7 +177,7 @@ function BannerSlide({
     }
 
     const content = (
-        <span className="relative block aspect-[32/7] w-full">
+        <span className="relative block aspect-[32/7] w-full overflow-hidden rounded-[24px] border border-[#2E2E2E] bg-black">
             <img
                 src={banner.image}
                 alt={label}

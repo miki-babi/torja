@@ -409,7 +409,7 @@ export default function AdminHomeBannersEdit({
                         <p className="text-sm font-medium text-muted-foreground">
                             Preview
                         </p>
-                        <div className="mx-auto w-full max-w-md">
+                        <div className="mx-auto w-full max-w-md overflow-hidden">
                             {previewBanners.length > 0 ? (
                                 <BannerCarousel banners={previewBanners} />
                             ) : (
