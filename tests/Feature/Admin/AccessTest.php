@@ -4,7 +4,7 @@ use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('guests are redirected to login from the admin area', function () {
-    $this->get(route('admin.dashboard'))->assertRedirect(route('login'));
+    $this->get(route('admin.dashboard'))->assertRedirect(route('admin.login'));
 });
 
 test('non-admin users get a 403 from the admin area', function () {

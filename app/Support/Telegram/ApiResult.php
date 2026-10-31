@@ -15,6 +15,7 @@ class ApiResult
     /**
      * @param  array<int, int>  $messageIds
      * @param  array<int, string>  $fileIds
+     * @param  array<string, mixed>|array<int, mixed>  $result
      */
     public function __construct(
         public readonly bool $ok,
@@ -23,6 +24,7 @@ class ApiResult
         public readonly ?int $errorCode = null,
         public readonly ?string $description = null,
         public readonly ?int $retryAfter = null,
+        public readonly array $result = [],
     ) {}
 
     public static function fromResponse(Response $response): self
@@ -42,7 +44,7 @@ class ApiResult
         $result = $body['result'] ?? [];
 
         // sendMediaGroup returns an array of Message; the others one Message.
-        $messages = isset($result['message_id']) ? [$result] : (is_array($result) ? $result : []);
+        $messages = isset($result['message_id']) ? [$result] : (is_array($result) && array_is_list($result) ? $result : []);
 
         $messageIds = [];
         $fileIds = [];
@@ -63,7 +65,12 @@ class ApiResult
             }
         }
 
-        return new self(ok: true, messageIds: $messageIds, fileIds: $fileIds);
+        return new self(
+            ok: true,
+            messageIds: $messageIds,
+            fileIds: $fileIds,
+            result: is_array($result) ? $result : [],
+        );
     }
 
     /**

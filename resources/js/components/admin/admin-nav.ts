@@ -16,6 +16,7 @@ import {
     ShoppingBag,
     Users,
     UtensilsCrossed,
+    Webhook,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { analytics, dashboard } from '@/routes/admin';
@@ -30,6 +31,7 @@ import { edit as proPageEdit } from '@/routes/admin/pro-page';
 import { index as programsIndex } from '@/routes/admin/programs';
 import { index as shopOrdersIndex } from '@/routes/admin/shop-orders';
 import { index as shopProductsIndex } from '@/routes/admin/shop-products';
+import { show as webhookShow } from '@/routes/admin/telegram/webhook';
 import { index as trackingIndex } from '@/routes/admin/tracking';
 import { index as translationsIndex } from '@/routes/admin/translations';
 import { index as usersIndex } from '@/routes/admin/users';
@@ -114,6 +116,9 @@ export const adminNavGroups: AdminNavGroup[] = [
     },
     {
         label: 'System',
-        items: [{ title: 'Tracking', href: trackingIndex(), icon: Activity }],
+        items: [
+            { title: 'Tracking', href: trackingIndex(), icon: Activity },
+            { title: 'Webhook', href: webhookShow(), icon: Webhook },
+        ],
     },
 ];

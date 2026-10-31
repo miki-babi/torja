@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\ProPageController;
 use App\Http\Controllers\Admin\ShopOrderController;
 use App\Http\Controllers\Admin\ShopProductController;
 use App\Http\Controllers\Admin\TelegramBroadcastController;
+use App\Http\Controllers\Admin\TelegramWebhookController;
 use App\Http\Controllers\Admin\TrackingIntegrationController;
 use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\UserController;
@@ -80,6 +81,13 @@ Route::middleware(['auth', 'verified', 'admin'])
             ->name('broadcasts.runs.resend-failed');
         Route::post('broadcasts/{broadcast}/runs/{run}/recall', [TelegramBroadcastController::class, 'recall'])
             ->name('broadcasts.runs.recall');
+
+        Route::get('telegram/webhook', [TelegramWebhookController::class, 'show'])
+            ->name('telegram.webhook.show');
+        Route::put('telegram/webhook', [TelegramWebhookController::class, 'update'])
+            ->name('telegram.webhook.update');
+        Route::delete('telegram/webhook', [TelegramWebhookController::class, 'destroy'])
+            ->name('telegram.webhook.destroy');
         Route::resource('shop-orders', ShopOrderController::class)
             ->only(['index', 'show', 'update'])
             ->parameters(['shop-orders' => 'shopOrder']);

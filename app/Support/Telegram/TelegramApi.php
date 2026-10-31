@@ -161,6 +161,55 @@ class TelegramApi
     }
 
     /**
+     * getMe — the bot identity, for the admin webhook status card.
+     */
+    public function getMe(): ApiResult
+    {
+        return $this->post('getMe', []);
+    }
+
+    /**
+     * getWebhookInfo — registered URL, pending update count, and the last
+     * delivery error Telegram saw.
+     */
+    public function getWebhookInfo(): ApiResult
+    {
+        return $this->post('getWebhookInfo', []);
+    }
+
+    /**
+     * setWebhook — point the bot at our update endpoint. Limited to the
+     * update types the controller serves; the configured secret token is
+     * attached automatically so the app can verify deliveries.
+     */
+    public function setWebhook(string $url): ApiResult
+    {
+        $payload = [
+            'url' => $url,
+            'allowed_updates' => ['message', 'callback_query'],
+        ];
+
+        $secret = config('services.telegram.webhook_secret');
+
+        if (is_string($secret) && $secret !== '') {
+            $payload['secret_token'] = $secret;
+        }
+
+        return $this->post('setWebhook', $payload);
+    }
+
+    /**
+     * deleteWebhook — switch the bot back to long-polling, optionally
+     * dropping any pending updates.
+     */
+    public function deleteWebhook(bool $dropPendingUpdates = false): ApiResult
+    {
+        return $this->post('deleteWebhook', [
+            'drop_pending_updates' => $dropPendingUpdates,
+        ]);
+    }
+
+    /**
      * POST a JSON payload and normalize the result.
      *
      * @param  array<string, mixed>  $payload
