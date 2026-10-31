@@ -1,5 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
 import { Compass, Dumbbell, Flame, Sparkles, Utensils } from 'lucide-react';
+import {
+    BannerCarousel,
+    type HomeBanner,
+} from '@/components/member/banner-carousel';
 import { MealPlanCard } from '@/components/member/meal-plan-card';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { TodaysWorkoutCard } from '@/components/member/todays-workout-card';
@@ -20,11 +24,13 @@ function greetingKey(): string {
 export default function MemberHome({
     userName,
     planDay,
+    banners,
     todayWorkout,
     streak,
 }: {
     userName: string;
     planDay: PlanDay | null;
+    banners: HomeBanner[];
     todayWorkout: {
         title: string;
         muscle: string | null;
@@ -120,6 +126,13 @@ export default function MemberHome({
                     <span>{t('member.home.chip_programs')}</span>
                 </Link>
             </div>
+
+            {/* Ad Banner Carousel */}
+            {banners.length > 0 && (
+                <section className="mt-4">
+                    <BannerCarousel banners={banners} />
+                </section>
+            )}
 
             {/* Meal Plan Section */}
             <section className="mt-5">

@@ -2,7 +2,9 @@
 
 use App\Models\ExercisePlaylist;
 use App\Models\NutritionProfile;
+use App\Models\Setting;
 use App\Models\User;
+use App\Support\HomeBanners;
 use Database\Seeders\FoodDatabaseSeeder;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -42,4 +44,31 @@ test('home generates todays workout playlist', function () {
     expect(ExercisePlaylist::where('user_id', $user->id)
         ->whereDate('generated_for', today())
         ->count())->toBe(1);
+});
+
+test('home exposes the configured ad banners', function () {
+    Setting::set(HomeBanners::SETTING_KEY, [
+        'banners' => [
+            ['image' => 'https://cdn.example.com/a.jpg', 'url' => 'https://example.com/offer'],
+            ['image' => 'home-banners/b.jpg', 'url' => '/pro'],
+        ],
+    ]);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('member.home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('banners.0.image', 'https://cdn.example.com/a.jpg')
+            ->where('banners.0.url', 'https://example.com/offer')
+            ->where('banners.0.external', true)
+            ->where('banners.1.url', '/pro')
+            ->where('banners.1.external', false));
+});
+
+test('home exposes an empty banner list by default', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('member.home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('banners', []));
 });

@@ -7,6 +7,7 @@ use App\Services\DailyWorkoutGenerator;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
 use App\Services\Nutrition\ProfileResolver;
 use App\Support\ExerciseCatalog;
+use App\Support\HomeBanners;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -49,6 +50,7 @@ class HomeController extends Controller
                 'playUrl' => route('member.playlists.play', $playlist),
             ],
             'streak' => $request->user()->activityStreak(),
+            'banners' => HomeBanners::forMember(),
         ]);
     }
 }

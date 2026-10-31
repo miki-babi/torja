@@ -9,6 +9,7 @@ import {
     Dumbbell,
     Globe,
     HandCoins,
+    Images,
     Languages,
     LayoutDashboard,
     Megaphone,
@@ -23,6 +24,7 @@ import { analytics, dashboard } from '@/routes/admin';
 import { index as ambassadorsIndex } from '@/routes/admin/ambassadors';
 import { index as broadcastsIndex } from '@/routes/admin/broadcasts';
 import { index as foodsIndex } from '@/routes/admin/foods';
+import { edit as homeBannersEdit } from '@/routes/admin/home-banners';
 import { index as ingredientsIndex } from '@/routes/admin/ingredients';
 import { index as languagesIndex } from '@/routes/admin/languages';
 import { index as mealProgramsIndex } from '@/routes/admin/meal-programs';
@@ -97,6 +99,11 @@ export const adminNavGroups: AdminNavGroup[] = [
     {
         label: 'Content',
         items: [
+            {
+                title: 'Home banners',
+                href: homeBannersEdit(),
+                icon: Images,
+            },
             { title: 'Programs', href: programsIndex(), icon: Dumbbell },
             {
                 title: 'Meal programs',

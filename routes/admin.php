@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AmbassadorController;
 use App\Http\Controllers\Admin\AmbassadorPayoutController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\FoodController;
+use App\Http\Controllers\Admin\HomeBannerController;
 use App\Http\Controllers\Admin\IngredientController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\MealProgramController;
@@ -44,6 +45,12 @@ Route::middleware(['auth', 'verified', 'admin'])
         Route::get('pro-page', [ProPageController::class, 'edit'])->name('pro-page.edit');
         Route::put('pro-page', [ProPageController::class, 'update'])->name('pro-page.update');
         Route::delete('pro-page', [ProPageController::class, 'destroy'])->name('pro-page.reset');
+
+        Route::post('home-banners/upload-image', [HomeBannerController::class, 'uploadImage'])
+            ->name('home-banners.upload-image');
+        Route::get('home-banners', [HomeBannerController::class, 'edit'])->name('home-banners.edit');
+        Route::put('home-banners', [HomeBannerController::class, 'update'])->name('home-banners.update');
+        Route::delete('home-banners', [HomeBannerController::class, 'destroy'])->name('home-banners.reset');
 
         Route::get('ambassadors', [AmbassadorController::class, 'index'])->name('ambassadors.index');
         Route::get('ambassadors/settings', [AmbassadorController::class, 'editSettings'])->name('ambassadors.settings.edit');

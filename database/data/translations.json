@@ -209,6 +209,10 @@
         "no_meal_plan": {
             "en": "No meal plan yet.",
             "am": "እስካሁን የምግብ እቅድ የለም።"
+        },
+        "sponsored": {
+            "en": "Sponsored",
+            "am": "ማስታወቂያ"
         }
     },
     "member.today": {
