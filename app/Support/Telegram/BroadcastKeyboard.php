@@ -76,6 +76,12 @@ class BroadcastKeyboard
         }
 
         $base = ['text' => $text];
+        $style = (string) ($button['style'] ?? '');
+
+        if (in_array($style, ['primary', 'danger', 'success'], true)) {
+            $base['style'] = $style;
+        }
+
         $url = trim((string) ($button['url'] ?? ''));
         $query = (string) ($button['query'] ?? '');
 

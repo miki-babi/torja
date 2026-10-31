@@ -281,6 +281,29 @@ test('chunk job sends messages and marks deliveries', function () {
         && $request['reply_markup']['inline_keyboard'][0][0]['url'] === 'https://x.test');
 });
 
+test('button styles land in the reply markup', function () {
+    Http::fake([
+        'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 42]]),
+    ]);
+
+    $broadcast = TelegramBroadcast::factory()->create([
+        'buttons' => [[['text' => 'Go', 'kind' => 'url', 'url' => 'https://x.test', 'style' => 'danger']]],
+    ]);
+    $run = $broadcast->runs()->create(['trigger' => 'manual', 'started_at' => now(), 'recipients_count' => 1]);
+    $delivery = $run->deliveries()->create([
+        'broadcast_id' => $broadcast->id,
+        'user_id' => User::factory()->create(['telegram_id' => 9])->id,
+        'chat_id' => '9',
+        'status' => 'pending',
+    ]);
+
+    (new SendTelegramBroadcastChunk($run->id, [$delivery->id]))
+        ->handle(app(BroadcastSender::class), app(SendsBroadcasts::class));
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'sendMessage')
+        && $request['reply_markup']['inline_keyboard'][0][0]['style'] === 'danger');
+});
+
 test('blocked users are marked instead of failing', function () {
     Http::fake([
         'api.telegram.org/*' => Http::response([

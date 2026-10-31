@@ -78,7 +78,16 @@ export function TelegramPreview({
                                         <button
                                             key={c}
                                             type="button"
-                                            className="flex flex-1 items-center justify-center gap-1 rounded-md bg-[#182533] px-2 py-2 text-[12px] font-medium text-sky-400 hover:bg-[#1f2f3f]"
+                                            className={cn(
+                                                'flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-2 text-[12px] font-medium',
+                                                button.style
+                                                    ? {
+                                                          primary: 'bg-[#3a6ea5]/60 text-white hover:bg-[#3a6ea5]/80',
+                                                          danger: 'bg-[#b04040]/50 text-red-200 hover:bg-[#b04040]/70',
+                                                          success: 'bg-[#3f7d43]/50 text-green-200 hover:bg-[#3f7d43]/70',
+                                                      }[button.style]
+                                                    : 'bg-[#182533] text-sky-400 hover:bg-[#1f2f3f]',
+                                            )}
                                         >
                                             {button.kind === 'url' ||
                                             button.kind === 'web_app' ? (

@@ -221,6 +221,7 @@ export type BroadcastMediaItem = {
 export type BroadcastButton = {
     text: string;
     kind: string;
+    style?: 'primary' | 'danger' | 'success' | null;
     url?: string;
     query?: string;
     copy_text?: string;

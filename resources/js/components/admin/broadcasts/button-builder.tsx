@@ -32,7 +32,7 @@ const KINDS_NEEDING_QUERY = [
 ];
 
 function emptyButton(): BroadcastButton {
-    return { text: '', kind: 'url', url: 'https://' };
+    return { text: '', kind: 'url', url: 'https://', style: null };
 }
 
 /**
@@ -115,7 +115,7 @@ export function ButtonBuilder({
                     {row.map((button, c) => (
                         <div
                             key={c}
-                            className="grid gap-2 rounded-md bg-muted/40 p-2 sm:grid-cols-[1fr_190px_auto] sm:items-end"
+                            className="grid gap-2 rounded-md bg-muted/40 p-2 sm:grid-cols-[1fr_190px_120px_auto] sm:items-end"
                         >
                             <div className="space-y-1">
                                 <Label className="text-xs">Label</Label>
@@ -150,6 +150,38 @@ export function ButtonBuilder({
                                                 </SelectItem>
                                             ),
                                         )}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs">Color</Label>
+                                <Select
+                                    value={button.style ?? 'default'}
+                                    onValueChange={(v) =>
+                                        setButton(r, c, {
+                                            style:
+                                                v === 'default'
+                                                    ? null
+                                                    : (v as BroadcastButton['style']),
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="default">
+                                            Default
+                                        </SelectItem>
+                                        <SelectItem value="primary">
+                                            Blue
+                                        </SelectItem>
+                                        <SelectItem value="danger">
+                                            Red
+                                        </SelectItem>
+                                        <SelectItem value="success">
+                                            Green
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

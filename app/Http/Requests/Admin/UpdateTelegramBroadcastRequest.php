@@ -40,6 +40,7 @@ class UpdateTelegramBroadcastRequest extends FormRequest
             'buttons.*' => ['array', 'max:8'],
             'buttons.*.*.text' => ['required', 'string', 'max:64'],
             'buttons.*.*.kind' => ['required', 'string', Rule::in(TelegramButtonKind::values())],
+            'buttons.*.*.style' => ['nullable', 'string', Rule::in(['primary', 'danger', 'success'])],
             'buttons.*.*.url' => [
                 'nullable', 'string', 'max:2000',
                 Rule::requiredIf(fn (): bool => $this->buttonKindsNeed('url', 'web_app', 'login_url')),
