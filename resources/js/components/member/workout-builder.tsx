@@ -39,7 +39,7 @@ type StoredState = {
     built: BuiltWorkout | null;
 };
 
-const STORAGE_KEY = 'workout-builder:v1';
+export const WORKOUT_BUILDER_STORAGE_KEY = 'workout-builder:v1';
 
 /**
  * Wizard state lives in sessionStorage so navigating to an exercise's
@@ -52,7 +52,7 @@ function readStored(): StoredState | null {
             return null;
         }
 
-        const raw = sessionStorage.getItem(STORAGE_KEY);
+        const raw = sessionStorage.getItem(WORKOUT_BUILDER_STORAGE_KEY);
         return raw === null ? null : (JSON.parse(raw) as StoredState);
     } catch {
         return null;
@@ -92,7 +92,7 @@ export function WorkoutBuilder({
     useEffect(() => {
         try {
             sessionStorage.setItem(
-                STORAGE_KEY,
+                WORKOUT_BUILDER_STORAGE_KEY,
                 JSON.stringify({ step, muscles, equipmentSel, built }),
             );
         } catch {
@@ -271,15 +271,17 @@ export function WorkoutBuilder({
                         {t('member.builder.back')}
                     </button>
 
-                    <div className="fixed inset-x-0 bottom-20 z-40 mx-auto max-w-md px-4">
-                        <Button
-                            className="h-12 w-full justify-center rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black hover:brightness-105"
-                            onClick={start}
-                            disabled={busy}
-                        >
-                            <Play className="size-4 fill-current" />
-                            {t('member.home.start_workout')}
-                        </Button>
+                    <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black via-black/95 to-transparent px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                        <div className="mx-auto max-w-md">
+                            <Button
+                                className="h-12 w-full justify-center rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black hover:brightness-105"
+                                onClick={start}
+                                disabled={busy}
+                            >
+                                <Play className="size-4 fill-current" />
+                                {t('member.home.start_workout')}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}

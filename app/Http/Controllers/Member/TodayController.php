@@ -34,7 +34,10 @@ class TodayController extends Controller
             ->unique()
             ->all();
 
+        $back = (string) $request->query('back', '');
+
         return Inertia::render('member/today', [
+            'backUrl' => str_starts_with($back, '/') ? $back : route('member.home'),
             'bodyParts' => ExerciseCatalog::bodyPartFilters(),
             'equipment' => Exercise::query()
                 ->distinct()

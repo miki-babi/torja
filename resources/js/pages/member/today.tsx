@@ -1,4 +1,5 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 import type {
     BodyPart,
@@ -9,8 +10,12 @@ import type {
     ExercisePlaylist,
     WorkoutSession,
 } from '@/components/member/types';
-import { WorkoutBuilder } from '@/components/member/workout-builder';
+import {
+    WORKOUT_BUILDER_STORAGE_KEY,
+    WorkoutBuilder,
+} from '@/components/member/workout-builder';
 import { WorkoutSessionCard } from '@/components/member/workout-session';
+import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 
 export default function MemberToday({
@@ -19,12 +24,14 @@ export default function MemberToday({
     playlists: initialPlaylists,
     sessions: initialSessions,
     exerciseSummaries,
+    backUrl,
 }: {
     bodyParts: BodyPart[];
     equipment: string[];
     playlists: ExercisePlaylist[];
     sessions: WorkoutSession[];
     exerciseSummaries: ExerciseSummaries;
+    backUrl: string;
 }) {
     const { url } = usePage();
     const { t } = useTranslation();
@@ -54,12 +61,34 @@ export default function MemberToday({
         setActiveSessionId(next.id);
     }
 
+    function closeWizard() {
+        try {
+            sessionStorage.removeItem(WORKOUT_BUILDER_STORAGE_KEY);
+        } catch {
+            // Storage unavailable — nothing to reset.
+        }
+        router.visit(backUrl);
+    }
+
     return (
-        <MobileShell>
+        <MobileShell hideNav>
             <Head title={t('member.builder.title')} />
-            <h1 className="text-xl font-semibold tracking-tight">
-                {t('member.builder.title')}
-            </h1>
+            <div className="flex items-center gap-1">
+                {activeSession === null && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="-ml-2 size-8 shrink-0"
+                        onClick={closeWizard}
+                        aria-label={t('member.builder.back')}
+                    >
+                        <ChevronLeft className="size-5" />
+                    </Button>
+                )}
+                <h1 className="text-xl font-semibold tracking-tight">
+                    {t('member.builder.title')}
+                </h1>
+            </div>
 
             <div className="mt-4">
                 {activeSession === null ? (
