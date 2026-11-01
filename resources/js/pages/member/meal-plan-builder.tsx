@@ -8,7 +8,6 @@ import { mealTypeLabel } from '@/components/member/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 import { meal } from '@/routes/member';
 import { search as foodSearch } from '@/routes/member/foods';
 import { store as storePlan } from '@/routes/member/meal-plans';
@@ -32,10 +31,18 @@ type FoodResult = {
     kcal_per_100g: number | null;
 };
 
+function seedDay(mealTypes: string[]): PlanMeal[] {
+    return mealTypes.map((type) => ({ meal_type: type, items: [] }));
+}
+
+function dayHasItems(meals: PlanMeal[]): boolean {
+    return meals.some((m) => m.items.length > 0);
+}
+
 /**
- * Step-by-step meal plan builder: name + day count → one step per day
- * (add meals and foods from the catalog or custom items) → review →
- * save. Saved plans render on /meal.
+ * Step-by-step meal plan builder: name → one day at a time (every meal
+ * slot is already on the card — just add foods) → "Add day" grows the
+ * plan → review → save. Empty meal slots are dropped on save.
  */
 export default function MealPlanBuilder({
     mealTypes,
@@ -47,47 +54,32 @@ export default function MealPlanBuilder({
     const { t } = useTranslation();
     const [step, setStep] = useState(0);
     const [name, setName] = useState('');
-    const [dayCount, setDayCount] = useState(1);
-    const [days, setDays] = useState<PlanMeal[][]>([[]]);
+    const [days, setDays] = useState<PlanMeal[][]>(() => [seedDay(mealTypes)]);
     const [busy, setBusy] = useState(false);
 
-    const totalSteps = dayCount + 2;
-
-    function setDayCountAndDays(count: number) {
-        setDayCount(count);
-        setDays((prev) =>
-            Array.from(
-                { length: count },
-                (_, i) => prev[i] ?? ([] as PlanMeal[]),
-            ),
-        );
-    }
+    const reviewStep = days.length + 1;
+    const onDayStep = step >= 1 && step <= days.length;
+    const currentMeals = onDayStep ? days[step - 1] : [];
 
     function updateDay(index: number, meals: PlanMeal[]) {
         setDays((prev) => prev.map((d, i) => (i === index ? meals : d)));
     }
 
-    function dayReady(meals: PlanMeal[]): boolean {
-        return meals.length > 0 && meals.every((m) => m.items.length > 0);
+    function addDay() {
+        setDays((prev) => [...prev, seedDay(mealTypes)]);
+        setStep((s) => s + 1);
     }
-
-    const canNext =
-        step === 0
-            ? name.trim() !== '' && dayCount >= 1
-            : step <= dayCount
-              ? dayReady(days[step - 1])
-              : true;
 
     async function save() {
         if (busy) {
             return;
         }
-        setBusy(true);
-        try {
-            await memberApi(storePlan().url, 'POST', {
-                name: name.trim(),
-                days: days.map((meals) => ({
-                    meals: meals.map((m) => ({
+
+        const payloadDays = days
+            .map((meals) => ({
+                meals: meals
+                    .filter((m) => m.items.length > 0)
+                    .map((m) => ({
                         meal_type: m.meal_type,
                         items: m.items.map((i) => ({
                             food_id: i.food_id,
@@ -95,7 +87,18 @@ export default function MealPlanBuilder({
                             portion_note: i.portion_note ?? null,
                         })),
                     })),
-                })),
+            }))
+            .filter((d) => d.meals.length > 0);
+
+        if (payloadDays.length === 0) {
+            return;
+        }
+
+        setBusy(true);
+        try {
+            await memberApi(storePlan().url, 'POST', {
+                name: name.trim(),
+                days: payloadDays,
             });
             router.visit(meal().url);
         } catch (error) {
@@ -108,14 +111,6 @@ export default function MealPlanBuilder({
         }
     }
 
-    function next() {
-        if (step >= totalSteps - 1) {
-            void save();
-        } else {
-            setStep((s) => s + 1);
-        }
-    }
-
     return (
         <MobileShell>
             <Head title={t('member.meal_builder.title')} />
@@ -124,12 +119,15 @@ export default function MealPlanBuilder({
             </h1>
 
             <div className="mt-4 space-y-5">
-                <p className="text-[11px] font-bold tracking-wider text-[#AFFA01] uppercase">
-                    {t('member.builder.step', {
-                        current: step + 1,
-                        total: totalSteps,
-                    })}
-                </p>
+                {(onDayStep || step === reviewStep) && (
+                    <p className="text-[11px] font-bold tracking-wider text-[#AFFA01] uppercase">
+                        {onDayStep
+                            ? t('member.meal_builder.day_title', {
+                                  day: step,
+                              })
+                            : t('member.meal_builder.review_title')}
+                    </p>
+                )}
 
                 {step === 0 && (
                     <div className="space-y-4">
@@ -148,44 +146,18 @@ export default function MealPlanBuilder({
                                 )}
                             />
                         </div>
-                        <div>
-                            <p className="mb-1.5 text-sm font-medium text-[#F5F5F5]">
-                                {t('member.meal_builder.days_label')}
-                            </p>
-                            <div className="grid grid-cols-4 gap-2">
-                                {Array.from(
-                                    { length: maxDays },
-                                    (_, i) => i + 1,
-                                ).map((n) => (
-                                    <button
-                                        key={n}
-                                        type="button"
-                                        onClick={() => setDayCountAndDays(n)}
-                                        className={cn(
-                                            'flex h-14 flex-col items-center justify-center rounded-xl border text-lg font-bold',
-                                            dayCount === n
-                                                ? 'border-lime-500 bg-lime-300/40 text-[#F5F5F5]'
-                                                : 'border-input text-muted-foreground',
-                                        )}
-                                    >
-                                        {n}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
                     </div>
                 )}
 
-                {step >= 1 && step <= dayCount && (
+                {onDayStep && (
                     <DayStep
-                        day={step}
                         mealTypes={mealTypes}
-                        meals={days[step - 1]}
+                        meals={currentMeals}
                         onChange={(meals) => updateDay(step - 1, meals)}
                     />
                 )}
 
-                {step === totalSteps - 1 && (
+                {step === reviewStep && (
                     <div className="space-y-4">
                         <h2 className="text-lg font-bold text-[#F5F5F5]">
                             {name}
@@ -197,23 +169,25 @@ export default function MealPlanBuilder({
                                         day: d + 1,
                                     })}
                                 </p>
-                                {meals.map((m, i) => (
-                                    <p
-                                        key={i}
-                                        className="text-sm text-[#F5F5F5]"
-                                    >
-                                        <span className="font-semibold">
-                                            {mealTypeLabel(m.meal_type)}
-                                        </span>
-                                        <span className="text-[#8E8E93]">
-                                            {' '}
-                                            —{' '}
-                                            {m.items
-                                                .map((i) => i.name)
-                                                .join(', ')}
-                                        </span>
-                                    </p>
-                                ))}
+                                {meals
+                                    .filter((m) => m.items.length > 0)
+                                    .map((m) => (
+                                        <p
+                                            key={m.meal_type}
+                                            className="text-sm text-[#F5F5F5]"
+                                        >
+                                            <span className="font-semibold">
+                                                {mealTypeLabel(m.meal_type)}
+                                            </span>
+                                            <span className="text-[#8E8E93]">
+                                                {' '}
+                                                —{' '}
+                                                {m.items
+                                                    .map((i) => i.name)
+                                                    .join(', ')}
+                                            </span>
+                                        </p>
+                                    ))}
                             </div>
                         ))}
                     </div>
@@ -230,16 +204,51 @@ export default function MealPlanBuilder({
                             {t('member.builder.back')}
                         </button>
                     )}
-                    <Button
-                        className="ml-auto h-11 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-5 font-bold text-black hover:brightness-105"
-                        onClick={next}
-                        disabled={!canNext || busy}
-                    >
-                        {step === totalSteps - 1
-                            ? t('member.meal_builder.save')
-                            : t('member.builder.continue')}
-                        <ChevronRight className="size-4" />
-                    </Button>
+
+                    {onDayStep && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => setStep(reviewStep)}
+                                disabled={!dayHasItems(currentMeals)}
+                                className="ml-auto text-xs font-semibold text-[#8E8E93] transition-colors hover:text-[#F5F5F5] disabled:opacity-40"
+                            >
+                                {t('member.meal_builder.review_title')}
+                            </button>
+                            {days.length < maxDays && (
+                                <Button
+                                    className="h-11 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-5 font-bold text-black hover:brightness-105"
+                                    onClick={addDay}
+                                    disabled={!dayHasItems(currentMeals)}
+                                >
+                                    <Plus className="size-4" />
+                                    {t('member.meal_builder.add_day')}
+                                </Button>
+                            )}
+                        </>
+                    )}
+
+                    {step === 0 && (
+                        <Button
+                            className="ml-auto h-11 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-5 font-bold text-black hover:brightness-105"
+                            onClick={() => setStep(1)}
+                            disabled={name.trim() === ''}
+                        >
+                            {t('member.builder.continue')}
+                            <ChevronRight className="size-4" />
+                        </Button>
+                    )}
+
+                    {step === reviewStep && (
+                        <Button
+                            className="ml-auto h-11 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-5 font-bold text-black hover:brightness-105"
+                            onClick={() => void save()}
+                            disabled={busy}
+                        >
+                            {t('member.meal_builder.save')}
+                            <ChevronRight className="size-4" />
+                        </Button>
+                    )}
                 </div>
             </div>
         </MobileShell>
@@ -247,134 +256,97 @@ export default function MealPlanBuilder({
 }
 
 /**
- * One day in the wizard: meal cards for each added MealType, an "Add
- * meal" grid of the types not yet used, and a per-meal food picker
- * (catalog search + custom item).
+ * One day in the wizard: every MealType slot is pre-seeded on the card;
+ * each has an "Add food" picker (catalog search + custom item).
  */
 function DayStep({
-    day,
     mealTypes,
     meals,
     onChange,
 }: {
-    day: number;
     mealTypes: string[];
     meals: PlanMeal[];
     onChange: (meals: PlanMeal[]) => void;
 }) {
     const { t } = useTranslation();
-    const [addingMeal, setAddingMeal] = useState<number | null>(null);
+    const [addingMeal, setAddingMeal] = useState<string | null>(null);
 
-    const usedTypes = new Set(meals.map((m) => m.meal_type));
-    const remaining = mealTypes.filter((type) => !usedTypes.has(type));
-
-    function addMeal(type: string) {
-        onChange([...meals, { meal_type: type, items: [] }]);
-        setAddingMeal(meals.length);
-    }
-
-    function setItems(index: number, items: PlanItem[]) {
-        onChange(meals.map((m, i) => (i === index ? { ...m, items } : m)));
+    function setItems(type: string, items: PlanItem[]) {
+        onChange(
+            meals.map((m) => (m.meal_type === type ? { ...m, items } : m)),
+        );
     }
 
     return (
         <div className="space-y-4">
-            <h2 className="text-lg font-bold text-[#F5F5F5]">
-                {t('member.meal_builder.day_title', { day })}
-            </h2>
+            {mealTypes.map((type) => {
+                const meal =
+                    meals.find((m) => m.meal_type === type) ??
+                    ({ meal_type: type, items: [] } as PlanMeal);
 
-            {meals.map((m, i) => (
-                <div
-                    key={m.meal_type}
-                    className="space-y-2 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] p-4"
-                >
-                    <div className="flex items-center justify-between">
+                return (
+                    <div
+                        key={type}
+                        className="space-y-2 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] p-4"
+                    >
                         <p className="text-sm font-bold text-[#F5F5F5]">
-                            {mealTypeLabel(m.meal_type)}
+                            {mealTypeLabel(type)}
                         </p>
-                        <button
-                            type="button"
-                            onClick={() =>
-                                onChange(meals.filter((_, j) => j !== i))
-                            }
-                            aria-label="Remove meal"
-                            className="text-[#8E8E93] transition-colors hover:text-[#F5F5F5]"
-                        >
-                            <X className="size-4" />
-                        </button>
-                    </div>
 
-                    {m.items.map((item, j) => (
-                        <div
-                            key={j}
-                            className="flex items-center gap-2.5 rounded-xl border border-[#2E2E2E] bg-[#141414] px-3 py-2"
-                        >
-                            {item.image_url !== undefined &&
-                                item.image_url !== null && (
-                                    <img
-                                        src={item.image_url}
-                                        alt=""
-                                        className="size-8 shrink-0 rounded-lg object-cover"
-                                    />
-                                )}
-                            <span className="min-w-0 flex-1 truncate text-sm text-[#F5F5F5]">
-                                {item.name}
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setItems(
-                                        i,
-                                        m.items.filter((_, k) => k !== j),
-                                    )
-                                }
-                                aria-label="Remove item"
-                                className="shrink-0 text-[#8E8E93] transition-colors hover:text-[#F5F5F5]"
+                        {meal.items.map((item, j) => (
+                            <div
+                                key={j}
+                                className="flex items-center gap-2.5 rounded-xl border border-[#2E2E2E] bg-[#141414] px-3 py-2"
                             >
-                                <X className="size-3.5" />
-                            </button>
-                        </div>
-                    ))}
-
-                    {addingMeal === i ? (
-                        <ItemPicker
-                            onAdd={(item) => {
-                                setItems(i, [...m.items, item]);
-                            }}
-                            onDone={() => setAddingMeal(null)}
-                        />
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => setAddingMeal(i)}
-                            className="flex items-center gap-1.5 text-xs font-semibold text-[#AFFA01]"
-                        >
-                            <Plus className="size-3.5" />
-                            {t('member.meal_builder.add_food')}
-                        </button>
-                    )}
-                </div>
-            ))}
-
-            {remaining.length > 0 && (
-                <div>
-                    <p className="mb-1.5 text-xs font-semibold text-[#8E8E93]">
-                        {t('member.meal_builder.add_meal')}
-                    </p>
-                    <div className="grid grid-cols-3 gap-2">
-                        {remaining.map((type) => (
-                            <button
-                                key={type}
-                                type="button"
-                                onClick={() => addMeal(type)}
-                                className="flex items-center justify-center rounded-xl border border-input px-2 py-3 text-xs font-medium text-muted-foreground transition-colors hover:border-lime-500 hover:text-[#F5F5F5]"
-                            >
-                                {mealTypeLabel(type)}
-                            </button>
+                                {item.image_url !== undefined &&
+                                    item.image_url !== null && (
+                                        <img
+                                            src={item.image_url}
+                                            alt=""
+                                            className="size-8 shrink-0 rounded-lg object-cover"
+                                        />
+                                    )}
+                                <span className="min-w-0 flex-1 truncate text-sm text-[#F5F5F5]">
+                                    {item.name}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setItems(
+                                            type,
+                                            meal.items.filter(
+                                                (_, k) => k !== j,
+                                            ),
+                                        )
+                                    }
+                                    aria-label="Remove item"
+                                    className="shrink-0 text-[#8E8E93] transition-colors hover:text-[#F5F5F5]"
+                                >
+                                    <X className="size-3.5" />
+                                </button>
+                            </div>
                         ))}
+
+                        {addingMeal === type ? (
+                            <ItemPicker
+                                onAdd={(item) =>
+                                    setItems(type, [...meal.items, item])
+                                }
+                                onDone={() => setAddingMeal(null)}
+                            />
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setAddingMeal(type)}
+                                className="flex items-center gap-1.5 text-xs font-semibold text-[#AFFA01]"
+                            >
+                                <Plus className="size-3.5" />
+                                {t('member.meal_builder.add_food')}
+                            </button>
+                        )}
                     </div>
-                </div>
-            )}
+                );
+            })}
         </div>
     );
 }
