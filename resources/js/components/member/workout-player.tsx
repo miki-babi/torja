@@ -297,9 +297,6 @@ export function WorkoutPlayer({
             {/* Top Bar Header */}
             <div className="relative flex items-center justify-center border-b border-[#2E2E2E]/60 pb-3">
                 <div className="text-center">
-                    <p className="text-xs font-semibold tracking-wider text-[#AFFA01] uppercase">
-                        {workout.title}
-                    </p>
                     <h1 className="text-sm font-bold text-[#F5F5F5]">
                         Exercise {exerciseIndex + 1} of {total}
                     </h1>
