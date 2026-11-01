@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\Telegram\TelegramApi;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -29,7 +30,7 @@ test('the status page renders bot identity and webhook info', function () {
             'result' => [
                 'url' => 'https://app.test/telegram/webhook',
                 'pending_update_count' => 3,
-                'allowed_updates' => ['message', 'callback_query'],
+                'allowed_updates' => TelegramApi::ALLOWED_UPDATES,
                 'last_error_message' => 'Wrong response from the webhook: 500',
                 'last_error_date' => 1730000000,
             ],
@@ -90,7 +91,7 @@ test('setting the webhook posts url, allowed updates and the secret to telegram'
     Http::assertSent(fn ($request) => str_contains($request->url(), 'setWebhook')
         && $request['url'] === 'https://app.test/telegram/webhook'
         && $request['secret_token'] === 'sekrit'
-        && $request['allowed_updates'] === ['message', 'callback_query']);
+        && $request['allowed_updates'] === TelegramApi::ALLOWED_UPDATES);
 });
 
 test('an empty url falls back to the app webhook endpoint', function () {

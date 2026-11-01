@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Telegram;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\Telegram\BroadcastCallbacks;
+use App\Support\Telegram\InlineQueries;
 use App\Support\Telegram\MenuKeyboard;
 use App\Support\Telegram\TelegramApi;
 use App\Support\Telegram\UserResolver;
@@ -43,6 +44,30 @@ class WebhookController extends Controller
 
         if (is_array($callbackQuery)) {
             app(BroadcastCallbacks::class)->handle($callbackQuery);
+
+            return response()->json(['ok' => true]);
+        }
+
+        $inlineQuery = $request->input('inline_query');
+
+        if (is_array($inlineQuery)) {
+            try {
+                app(InlineQueries::class)->handle($inlineQuery);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
+            return response()->json(['ok' => true]);
+        }
+
+        $chosenResult = $request->input('chosen_inline_result');
+
+        if (is_array($chosenResult)) {
+            try {
+                app(InlineQueries::class)->handleChosen($chosenResult);
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
             return response()->json(['ok' => true]);
         }

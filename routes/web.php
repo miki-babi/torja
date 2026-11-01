@@ -25,7 +25,7 @@ Route::post('t', BeaconController::class)
     ->name('tracking.beacon');
 
 Route::post('telegram/webhook', WebhookController::class)
-    ->middleware('throttle:60,1')
+    ->middleware('throttle:300,1')
     ->name('telegram.webhook');
 
 Route::middleware('guest')->group(function () {

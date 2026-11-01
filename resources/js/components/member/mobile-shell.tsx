@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { useEffect, type ReactNode } from 'react';
 import { BottomNav } from '@/components/member/bottom-nav';
 import { SessionFab } from '@/components/member/session-fab';
@@ -18,7 +18,8 @@ let startParamReported = false;
  * their referrer bound — the same binding guests get during webapp
  * sign-in. Only `ref_*` params (ambassador invites) are reported; the
  * response's redirect is intentionally ignored since the member is
- * already in-app.
+ * already in-app. `ex_*` params (exercises shared via inline mode)
+ * navigate straight to the exercise page instead.
  */
 function useTelegramStartParam() {
     useEffect(() => {
@@ -36,7 +37,17 @@ function useTelegramStartParam() {
 
         const param = telegramStartParam(payload.initData);
 
-        if (param === null || !param.startsWith('ref_')) {
+        if (param === null) {
+            return;
+        }
+
+        if (/^ex_[\w-]+$/.test(param)) {
+            router.visit(`/exercise/${param.slice(3)}`);
+
+            return;
+        }
+
+        if (!param.startsWith('ref_')) {
             return;
         }
 

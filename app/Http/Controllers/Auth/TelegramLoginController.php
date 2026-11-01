@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Responses\Concerns\RedirectsUsersByRole;
 use App\Listeners\BindReferrer;
 use App\Models\User;
+use App\Support\ExerciseCatalog;
 use App\Support\Telegram\InitData;
 use App\Support\Telegram\UserResolver;
 use App\Support\Tracking\Tracker;
@@ -26,7 +27,9 @@ use Illuminate\Support\Str;
  * `initData`, posts it here, and the verified Telegram user is signed in
  * (creating an account on the fly when unknown) with no round-trip. An
  * ambassador `startapp=ref_<code>` start param binds the referrer, both
- * on sign-in and for already-authenticated Mini App sessions.
+ * on sign-in and for already-authenticated Mini App sessions; an
+ * `ex_<slug>` start param (exercises shared via inline mode) redirects
+ * the new session to that exercise's detail page.
  */
 class TelegramLoginController extends Controller
 {
@@ -161,8 +164,29 @@ class TelegramLoginController extends Controller
         }
 
         return response()->json([
-            'redirect' => redirect()->intended($this->homeFor($user))->getTargetUrl(),
+            'redirect' => $this->exerciseRedirect($initData)
+                ?? redirect()->intended($this->homeFor($user))->getTargetUrl(),
         ]);
+    }
+
+    /**
+     * Map an `ex_<slug>` Mini App start param — the deep link attached to
+     * exercises shared via inline mode — to the exercise detail page, or
+     * null for other params and unknown exercises.
+     */
+    private function exerciseRedirect(InitData $initData): ?string
+    {
+        $param = $initData->startParam();
+
+        if ($param === null || preg_match('/^ex_([\w-]{1,512})$/', $param, $matches) !== 1) {
+            return null;
+        }
+
+        $slug = ExerciseCatalog::resolve($matches[1]);
+
+        return ExerciseCatalog::has($slug)
+            ? route('member.exercises.show', $slug)
+            : null;
     }
 
     /**

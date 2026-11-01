@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Exercise;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -294,6 +295,23 @@ test('webapp leaves the chat id empty without write permission', function () {
 
     expect(User::firstWhere('telegram_id', 555001)->telegram_chat_id)
         ->toBeNull();
+});
+
+test('webapp redirects an ex start param to the exercise detail page', function () {
+    $exercise = Exercise::factory()->create(['slug' => 'barbell-bench-press']);
+
+    $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(startParam: 'ex_barbell-bench-press'),
+    ])->assertOk()
+        ->assertJson(['redirect' => route('member.exercises.show', $exercise)]);
+});
+
+test('webapp falls back to the home redirect for unknown exercises', function () {
+    $response = $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(startParam: 'ex_no-such-exercise'),
+    ])->assertOk();
+
+    expect($response->json('redirect'))->not->toContain('/exercise/');
 });
 
 test('webapp rejects a tampered signature', function () {

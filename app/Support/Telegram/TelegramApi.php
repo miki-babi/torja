@@ -16,6 +16,33 @@ class TelegramApi
     private const BASE = 'https://api.telegram.org';
 
     /**
+     * Update types the webhook serves — messages, broadcast callbacks and
+     * inline-mode queries (plus share feedback).
+     */
+    public const ALLOWED_UPDATES = [
+        'message',
+        'callback_query',
+        'inline_query',
+        'chosen_inline_result',
+    ];
+
+    /**
+     * answerInlineQuery — exercise results for inline mode. `options`
+     * carries cache_time, is_personal, next_offset, and the picker-level
+     * `button` (Mini App shortcut or switch-to-PM).
+     *
+     * @param  array<int, array<string, mixed>>  $results
+     * @param  array<string, mixed>  $options
+     */
+    public function answerInlineQuery(string $inlineQueryId, array $results, array $options = []): ApiResult
+    {
+        return $this->post('answerInlineQuery', [
+            'inline_query_id' => $inlineQueryId,
+            'results' => $results,
+        ] + $options);
+    }
+
+    /**
      * sendMessage — HTML body plus inline keyboard.
      *
      * @param  array<string, mixed>|null  $replyMarkup
@@ -231,7 +258,7 @@ class TelegramApi
     {
         $payload = [
             'url' => $url,
-            'allowed_updates' => ['message', 'callback_query'],
+            'allowed_updates' => self::ALLOWED_UPDATES,
         ];
 
         $secret = config('services.telegram.webhook_secret');

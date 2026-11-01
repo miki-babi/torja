@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Telegram\TelegramApi;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 
 #[Signature('telegram:set-webhook {--url= : Public webhook URL (defaults to APP_URL/telegram/webhook)}')]
 #[Description('Register the Telegram webhook with the Bot API')]
@@ -26,17 +26,10 @@ class SetTelegramWebhook extends Command
 
         $url = $this->option('url') ?? rtrim((string) config('app.url'), '/').'/telegram/webhook';
 
-        $payload = ['url' => $url];
-        $secret = config('services.telegram.webhook_secret');
+        $result = app(TelegramApi::class)->setWebhook($url);
 
-        if (is_string($secret) && $secret !== '') {
-            $payload['secret_token'] = $secret;
-        }
-
-        $response = Http::timeout(10)->post("https://api.telegram.org/bot{$token}/setWebhook", $payload);
-
-        if (! $response->ok() || ! ($response->json('ok') ?? false)) {
-            $this->error('setWebhook failed: '.$response->body());
+        if (! $result->ok) {
+            $this->error('setWebhook failed: '.$result->description);
 
             return self::FAILURE;
         }
