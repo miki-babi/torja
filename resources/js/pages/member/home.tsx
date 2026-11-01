@@ -1,5 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
-import { Compass, Dumbbell, Flame, Sparkles, Utensils } from 'lucide-react';
+import {
+    Compass,
+    Dumbbell,
+    Flame,
+    Sparkles,
+    Utensils,
+    UtensilsCrossed,
+} from 'lucide-react';
 import {
     BannerCarousel,
     type HomeBanner,
@@ -12,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n';
 import { exercise, meal, today } from '@/routes/member';
+import { create as createPlan } from '@/routes/member/meal-plans';
 import { index as exploreIndex } from '@/routes/explore';
 
 function greetingKey(): string {
@@ -106,28 +114,26 @@ export default function MemberHome({
 
             {/* Meal Plan Section */}
             <section className="mt-5">
-                <MealPlanCard planDay={planDay} />
-            </section>
-
-            {/* Programs Section */}
-            <section className="mt-5">
-                <Card className="overflow-hidden p-0">
-                    <CardContent className="flex items-center justify-between gap-4 p-5">
-                        <div className="min-w-0 flex-1">
-                            <span className="text-[11px] font-bold tracking-wider text-[#AFFA01] uppercase">
-                                {t('programs.home_card_title')}
-                            </span>
-                            <p className="mt-1 text-sm font-medium text-[#F5F5F5]">
-                                {t('programs.home_card_body')}
+                {planDay !== null ? (
+                    <MealPlanCard planDay={planDay} />
+                ) : (
+                    <Card>
+                        <CardContent className="flex flex-col items-center gap-2 p-4 text-center">
+                            <UtensilsCrossed className="size-5 text-muted-foreground" />
+                            <p className="text-sm font-medium">
+                                {t('member.meal_builder.no_plan')}
                             </p>
-                        </div>
-                        <Button asChild size="sm" className="shrink-0">
-                            <Link href={exploreIndex()}>
-                                {t('programs.browse')}
-                            </Link>
-                        </Button>
-                    </CardContent>
-                </Card>
+                            <p className="text-sm text-muted-foreground">
+                                {t('member.meal_builder.no_plan_hint')}
+                            </p>
+                            <Button asChild className="mt-2">
+                                <Link href={createPlan().url}>
+                                    {t('member.meal_builder.create_plan')}
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
             </section>
         </MobileShell>
     );
