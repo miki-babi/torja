@@ -29,6 +29,9 @@ type FoodResult = {
     name_en: string;
     image_url: string | null;
     kcal_per_100g: number | null;
+    protein_g: number | null;
+    carbs_g: number | null;
+    fat_g: number | null;
 };
 
 function seedDay(mealTypes: string[]): PlanMeal[] {
@@ -366,18 +369,15 @@ function ItemPicker({
     const { t } = useTranslation();
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<FoodResult[]>([]);
-    const [searching, setSearching] = useState(false);
     const latest = useRef<symbol>(Symbol('init'));
 
     useEffect(() => {
         const trimmed = query.trim();
         if (trimmed === '') {
             setResults([]);
-            setSearching(false);
             return;
         }
 
-        setSearching(true);
         const token = Symbol('search');
         latest.current = token;
 
@@ -391,12 +391,10 @@ function ItemPicker({
                 };
                 if (latest.current === token) {
                     setResults(foods);
-                    setSearching(false);
                 }
             } catch {
                 if (latest.current === token) {
                     toast.error('Could not search foods');
-                    setSearching(false);
                 }
             }
         }, 300);
@@ -405,7 +403,15 @@ function ItemPicker({
     }, [query]);
 
     const trimmedQuery = query.trim();
-    const noMatch = trimmedQuery !== '' && !searching && results.length === 0;
+
+    function addTypedItem() {
+        if (trimmedQuery === '') {
+            return;
+        }
+        onAdd({ food_id: null, name: trimmedQuery });
+        setQuery('');
+        setResults([]);
+    }
 
     return (
         <div className="fixed inset-0 z-50 flex flex-col bg-background">
@@ -425,19 +431,25 @@ function ItemPicker({
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={(e) => {
-                            if (e.key === 'Enter' && noMatch) {
-                                onAdd({ food_id: null, name: trimmedQuery });
-                                setQuery('');
-                                setResults([]);
+                            if (e.key === 'Enter') {
+                                addTypedItem();
                             }
                         }}
                         placeholder={t('member.meal_builder.search_foods')}
                         className="pl-9"
                     />
                 </div>
+                <Button
+                    className="h-10 shrink-0 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-3.5 font-bold text-black hover:brightness-105"
+                    onClick={addTypedItem}
+                    disabled={trimmedQuery === ''}
+                >
+                    <Plus className="size-4" />
+                    {t('member.meal_builder.add')}
+                </Button>
             </div>
 
-            <div className="flex-1 space-y-1 overflow-y-auto px-4 pb-6">
+            <div className="flex-1 space-y-2 overflow-y-auto px-4 pb-6">
                 {results.map((food) => (
                     <button
                         key={food.id}
@@ -449,45 +461,45 @@ function ItemPicker({
                                 image_url: food.image_url,
                             })
                         }
-                        className="flex w-full items-center gap-2.5 rounded-xl border border-[#2E2E2E] bg-[#141414] px-3 py-2 text-left transition-colors hover:border-[#AFFA01]/40"
+                        className="flex w-full items-center gap-3 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] p-3.5 text-left transition-colors hover:border-[#AFFA01]/40"
                     >
-                        {food.image_url !== null && (
-                            <img
-                                src={food.image_url}
-                                alt=""
-                                className="size-8 shrink-0 rounded-lg object-cover"
-                            />
-                        )}
-                        <span className="min-w-0 flex-1 truncate text-sm text-[#F5F5F5]">
-                            {food.name_en}
-                        </span>
-                        {food.kcal_per_100g !== null && (
-                            <span className="shrink-0 text-xs text-[#8E8E93]">
-                                {food.kcal_per_100g} kcal
+                        {food.image_url !== null ? (
+                            <span className="shrink-0 overflow-hidden rounded-xl border border-[#2E2E2E] bg-white">
+                                <img
+                                    src={food.image_url}
+                                    alt=""
+                                    className="size-14 object-cover"
+                                />
                             </span>
+                        ) : (
+                            <span className="size-14 shrink-0 rounded-xl border border-[#2E2E2E] bg-[#141414]" />
                         )}
+                        <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold text-[#F5F5F5]">
+                                {food.name_en}
+                            </span>
+                            <span className="mt-0.5 block truncate text-xs text-[#8E8E93]">
+                                {[
+                                    food.kcal_per_100g !== null
+                                        ? `${food.kcal_per_100g} kcal`
+                                        : null,
+                                    food.protein_g !== null
+                                        ? `P ${food.protein_g}g`
+                                        : null,
+                                    food.carbs_g !== null
+                                        ? `C ${food.carbs_g}g`
+                                        : null,
+                                    food.fat_g !== null
+                                        ? `F ${food.fat_g}g`
+                                        : null,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' · ')}
+                            </span>
+                        </span>
+                        <Plus className="size-4 shrink-0 text-[#AFFA01]" />
                     </button>
                 ))}
-
-                {noMatch && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            onAdd({ food_id: null, name: trimmedQuery });
-                            setQuery('');
-                            setResults([]);
-                        }}
-                        className="flex w-full items-center gap-2.5 rounded-xl border border-[#AFFA01]/40 bg-[#141414] px-3 py-2 text-left"
-                    >
-                        <Plus className="size-4 shrink-0 text-[#AFFA01]" />
-                        <span className="min-w-0 flex-1 truncate text-sm text-[#F5F5F5]">
-                            {trimmedQuery}
-                        </span>
-                        <span className="shrink-0 text-xs font-semibold text-[#AFFA01]">
-                            {t('member.meal_builder.add')}
-                        </span>
-                    </button>
-                )}
             </div>
         </div>
     );
