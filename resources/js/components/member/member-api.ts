@@ -22,9 +22,21 @@ export async function memberApi<T>(
         body: body === undefined ? undefined : JSON.stringify(body),
     });
 
+    const data: unknown = await response.json().catch(() => null);
+
     if (!response.ok) {
-        throw new Error(`Request failed: ${response.status}`);
+        const message =
+            typeof data === 'object' &&
+            data !== null &&
+            'message' in data &&
+            typeof data.message === 'string'
+                ? data.message
+                : `Request failed: ${response.status}`;
+
+        const error = new Error(message);
+        (error as Error & { status?: number }).status = response.status;
+        throw error;
     }
 
-    return response.json() as Promise<T>;
+    return data as T;
 }

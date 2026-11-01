@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
-use App\Services\DailyWorkoutGenerator;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
 use App\Services\Nutrition\ProfileResolver;
-use App\Support\ExerciseCatalog;
 use App\Support\HomeBanners;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -19,11 +17,11 @@ class HomeController extends Controller
     public function __construct(
         private readonly ProfileResolver $profiles,
         private readonly MealPlanPreviewBuilder $preview,
-        private readonly DailyWorkoutGenerator $workout,
     ) {}
 
     /**
-     * Member home: greeting, today's meal-plan checklist and today's workout.
+     * Member home: greeting, today's meal-plan checklist and the workout
+     * builder call-to-action.
      */
     public function __invoke(Request $request): Response
     {
@@ -35,20 +33,9 @@ class HomeController extends Controller
             ? Carbon::now()->dayOfWeekIso
             : 1;
 
-        $playlist = $this->workout->for($request->user());
-        $muscle = $playlist->items->first() !== null
-            ? ExerciseCatalog::muscleFor($playlist->items->first()->exercise_id)
-            : null;
-
         return Inertia::render('member/home', [
             'userName' => Str::before(trim((string) $request->user()?->name), ' ') ?: 'there',
             'planDay' => $this->preview->for($profile, $day),
-            'todayWorkout' => [
-                'title' => $playlist->name,
-                'muscle' => $muscle,
-                'exerciseCount' => $playlist->items->count(),
-                'playUrl' => route('member.playlists.play', $playlist),
-            ],
             'streak' => $request->user()->activityStreak(),
             'banners' => HomeBanners::forMember(),
         ]);

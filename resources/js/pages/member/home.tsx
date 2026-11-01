@@ -25,45 +25,15 @@ export default function MemberHome({
     userName,
     planDay,
     banners,
-    todayWorkout,
     streak,
 }: {
     userName: string;
     planDay: PlanDay | null;
     banners: HomeBanner[];
-    todayWorkout: {
-        title: string;
-        muscle: string | null;
-        exerciseCount: number;
-        playUrl: string;
-    };
     streak: number;
 }) {
     const { t } = useTranslation();
     const greeting = t(`member.home.${greetingKey()}`);
-
-    /**
-     * Translated body-part label (exercise_values.body_part.*), falling back
-     * to the raw catalog value when no language line exists.
-     */
-    function tv(value: string): string {
-        const key = `exercise_values.body_part.${value}`;
-        const text = t(key);
-        return text === key ? value : text;
-    }
-
-    const muscleLabel =
-        todayWorkout.muscle === null
-            ? t('member.home.full_body')
-            : tv(todayWorkout.muscle);
-    const workoutTitle =
-        todayWorkout.muscle === null
-            ? todayWorkout.title
-            : t('member.home.focus_title', { muscle: muscleLabel });
-    const workoutSubtitle = t('member.home.workout_subtitle', {
-        muscle: muscleLabel,
-        count: todayWorkout.exerciseCount,
-    });
 
     return (
         <MobileShell>
@@ -84,14 +54,14 @@ export default function MemberHome({
                 </div>
             </div>
 
-            {/* PrimeGym Hero Today's Workout Card */}
+            {/* PrimeGym Hero Workout Builder Card */}
             <section className="mt-5">
                 <TodaysWorkoutCard
                     todayLabel={t('member.home.today')}
-                    title={workoutTitle}
-                    subtitle={workoutSubtitle}
+                    title={t('member.builder.title')}
+                    subtitle={t('member.builder.subtitle')}
                     ctaLabel={t('member.home.start_workout')}
-                    href={todayWorkout.playUrl}
+                    href={today().url}
                 />
             </section>
 

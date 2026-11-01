@@ -1,72 +1,53 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { ChevronRight } from 'lucide-react';
+import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import {
-    exerciseDetail,
-    exerciseName,
-    type ExerciseSummaries,
-} from '@/components/member/exercise-data';
+import type { ExerciseSummaries } from '@/components/member/exercise-data';
+import type { BodyPart } from '@/components/member/exercise-data';
 import { MobileShell } from '@/components/member/mobile-shell';
-import { SessionStart } from '@/components/member/session-start';
 import type {
     ExercisePlaylist,
     WorkoutSession,
 } from '@/components/member/types';
+import { WorkoutBuilder } from '@/components/member/workout-builder';
 import { WorkoutSessionCard } from '@/components/member/workout-session';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { show as exerciseShow } from '@/routes/member/exercises';
-
-function formatLastTrained(lastTrainedOn: string | null): string {
-    if (lastTrainedOn === null) {
-        return 'not trained recently';
-    }
-    const days = Math.max(
-        0,
-        Math.round(
-            (Date.now() - new Date(`${lastTrainedOn}T12:00:00`).getTime()) /
-                86_400_000,
-        ),
-    );
-    if (days === 0) {
-        return 'trained today';
-    }
-    if (days === 1) {
-        return 'last trained yesterday';
-    }
-    return `last trained ${days} days ago`;
-}
+import { useTranslation } from '@/lib/i18n';
 
 export default function MemberToday({
-    playlist,
-    muscleFocus,
-    playlists,
+    bodyParts,
+    equipment,
+    playlists: initialPlaylists,
     sessions: initialSessions,
     exerciseSummaries,
 }: {
-    playlist: ExercisePlaylist;
-    muscleFocus: {
-        muscle: string | null;
-        label: string | null;
-        lastTrainedOn: string | null;
-    };
+    bodyParts: BodyPart[];
+    equipment: string[];
     playlists: ExercisePlaylist[];
     sessions: WorkoutSession[];
     exerciseSummaries: ExerciseSummaries;
 }) {
     const { url } = usePage();
+    const { t } = useTranslation();
+    const [playlists, setPlaylists] =
+        useState<ExercisePlaylist[]>(initialPlaylists);
     const [sessions, setSessions] = useState<WorkoutSession[]>(initialSessions);
     const [activeSessionId, setActiveSessionId] = useState<number | null>(
         () => {
-            const param = new URLSearchParams(
-                url.split('?')[1] ?? '',
-            ).get('session');
-            return param === null ? null : Number(param);
+            const param = new URLSearchParams(url.split('?')[1] ?? '').get(
+                'session',
+            );
+            if (param !== null) {
+                return Number(param);
+            }
+
+            // Resume the latest session logged today so an in-progress
+            // workout is not lost behind the builder.
+            const todayKey = new Date().toISOString().slice(0, 10);
+            const todays = initialSessions.filter((s) => s.date === todayKey);
+            return todays.length === 0
+                ? null
+                : Math.max(...todays.map((s) => s.id));
         },
     );
-    const [expandedId, setExpandedId] = useState<string | null>(null);
 
-    const todayKey = new Date().toISOString().slice(0, 10);
-    const todaysSessions = sessions.filter((s) => s.date === todayKey);
     const activeSession =
         sessions.find((s) => s.id === activeSessionId) ?? null;
     const activePlaylist =
@@ -82,73 +63,28 @@ export default function MemberToday({
         setActiveSessionId(next.id);
     }
 
+    function onBuilt(session: WorkoutSession, playlist: ExercisePlaylist) {
+        setPlaylists((list) =>
+            list.some((p) => p.id === playlist.id)
+                ? list.map((p) => (p.id === playlist.id ? playlist : p))
+                : [playlist, ...list],
+        );
+        upsertSession(session);
+    }
+
     return (
         <MobileShell>
-            <Head title="Today" />
+            <Head title={t('member.builder.title')} />
             <h1 className="text-xl font-semibold tracking-tight">
-                Today's workout
+                {t('member.builder.title')}
             </h1>
-
-            <Card className="mt-4 p-0 overflow-hidden">
-                <CardHeader className="p-5 border-b border-[#2E2E2E]">
-                    <CardTitle className="text-lg font-bold text-[#F5F5F5]">{playlist.name}</CardTitle>
-                    {muscleFocus.label !== null && (
-                        <p className="text-xs font-semibold text-[#AFFA01]">
-                            {muscleFocus.label} ·{' '}
-                            {formatLastTrained(muscleFocus.lastTrainedOn)}
-                        </p>
-                    )}
-                </CardHeader>
-                <CardContent className="divide-y divide-[#2E2E2E] p-0">
-                    {playlist.exercise_ids.map((id, index) => {
-                        const expanded = expandedId === id;
-                        return (
-                            <div
-                                key={id}
-                                className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-[#252525]"
-                            >
-                                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#141414] border border-[#2E2E2E] text-xs font-bold text-[#8E8E93]">
-                                    {index + 1}
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setExpandedId(expanded ? null : id)
-                                    }
-                                    className="min-w-0 flex-1 text-left"
-                                >
-                                    <p className="text-sm font-semibold text-[#F5F5F5]">
-                                        {exerciseName(exerciseSummaries, id)}
-                                    </p>
-                                    <p className="text-xs text-[#8E8E93]">
-                                        {exerciseDetail(
-                                            exerciseSummaries,
-                                            id,
-                                        ) ?? ''}
-                                    </p>
-                                </button>
-                                {expanded && (
-                                    <Link
-                                        href={exerciseShow(id).url}
-                                        aria-label={`Instructions for ${exerciseName(exerciseSummaries, id)}`}
-                                        className="flex shrink-0 items-center gap-1 text-xs font-semibold text-[#AFFA01] hover:underline"
-                                    >
-                                        Instructions
-                                        <ChevronRight className="size-3" />
-                                    </Link>
-                                )}
-                            </div>
-                        );
-                    })}
-                </CardContent>
-            </Card>
 
             <div className="mt-4">
                 {activeSession === null ? (
-                    <SessionStart
-                        playlists={playlists}
-                        todaysSessions={todaysSessions}
-                        onStart={upsertSession}
+                    <WorkoutBuilder
+                        bodyParts={bodyParts}
+                        equipment={equipment}
+                        onStart={onBuilt}
                     />
                 ) : (
                     <WorkoutSessionCard

@@ -25,25 +25,17 @@ test('members see their plan day and workout on home', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('member/home')
             ->where('userName', Str::before($user->name, ' '))
-            ->has('planDay.meals')
-            ->has('todayWorkout'));
+            ->has('planDay.meals'));
 });
 
-test('home generates todays workout playlist', function () {
+test('home does not generate a workout playlist', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
         ->get(route('member.home'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->has('todayWorkout.title')
-            ->has('todayWorkout.muscle')
-            ->has('todayWorkout.exerciseCount')
-            ->has('todayWorkout.playUrl'));
+        ->assertOk();
 
-    expect(ExercisePlaylist::where('user_id', $user->id)
-        ->whereDate('generated_for', today())
-        ->count())->toBe(1);
+    expect(ExercisePlaylist::where('user_id', $user->id)->count())->toBe(0);
 });
 
 test('home exposes the configured ad banners', function () {

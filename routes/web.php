@@ -120,6 +120,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', Member\HomeController::class)->name('member.home');
     Route::redirect('home', '/');
     Route::get('today', Member\TodayController::class)->name('member.today');
+    Route::post('member/workouts/build', Member\WorkoutBuilderController::class)
+        ->name('member.workouts.build');
     Route::get('exercise', Member\ExerciseController::class)->name('member.exercise');
     Route::get('member/exercises/search', Member\ExerciseSearchController::class)
         ->name('member.exercises.search');
