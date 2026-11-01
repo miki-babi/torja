@@ -562,7 +562,9 @@ export function WorkoutPlayer({
                                 <span>Nice!</span>
                             </>
                         ) : (
-                            <span>Complete Set</span>
+                            <span>
+                                Complete Set {currentSetIndex + 1}/{targetSets}
+                            </span>
                         )}
                     </button>
                 </div>
