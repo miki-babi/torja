@@ -22,7 +22,6 @@ import { Check } from 'lucide-react';
 const INCLUDES = [
     'A calorie and protein target calculated from your body and activity',
     'A sample meal day matched to your goal',
-    'Automatic swaps for foods you avoid or dislike',
 ];
 
 const SECTION_ORDER: SectionKey[] = [

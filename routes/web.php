@@ -134,10 +134,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.meal-plans.store');
     Route::get('meal/{mealPlanMeal}', Member\MealShowController::class)
         ->name('member.meals.show');
-    Route::put('meal/{mealPlanMeal}/items/{item}/swap', [Member\MealSwapController::class, 'store'])
-        ->name('member.meals.items.swap');
-    Route::delete('meal/{mealPlanMeal}/items/{item}/swap', [Member\MealSwapController::class, 'destroy'])
-        ->name('member.meals.items.swap.destroy');
     Route::get('playlists/{playlist}', [Member\PlaylistController::class, 'show'])
         ->name('member.playlists.show');
     Route::get('member/playlists/{playlist}/play', [Member\PlaylistController::class, 'play'])
@@ -188,8 +184,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.sessions.sets.upsert');
     Route::delete('member/sessions/{session}/sets/{set}', [Member\SessionController::class, 'destroySet'])
         ->name('member.sessions.sets.destroy');
-    Route::get('member/foods/search', Member\FoodSearchController::class)
-        ->name('member.foods.search');
     Route::get('habits', [Member\HabitController::class, 'index'])
         ->name('member.habits');
     Route::post('member/habits', [Member\HabitController::class, 'store'])

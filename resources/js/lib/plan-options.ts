@@ -13,15 +13,12 @@ export type Option = {
 };
 
 export type LikedFood = {
-    food_id: number;
+    name: string;
     tags: string[];
 };
 
 export type DiaryEntry = {
     meal: string;
-    food_id?: number | null;
-    /** Client-only display label for the picked food; stripped before PATCH. */
-    _food_label?: string;
     free_text?: string;
     portion_note?: string;
 };
@@ -72,11 +69,11 @@ export interface LikedFoodsAnswers {
 }
 
 export interface AvoidancesAnswers {
-    disliked_food_ids: number[];
+    disliked_foods: string[];
     allergen_codes: string[];
-    excluded_ingredient_ids: number[];
+    excluded_ingredients: string[];
     allergy_other: string;
-    discomfort_ingredient_ids: number[];
+    discomfort_ingredients: string[];
     discomfort_note: string;
 }
 
@@ -497,45 +494,6 @@ export const SUPPORT_OPTIONS: Option[] = [
     { value: 'eating_out_guidance', label: 'Eating-out guidance' },
 ];
 
-/** Picker payload sent as a deferred prop. */
-export interface PickerFood {
-    id: number;
-    name_en: string;
-    name_am: string | null;
-    allergens: string[];
-    meal_types: string[];
-}
-
-export interface PickerCategory {
-    name: string;
-    foods: PickerFood[];
-}
-
-export interface FoodGroup {
-    section: string;
-    categories: PickerCategory[];
-}
-
-export interface PickerIngredient {
-    id: number;
-    name_en: string;
-    name_am: string | null;
-    allergens: string[];
-    common_allergy_label: string | null;
-}
-
-export interface PickerProps {
-    foodGroups: FoodGroup[];
-    ingredients: PickerIngredient[];
-}
-
-export const FOOD_GROUP_LABELS: Record<string, string> = {
-    traditional_ethiopian: 'Traditional Ethiopian',
-    protein_rich: 'Protein-rich',
-    other_staples: 'Other staples',
-    fruit_and_veg: 'Fruit & vegetables',
-};
-
 export const MEAL_TYPE_LABELS: Record<string, string> = {
     breakfast: 'Breakfast',
     snack: 'Snack',
@@ -582,11 +540,11 @@ export function defaultAnswers(): WizardAnswers {
         },
         liked_foods: { liked_foods: [] },
         avoidances: {
-            disliked_food_ids: [],
+            disliked_foods: [],
             allergen_codes: [],
-            excluded_ingredient_ids: [],
+            excluded_ingredients: [],
             allergy_other: '',
-            discomfort_ingredient_ids: [],
+            discomfort_ingredients: [],
             discomfort_note: '',
         },
         habits: { usual_meals: [], diary: [], improvements: [] },
@@ -768,10 +726,13 @@ const FIELD_LABELS: Record<string, string> = {
     adapt_to_fasting: 'Adapt plan to fasting days',
     other_rules: 'Other rules',
     liked_foods: 'Liked foods',
+    disliked_foods: 'Disliked foods',
     disliked_food_ids: 'Disliked foods',
     allergen_codes: 'Allergens',
+    excluded_ingredients: 'Ingredients to avoid',
     excluded_ingredient_ids: 'Ingredients to avoid',
     allergy_other: 'Other allergies',
+    discomfort_ingredients: 'Foods causing discomfort',
     discomfort_ingredient_ids: 'Foods causing discomfort',
     discomfort_note: 'Discomfort notes',
     usual_meals: 'Usual meals',

@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Food;
 use App\Models\MealPlanMeal;
 use App\Models\NutritionProfile;
 use App\Models\Payment;
@@ -29,8 +28,6 @@ test('members without a meal plan get an empty plan payload', function () {
 });
 
 test('unlocked members see all days of their own plan', function () {
-    $food = Food::factory()->create();
-
     $user = User::factory()->create();
     NutritionProfile::factory()->forUser($user)->completed()->create();
     Payment::factory()->for($user)->successful()->create();
@@ -38,7 +35,7 @@ test('unlocked members see all days of their own plan', function () {
     $this->actingAs($user)->postJson(route('member.meal-plans.store'), [
         'name' => 'Two days',
         'days' => [
-            ['meals' => [['meal_type' => 'breakfast', 'items' => [['food_id' => $food->id]]]]],
+            ['meals' => [['meal_type' => 'breakfast', 'items' => [['name' => 'Oats']]]]],
             ['meals' => [['meal_type' => 'dinner', 'items' => [['name' => 'Custom item']]]]],
         ],
     ])->assertCreated();
@@ -55,16 +52,14 @@ test('unlocked members see all days of their own plan', function () {
 });
 
 test('locked members only see day one of their own plan', function () {
-    $food = Food::factory()->create();
-
     $user = User::factory()->create();
     NutritionProfile::factory()->forUser($user)->completed()->create();
 
     $this->actingAs($user)->postJson(route('member.meal-plans.store'), [
         'name' => 'Two days',
         'days' => [
-            ['meals' => [['meal_type' => 'breakfast', 'items' => [['food_id' => $food->id]]]]],
-            ['meals' => [['meal_type' => 'dinner', 'items' => [['food_id' => $food->id]]]]],
+            ['meals' => [['meal_type' => 'breakfast', 'items' => [['name' => 'Oats']]]]],
+            ['meals' => [['meal_type' => 'dinner', 'items' => [['name' => 'Rice']]]]],
         ],
     ])->assertCreated();
 
@@ -87,7 +82,7 @@ test('targets are null when body data is incomplete', function () {
             ->where('targets', null));
 });
 
-test('members can view a personalized meal detail page', function () {
+test('members can view a meal detail page with their stored item names', function () {
     $this->seed(FoodDatabaseSeeder::class);
 
     $user = User::factory()->create();
@@ -106,31 +101,23 @@ test('members can view a personalized meal detail page', function () {
             ->has('day'));
 });
 
-test('meal detail applies the profile exclusions', function () {
+test('meal items expose only the stored name and portion note', function () {
     $this->seed(FoodDatabaseSeeder::class);
 
     $user = User::factory()->create();
-    $profile = NutritionProfile::factory()->forUser($user)->completed()->create();
+    NutritionProfile::factory()->forUser($user)->completed()->create();
 
-    $meal = MealPlanMeal::whereHas('mealPlan', fn ($q) => $q->where('slug', 'fat_loss_7day'))
-        ->whereHas('items', fn ($q) => $q->whereNotNull('food_id'))
-        ->firstOrFail();
-    $item = $meal->items()->whereNotNull('food_id')->firstOrFail();
-
-    $profile->update([
-        'avoidances' => ['disliked_food_ids' => [$item->food_id]],
-    ]);
+    $meal = MealPlanMeal::firstOrFail();
 
     $response = $this->actingAs($user)
         ->get(route('member.meals.show', $meal->id))
         ->assertOk();
 
-    $items = collect($response->viewData('page')['props']['meal']['items']);
+    $item = collect($response->viewData('page')['props']['meal']['items'])->first();
 
-    // The disliked food must be swapped out or flagged as excluded.
-    expect($items->contains(
-        fn ($i) => $i['excluded'] || $i['swapped_from'] !== null,
-    ))->toBeTrue();
+    expect($item['name'])->not->toBeEmpty()
+        ->and($item)->toHaveKeys(['item_id', 'name', 'portion_note'])
+        ->and($item)->not->toHaveKeys(['food_id', 'swap_options', 'macros']);
 });
 
 test('locked members cannot open meals beyond day one', function () {

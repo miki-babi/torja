@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft, ChevronRight, Plus, Search, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import {
     DiscoverPrograms,
@@ -13,29 +13,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/lib/i18n';
 import { meal } from '@/routes/member';
-import { search as foodSearch } from '@/routes/member/foods';
 import { store as storePlan } from '@/routes/member/meal-plans';
 
 type PlanItem = {
-    food_id: number | null;
     name: string;
-    image_url?: string | null;
     portion_note?: string | null;
 };
 
 type PlanMeal = {
     meal_type: string;
     items: PlanItem[];
-};
-
-type FoodResult = {
-    id: number;
-    name_en: string;
-    image_url: string | null;
-    kcal_per_100g: number | null;
-    protein_g: number | null;
-    carbs_g: number | null;
-    fat_g: number | null;
 };
 
 function seedDay(mealTypes: string[]): PlanMeal[] {
@@ -91,7 +78,6 @@ export default function MealPlanBuilder({
                     .map((m) => ({
                         meal_type: m.meal_type,
                         items: m.items.map((i) => ({
-                            food_id: i.food_id,
                             name: i.name,
                             portion_note: i.portion_note ?? null,
                         })),
@@ -270,7 +256,7 @@ export default function MealPlanBuilder({
 
 /**
  * One day in the wizard: every MealType slot is pre-seeded on the card;
- * each has an "Add food" picker (catalog search + custom item).
+ * each has an "Add food" field where the member types the item name.
  */
 function DayStep({
     mealTypes,
@@ -311,14 +297,6 @@ function DayStep({
                                 key={j}
                                 className="flex items-center gap-2.5 rounded-xl border border-[#2E2E2E] bg-[#141414] px-3 py-2"
                             >
-                                {item.image_url !== undefined &&
-                                    item.image_url !== null && (
-                                        <img
-                                            src={item.image_url}
-                                            alt=""
-                                            className="size-8 shrink-0 rounded-lg object-cover"
-                                        />
-                                    )}
                                 <span className="min-w-0 flex-1 truncate text-sm text-[#F5F5F5]">
                                     {item.name}
                                 </span>
@@ -365,9 +343,8 @@ function DayStep({
 }
 
 /**
- * Food picker inside a meal card: a single field that live-searches the
- * catalog on every keystroke — tap a result to add it; when nothing
- * matches, an Add button appends the typed text as an item.
+ * Food entry inside a meal card: a focused overlay with a single text
+ * field — the member types the item name and taps Add (or Enter).
  */
 function ItemPicker({
     onAdd,
@@ -378,39 +355,6 @@ function ItemPicker({
 }) {
     const { t } = useTranslation();
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState<FoodResult[]>([]);
-    const latest = useRef<symbol>(Symbol('init'));
-
-    useEffect(() => {
-        const trimmed = query.trim();
-        if (trimmed === '') {
-            setResults([]);
-            return;
-        }
-
-        const token = Symbol('search');
-        latest.current = token;
-
-        const timer = setTimeout(async () => {
-            try {
-                const res = await fetch(
-                    `${foodSearch().url}?q=${encodeURIComponent(trimmed)}`,
-                );
-                const { foods } = (await res.json()) as {
-                    foods: FoodResult[];
-                };
-                if (latest.current === token) {
-                    setResults(foods);
-                }
-            } catch {
-                if (latest.current === token) {
-                    toast.error('Could not search foods');
-                }
-            }
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [query]);
 
     const trimmedQuery = query.trim();
 
@@ -418,9 +362,8 @@ function ItemPicker({
         if (trimmedQuery === '') {
             return;
         }
-        onAdd({ food_id: null, name: trimmedQuery });
+        onAdd({ name: trimmedQuery });
         setQuery('');
-        setResults([]);
     }
 
     return (
@@ -434,21 +377,18 @@ function ItemPicker({
                 >
                     <ArrowLeft className="size-4" />
                 </button>
-                <div className="relative flex-1">
-                    <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8E8E93]" />
-                    <Input
-                        autoFocus
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                addTypedItem();
-                            }
-                        }}
-                        placeholder={t('member.meal_builder.search_foods')}
-                        className="pl-9"
-                    />
-                </div>
+                <Input
+                    autoFocus
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            addTypedItem();
+                        }
+                    }}
+                    placeholder={t('member.meal_builder.custom_placeholder')}
+                    className="flex-1"
+                />
                 <Button
                     className="h-10 shrink-0 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-3.5 font-bold text-black hover:brightness-105"
                     onClick={addTypedItem}
@@ -457,59 +397,6 @@ function ItemPicker({
                     <Plus className="size-4" />
                     {t('member.meal_builder.add')}
                 </Button>
-            </div>
-
-            <div className="flex-1 space-y-2 overflow-y-auto px-4 pb-6">
-                {results.map((food) => (
-                    <button
-                        key={food.id}
-                        type="button"
-                        onClick={() =>
-                            onAdd({
-                                food_id: food.id,
-                                name: food.name_en,
-                                image_url: food.image_url,
-                            })
-                        }
-                        className="flex w-full items-center gap-3 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] p-3.5 text-left transition-colors hover:border-[#AFFA01]/40"
-                    >
-                        {food.image_url !== null ? (
-                            <span className="shrink-0 overflow-hidden rounded-xl border border-[#2E2E2E] bg-white">
-                                <img
-                                    src={food.image_url}
-                                    alt=""
-                                    className="size-14 object-cover"
-                                />
-                            </span>
-                        ) : (
-                            <span className="size-14 shrink-0 rounded-xl border border-[#2E2E2E] bg-[#141414]" />
-                        )}
-                        <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-semibold text-[#F5F5F5]">
-                                {food.name_en}
-                            </span>
-                            <span className="mt-0.5 block truncate text-xs text-[#8E8E93]">
-                                {[
-                                    food.kcal_per_100g !== null
-                                        ? `${food.kcal_per_100g} kcal`
-                                        : null,
-                                    food.protein_g !== null
-                                        ? `P ${food.protein_g}g`
-                                        : null,
-                                    food.carbs_g !== null
-                                        ? `C ${food.carbs_g}g`
-                                        : null,
-                                    food.fat_g !== null
-                                        ? `F ${food.fat_g}g`
-                                        : null,
-                                ]
-                                    .filter(Boolean)
-                                    .join(' · ')}
-                            </span>
-                        </span>
-                        <Plus className="size-4 shrink-0 text-[#AFFA01]" />
-                    </button>
-                ))}
             </div>
         </div>
     );

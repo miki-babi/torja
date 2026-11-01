@@ -14,12 +14,12 @@ import { FormEvent, useState } from 'react';
 import { toast } from 'sonner';
 import { AdminPageHeader } from '@/components/admin/page-header';
 import {
+    type FoodSearchResult,
     type FoodSummaries,
     ProgramFoodPicker,
 } from '@/components/admin/program-food-picker';
 import InputError from '@/components/input-error';
 import { memberApi } from '@/components/member/member-api';
-import type { FoodSearchResult } from '@/components/member/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';

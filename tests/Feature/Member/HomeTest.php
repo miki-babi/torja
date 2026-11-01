@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\ExercisePlaylist;
-use App\Models\Food;
 use App\Models\NutritionProfile;
 use App\Models\Setting;
 use App\Models\User;
@@ -30,15 +29,13 @@ test('home shows no meal plan until the member builds one', function () {
 });
 
 test('home shows the member\'s own plan day once built', function () {
-    $food = Food::factory()->create();
-
     $user = User::factory()->create();
     NutritionProfile::factory()->forUser($user)->completed()->create();
 
     $this->actingAs($user)->postJson(route('member.meal-plans.store'), [
         'name' => 'My plan',
         'days' => [
-            ['meals' => [['meal_type' => 'breakfast', 'items' => [['food_id' => $food->id]]]]],
+            ['meals' => [['meal_type' => 'breakfast', 'items' => [['name' => 'Oats']]]]],
         ],
     ])->assertCreated();
 

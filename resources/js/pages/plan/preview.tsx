@@ -1,7 +1,6 @@
 import Heading from '@/components/heading';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -16,12 +15,7 @@ import { meal } from '@/routes/member';
 import { wizard } from '@/routes/plan';
 import { show as pro } from '@/routes/pro';
 import { Head, Link } from '@inertiajs/react';
-import {
-    AlertTriangle,
-    ArrowRightLeft,
-    CheckCircle2,
-    Lock,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
 
 type TargetWarning = {
     type: string;
@@ -39,15 +33,12 @@ type Targets = {
 type PreviewItem = {
     name: string;
     portion_note: string | null;
-    swapped_from: { name: string; reason: string | null } | null;
-    excluded: boolean;
 };
 
 type SampleDay = {
     plan_name: string;
     day: number;
     meals: { type: string; items: PreviewItem[] }[];
-    excluded_count: number;
 };
 
 type Props = {
@@ -180,10 +171,7 @@ export default function PlanPreview({
                                     Sample day from {sampleDay.plan_name}
                                 </CardTitle>
                                 <CardDescription>
-                                    Day {sampleDay.day} — filtered to your diet
-                                    and exclusions
-                                    {sampleDay.excluded_count > 0 &&
-                                        ` (${sampleDay.excluded_count} item${sampleDay.excluded_count === 1 ? '' : 's'} replaced)`}
+                                    Day {sampleDay.day} of {sampleDay.plan_name}
                                     .
                                 </CardDescription>
                             </CardHeader>
@@ -200,42 +188,10 @@ export default function PlanPreview({
                                         <ul className="space-y-1.5 text-sm">
                                             {meal.items.map(
                                                 (item, itemIndex) => (
-                                                    <li
-                                                        key={itemIndex}
-                                                        className="flex flex-wrap items-center gap-2"
-                                                    >
-                                                        <span>
-                                                            {item.name}
-                                                            {item.portion_note &&
-                                                                ` — ${item.portion_note}`}
-                                                        </span>
-                                                        {item.swapped_from && (
-                                                            <Badge
-                                                                variant="secondary"
-                                                                className="gap-1 font-normal"
-                                                            >
-                                                                <ArrowRightLeft className="size-3" />
-                                                                swapped from{' '}
-                                                                {
-                                                                    item
-                                                                        .swapped_from
-                                                                        .name
-                                                                }
-                                                                {item
-                                                                    .swapped_from
-                                                                    .reason &&
-                                                                    `: ${item.swapped_from.reason}`}
-                                                            </Badge>
-                                                        )}
-                                                        {item.excluded && (
-                                                            <Badge
-                                                                variant="destructive"
-                                                                className="font-normal"
-                                                            >
-                                                                excluded — no
-                                                                safe swap found
-                                                            </Badge>
-                                                        )}
+                                                    <li key={itemIndex}>
+                                                        {item.name}
+                                                        {item.portion_note &&
+                                                            ` — ${item.portion_note}`}
                                                     </li>
                                                 ),
                                             )}

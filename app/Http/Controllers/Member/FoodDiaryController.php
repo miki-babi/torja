@@ -40,8 +40,7 @@ class FoodDiaryController extends Controller
             'protein_g' => ['nullable', 'numeric', 'min:0', 'max:2000'],
             'carbs_g' => ['nullable', 'numeric', 'min:0', 'max:2000'],
             'fat_g' => ['nullable', 'numeric', 'min:0', 'max:2000'],
-            'food_id' => ['nullable', 'integer', Rule::exists('foods', 'id')],
-            'source' => ['required', 'string', Rule::in(['search', 'photo', 'plan_meal', 'plan_swap'])],
+            'source' => ['required', 'string', Rule::in(['manual', 'photo', 'plan_meal'])],
             'had_photos' => ['sometimes', 'boolean'],
         ]);
 
@@ -49,7 +48,6 @@ class FoodDiaryController extends Controller
 
         app(Tracker::class)->record('food.logged', subject: $entry, properties: [
             'source' => $entry->source,
-            'food_id' => $entry->food_id,
             'kcal' => $entry->kcal === null ? null : (float) $entry->kcal,
         ]);
 

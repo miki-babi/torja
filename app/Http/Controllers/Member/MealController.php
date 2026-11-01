@@ -46,7 +46,7 @@ class MealController extends Controller
         return Inertia::render('member/meal', [
             'targets' => $this->targets->for($profile),
             'planDays' => $plan === null ? [] : collect($unlocked ? range(1, $maxDay) : [1])
-                ->mapWithKeys(fn (int $day) => [$day => $this->preview->dayFor($plan, $profile, $day)])
+                ->mapWithKeys(fn (int $day) => [$day => $this->preview->dayFor($plan, $day)])
                 ->all(),
             'unlocked' => $unlocked,
             'price' => ProPage::price(),

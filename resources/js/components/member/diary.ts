@@ -20,7 +20,6 @@ export type DiaryEntryPayload = {
     protein_g: number;
     carbs_g: number;
     fat_g: number;
-    food_id?: number | null;
     source: string;
     had_photos?: boolean;
 };
@@ -33,7 +32,6 @@ export type StoredDiaryEntry = {
     protein_g: string | null;
     carbs_g: string | null;
     fat_g: string | null;
-    food_id: number | null;
     source: string;
 };
 

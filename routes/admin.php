@@ -128,6 +128,8 @@ Route::middleware(['auth', 'verified', 'admin'])
         Route::delete('meal-programs/{mealProgram}/publish', [MealProgramController::class, 'unpublish'])
             ->name('meal-programs.unpublish');
 
+        Route::get('foods/search', [FoodController::class, 'search'])
+            ->name('foods.search');
         Route::resource('foods', FoodController::class)
             ->only(['index', 'create', 'store', 'edit', 'update']);
 

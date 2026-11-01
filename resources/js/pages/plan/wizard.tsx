@@ -29,7 +29,6 @@ import {
     TOTAL_STEPS,
     mergeAnswers,
     toSectionPayload,
-    type PickerProps,
     type SectionKey,
     type WizardAnswers,
 } from '@/lib/plan-options';
@@ -43,8 +42,6 @@ type Props = {
     currentStep: number;
     status: string;
     answers: Partial<Record<SectionKey, object>>;
-    /** Deferred prop — undefined until loaded. */
-    picker?: PickerProps;
 };
 
 const INTRO_BULLETS = [
@@ -57,7 +54,6 @@ export default function PlanWizard({
     currentStep,
     status,
     answers: savedAnswers,
-    picker,
 }: Props) {
     const { auth } = usePage<{ auth: Auth }>().props;
     const [step, setStep] = useState(() =>
@@ -218,7 +214,6 @@ export default function PlanWizard({
                                     <Step02Goal
                                         value={answers.goal}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('goal', data)
                                         }
@@ -228,7 +223,6 @@ export default function PlanWizard({
                                     <Step03Body
                                         value={answers.body}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('body', data)
                                         }
@@ -238,7 +232,6 @@ export default function PlanWizard({
                                     <Step04Activity
                                         value={answers.activity}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('activity', data)
                                         }
@@ -248,7 +241,6 @@ export default function PlanWizard({
                                     <Step05Pace
                                         value={answers.pace}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('pace', data)
                                         }
@@ -258,7 +250,6 @@ export default function PlanWizard({
                                     <Step06Diet
                                         value={answers.diet}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('diet', data)
                                         }
@@ -268,7 +259,6 @@ export default function PlanWizard({
                                     <Step07LikedFoods
                                         value={answers.liked_foods}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('liked_foods', data)
                                         }
@@ -278,7 +268,6 @@ export default function PlanWizard({
                                     <Step08Avoidances
                                         value={answers.avoidances}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('avoidances', data)
                                         }
@@ -288,7 +277,6 @@ export default function PlanWizard({
                                     <Step09Habits
                                         value={answers.habits}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('habits', data)
                                         }
@@ -298,7 +286,6 @@ export default function PlanWizard({
                                     <Step10Schedule
                                         value={answers.schedule}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('schedule', data)
                                         }
@@ -308,7 +295,6 @@ export default function PlanWizard({
                                     <Step11Budget
                                         value={answers.budget}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('budget', data)
                                         }
@@ -318,7 +304,6 @@ export default function PlanWizard({
                                     <Step12Cooking
                                         value={answers.cooking}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('cooking', data)
                                         }
@@ -328,7 +313,6 @@ export default function PlanWizard({
                                     <Step13Obstacles
                                         value={answers.obstacles}
                                         errors={errors}
-                                        picker={picker}
                                         onChange={(data) =>
                                             patchSection('obstacles', data)
                                         }

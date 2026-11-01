@@ -25,6 +25,25 @@ test('non-admin users cannot manage foods or ingredients', function () {
     $this->actingAs($user)->put(route('admin.ingredients.update', $ingredient), [])->assertForbidden();
 });
 
+test('food search is admin-only and matches by name', function () {
+    Food::factory()->create(['name_en' => 'Enjera, teff, white']);
+    Food::factory()->create(['name_en' => 'Shiro wot']);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('admin.foods.search', ['q' => 'enjera']))
+        ->assertForbidden();
+
+    $response = $this->actingAs(foodAdmin())
+        ->get(route('admin.foods.search', ['q' => 'enjera']))
+        ->assertOk()
+        ->assertJsonStructure([
+            'foods' => [['id', 'name_en', 'kcal_per_100g', 'protein_g', 'carbs_g', 'fat_g']],
+        ]);
+
+    expect(collect($response->json('foods'))->pluck('name_en')->all())
+        ->toBe(['Enjera, teff, white']);
+});
+
 test('admins can create a manual food with image, flags and ingredients', function () {
     Storage::fake('public');
     $ingredient = Ingredient::factory()->create();

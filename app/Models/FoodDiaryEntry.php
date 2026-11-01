@@ -28,7 +28,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['user_id', 'logged_on', 'name', 'detail', 'kcal', 'protein_g', 'carbs_g', 'fat_g', 'food_id', 'source', 'had_photos'])]
+#[Fillable(['user_id', 'logged_on', 'name', 'detail', 'kcal', 'protein_g', 'carbs_g', 'fat_g', 'source', 'had_photos'])]
 class FoodDiaryEntry extends Model
 {
     /** @use HasFactory<FoodDiaryEntryFactory> */

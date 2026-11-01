@@ -48,7 +48,6 @@ type ServerEntry = {
     protein_g: string | null;
     carbs_g: string | null;
     fat_g: string | null;
-    food_id: number | null;
     source: string;
 };
 
@@ -146,7 +145,7 @@ export default function MemberMeal({
     );
 
     const addEntry = (entry: Omit<DiaryEntry, 'id'>) =>
-        persistEntry(entry, 'search');
+        persistEntry(entry, 'manual');
     const addPlanMeal = (m: PlanMeal) =>
         persistEntry(
             {

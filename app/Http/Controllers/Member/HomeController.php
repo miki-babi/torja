@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
-use App\Services\Nutrition\ProfileResolver;
 use App\Support\HomeBanners;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -15,7 +14,6 @@ use Inertia\Response;
 class HomeController extends Controller
 {
     public function __construct(
-        private readonly ProfileResolver $profiles,
         private readonly MealPlanPreviewBuilder $preview,
     ) {}
 
@@ -25,8 +23,6 @@ class HomeController extends Controller
      */
     public function __invoke(Request $request): Response
     {
-        $profile = $this->profiles->for($request);
-
         $plan = $request->user()->mealPlans()
             ->whereNull('meal_program_id')
             ->latest('id')
@@ -43,7 +39,7 @@ class HomeController extends Controller
 
         return Inertia::render('member/home', [
             'userName' => Str::before(trim((string) $request->user()?->name), ' ') ?: 'there',
-            'planDay' => $plan === null ? null : $this->preview->dayFor($plan, $profile, $day),
+            'planDay' => $plan === null ? null : $this->preview->dayFor($plan, $day),
             'streak' => $request->user()->activityStreak(),
             'banners' => HomeBanners::forMember(),
         ]);

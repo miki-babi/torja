@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Member;
 use App\Enums\MatchConfidence;
 use App\Enums\MealType;
 use App\Http\Controllers\Controller;
-use App\Models\Food;
 use App\Models\MealPlan;
 use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +19,8 @@ class MealPlanStoreController extends Controller
     /**
      * Persist a member-built meal plan: a user-owned MealPlan plus its
      * day meals and items, created atomically from the wizard payload.
-     * Catalog items carry a food_id; custom items only a raw_text name.
+     * Members type item names themselves — every item is custom text,
+     * never a food-database reference.
      */
     public function __invoke(Request $request): JsonResponse
     {
@@ -30,7 +30,6 @@ class MealPlanStoreController extends Controller
             'days.*.meals' => ['required', 'array', 'min:1'],
             'days.*.meals.*.meal_type' => ['required', 'string', Rule::in(array_column(MealType::cases(), 'value'))],
             'days.*.meals.*.items' => ['required', 'array', 'min:1'],
-            'days.*.meals.*.items.*.food_id' => ['nullable', 'integer', 'exists:foods,id'],
             'days.*.meals.*.items.*.name' => ['nullable', 'string', 'max:120'],
             'days.*.meals.*.items.*.portion_note' => ['nullable', 'string', 'max:120'],
         ]);
@@ -38,9 +37,16 @@ class MealPlanStoreController extends Controller
         $meals = collect($data['days'])
             ->flatMap(fn (array $day): array => $day['meals']);
 
-        $invalidItem = $meals
-            ->flatMap(fn (array $meal): array => $meal['items'])
-            ->contains(fn (array $item): bool => ($item['food_id'] ?? null) === null && blank($item['name'] ?? null));
+        $invalidItem = $meals->contains(function (array $meal): bool {
+            $items = $meal['items'] ?? [];
+
+            if ($items === []) {
+                return true;
+            }
+
+            return collect($items)
+                ->contains(fn (array $item): bool => blank($item['name'] ?? null));
+        });
 
         $duplicateType = collect($data['days'])
             ->contains(function (array $day): bool {
@@ -61,11 +67,7 @@ class MealPlanStoreController extends Controller
             ]);
         }
 
-        $foods = Food::query()
-            ->whereIn('id', $meals->flatMap(fn (array $meal): array => $meal['items'])->pluck('food_id')->filter()->unique())
-            ->pluck('name_en', 'id');
-
-        $plan = DB::transaction(function () use ($request, $data, $foods): MealPlan {
+        $plan = DB::transaction(function () use ($request, $data): MealPlan {
             $plan = MealPlan::create([
                 'slug' => 'custom-'.Str::random(12),
                 'user_id' => $request->user()->id,
@@ -82,16 +84,12 @@ class MealPlanStoreController extends Controller
                         'position' => $position,
                     ]);
 
-                    foreach ($meal['items'] as $itemPosition => $item) {
-                        $foodId = $item['food_id'] ?? null;
-
+                    foreach ($meal['items'] ?? [] as $itemPosition => $item) {
                         $row->items()->create([
-                            'food_id' => $foodId,
-                            'raw_text' => $item['name'] ?? $foods[$foodId] ?? '',
+                            'food_id' => null,
+                            'raw_text' => $item['name'],
                             'portion_note' => $item['portion_note'] ?? null,
-                            'match_confidence' => $foodId === null
-                                ? MatchConfidence::None
-                                : MatchConfidence::Exact,
+                            'match_confidence' => MatchConfidence::None,
                             'position' => $itemPosition,
                         ]);
                     }

@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Food;
 use App\Models\NutritionProfile;
 use App\Models\User;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
@@ -42,93 +41,20 @@ test('targets are null when body data is incomplete', function () {
             ->where('targets', null));
 });
 
-test('allergen exclusions are replaced via swaps and annotated', function () {
+test('the sample day lists the stored item names without food details', function () {
     $this->seed(FoodDatabaseSeeder::class);
 
-    $profile = NutritionProfile::factory()->completed()->create([
-        'avoidances' => [
-            'disliked_food_ids' => [],
-            'allergen_codes' => ['milk_dairy'],
-            'excluded_ingredient_ids' => [],
-            'discomfort_ingredient_ids' => [],
-        ],
-    ]);
+    $profile = NutritionProfile::factory()->completed()->create();
 
     $preview = app(MealPlanPreviewBuilder::class)->for($profile);
 
-    expect($preview['excluded_count'])->toBeGreaterThan(0);
-
-    $foodsByName = Food::all()->keyBy('name_en');
-
-    $swapped = 0;
-    foreach ($preview['meals'] as $meal) {
-        foreach ($meal['items'] as $item) {
-            $food = $foodsByName->get($item['name']);
-            expect($food)->not->toBeNull();
-            expect(collect($food->allergens)->contains('milk_dairy'))->toBeFalse();
-            expect($item['excluded'])->toBeFalse();
-
-            if ($item['swapped_from'] !== null) {
-                $swapped++;
-                $original = $foodsByName->get($item['swapped_from']['name']);
-                expect(collect($original->allergens)->contains('milk_dairy'))
-                    ->toBeTrue();
-                expect($item['swapped_from']['reason'])->not->toBeNull();
-            }
-        }
-    }
-
-    expect($swapped)->toBe($preview['excluded_count']);
-});
-
-test('vegan users only see vegan items', function () {
-    $this->seed(FoodDatabaseSeeder::class);
-
-    $profile = NutritionProfile::factory()->completed()->create([
-        'diet' => [
-            'diet_type' => 'vegan',
-            'fasting' => 'none',
-            'adapt_to_fasting' => false,
-        ],
-    ]);
-
-    $preview = app(MealPlanPreviewBuilder::class)->for($profile);
-
-    expect($preview['excluded_count'])->toBeGreaterThan(0);
-
-    $foodsByName = Food::all()->keyBy('name_en');
+    expect($preview)->not->toHaveKey('excluded_count');
 
     foreach ($preview['meals'] as $meal) {
         foreach ($meal['items'] as $item) {
-            $food = $foodsByName->get($item['name']);
-            expect($food)->not->toBeNull();
-
-            if (! $item['excluded']) {
-                expect($food->is_vegan)->toBeTrue();
-            }
+            expect($item['name'])->not->toBeEmpty()
+                ->and($item)->toHaveKeys(['item_id', 'name', 'portion_note'])
+                ->and($item)->not->toHaveKeys(['food_id', 'swap_options', 'macros', 'excluded']);
         }
     }
-});
-
-test('disliked foods are excluded from the sample day', function () {
-    $this->seed(FoodDatabaseSeeder::class);
-
-    $chicken = Food::find(453);
-
-    $profile = NutritionProfile::factory()->completed()->create([
-        'avoidances' => [
-            'disliked_food_ids' => [$chicken->id],
-            'allergen_codes' => [],
-            'excluded_ingredient_ids' => [],
-            'discomfort_ingredient_ids' => [],
-        ],
-    ]);
-
-    $preview = app(MealPlanPreviewBuilder::class)->for($profile);
-
-    $names = collect($preview['meals'])
-        ->flatMap(fn (array $meal): array => $meal['items'])
-        ->pluck('name');
-
-    expect($names)->not->toContain($chicken->name_en);
 });

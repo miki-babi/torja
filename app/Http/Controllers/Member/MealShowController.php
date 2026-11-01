@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\MealPlanMeal;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
-use App\Services\Nutrition\ProfileResolver;
 use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,13 +13,12 @@ use Inertia\Response;
 class MealShowController extends Controller
 {
     public function __construct(
-        private readonly ProfileResolver $profiles,
         private readonly MealPlanPreviewBuilder $preview,
     ) {}
 
     /**
-     * Detail screen for one plan meal, personalized for the current profile's
-     * exclusions and swaps.
+     * Detail screen for one plan meal: the meal's stored item names and
+     * portion notes.
      */
     public function __invoke(Request $request, MealPlanMeal $mealPlanMeal): Response
     {
@@ -28,8 +26,6 @@ class MealShowController extends Controller
             $this->canView($request, $mealPlanMeal),
             403,
         );
-
-        $profile = $this->profiles->for($request);
 
         app(Tracker::class)->record('meal.item_viewed', subject: $mealPlanMeal, properties: [
             'day' => $mealPlanMeal->day,
@@ -39,7 +35,7 @@ class MealShowController extends Controller
         return Inertia::render('member/meal-show', [
             'planName' => $mealPlanMeal->mealPlan->name,
             'day' => $mealPlanMeal->day,
-            'meal' => $this->preview->mealFor($mealPlanMeal, $profile),
+            'meal' => $this->preview->mealFor($mealPlanMeal),
         ]);
     }
 

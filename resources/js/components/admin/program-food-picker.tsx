@@ -1,6 +1,5 @@
 import { Check, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { FoodSearchResult } from '@/components/member/types';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -12,13 +11,23 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { search } from '@/routes/member/foods';
+import { search } from '@/routes/admin/foods';
+
+export type FoodSearchResult = {
+    id: number;
+    name_en: string;
+    image_url?: string | null;
+    kcal_per_100g: number | null;
+    protein_g: number | null;
+    carbs_g: number | null;
+    fat_g: number | null;
+};
 
 export type FoodSummaries = Record<number, FoodSearchResult>;
 
 /**
  * Food picker for the meal program builder: debounced search against the
- * member food search endpoint with multi-select. Already-added foods are
+ * admin food search endpoint with multi-select. Already-added foods are
  * shown disabled via `exclude`.
  */
 export function ProgramFoodPicker({

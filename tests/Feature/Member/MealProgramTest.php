@@ -2,7 +2,6 @@
 
 use App\Models\Food;
 use App\Models\MealPlan;
-use App\Models\MealPlanItemOverride;
 use App\Models\MealProgram;
 use App\Models\User;
 use App\Services\Programs\MealProgramAccessGranter;
@@ -64,25 +63,6 @@ test('meals on an owned plan copy open for every day without pro', function () {
             ->component('member/meal-show')
             ->where('planName', 'Claimed Plan')
             ->where('day', 3));
-});
-
-test('meals on an owned plan copy support swaps without pro', function () {
-    $user = User::factory()->create();
-    $plan = claimedMealPlan($user);
-
-    $meal = $plan->meals()->where('day', 3)->sole();
-    $item = $meal->items()->sole();
-    $swap = Food::factory()->create(['name_en' => 'Teff bread']);
-    $item->food->swaps()->attach($swap->id, ['reason' => 'lighter', 'position' => 0]);
-
-    $this->actingAs($user)
-        ->putJson(route('member.meals.items.swap', [$meal, $item]), [
-            'food_id' => $swap->id,
-        ])
-        ->assertOk()
-        ->assertJsonPath('meal.items.0.name', 'Teff bread');
-
-    expect(MealPlanItemOverride::sole()->food_id)->toBe($swap->id);
 });
 
 test('global plans keep their day-one gate for locked members', function () {

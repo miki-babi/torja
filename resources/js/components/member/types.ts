@@ -1,40 +1,7 @@
 export type PlanMealItem = {
     name: string;
     portion_note: string | null;
-    food_id?: number | null;
-    image_url?: string | null;
-    macros?: {
-        kcal_per_100g: number | null;
-        protein_g: number | null;
-        carbs_g: number | null;
-        fat_g: number | null;
-    } | null;
-    swapped_from?: { name: string; reason: string | null } | null;
-    excluded?: boolean;
     item_id?: number;
-    chosen?: boolean;
-    original_name?: string;
-    original_food_id?: number | null;
-    original_image_url?: string | null;
-    original_macros?: {
-        kcal_per_100g: number | null;
-        protein_g: number | null;
-        carbs_g: number | null;
-        fat_g: number | null;
-    } | null;
-    swap_options?: {
-        food_id: number;
-        name: string;
-        image_url?: string | null;
-        reason: string | null;
-        macros?: {
-            kcal_per_100g: number | null;
-            protein_g: number | null;
-            carbs_g: number | null;
-            fat_g: number | null;
-        } | null;
-        excluded: boolean;
-    }[];
 };
 
 export type PlanMeal = {
@@ -47,7 +14,6 @@ export type PlanDay = {
     plan_name: string;
     day: number;
     meals: PlanMeal[];
-    excluded_count: number;
 };
 
 export type NutritionTargets = {
@@ -75,15 +41,6 @@ export type DiaryTotals = Pick<
     DiaryEntry,
     'kcal' | 'protein' | 'carbs' | 'fat'
 >;
-
-export type FoodSearchResult = {
-    id: number;
-    name_en: string;
-    kcal_per_100g: number | null;
-    protein_g: number | null;
-    carbs_g: number | null;
-    fat_g: number | null;
-};
 
 export type WorkoutSetEntry = {
     id: number;
