@@ -161,6 +161,18 @@ test('builder rejects unknown muscles and equipment', function () {
     ])->assertUnprocessable();
 });
 
+test('active session prop exposes today\'s latest session', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('member.today'))
+        ->assertInertia(fn ($page) => $page->where('activeSession', null));
+
+    $session = WorkoutSession::factory()->create(['user_id' => $user->id, 'date' => today()]);
+
+    $this->actingAs($user)->get(route('member.today'))
+        ->assertInertia(fn ($page) => $page->where('activeSession.id', $session->id));
+});
+
 test('generated playlists are hidden from the exercise page list', function () {
     $user = User::factory()->create();
     seedBuilderExerciseCatalog();

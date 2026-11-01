@@ -58,6 +58,13 @@ class HandleInertiaRequests extends Middleware
                 ->all(),
             'translations' => Translator::map(app()->getLocale()),
             'nudge' => app(NudgeResolver::class)->forRequest($request),
+            'activeSession' => $request->user()
+                ? $request->user()->workoutSessions()
+                    ->whereDate('date', today())
+                    ->latest('id')
+                    ->first(['id', 'exercise_playlist_id'])
+                    ?->only(['id', 'exercise_playlist_id'])
+                : null,
             'tracking' => [
                 'visitor_id' => $request->attributes->get('visitor_id'),
                 'integrations' => TrackingIntegration::frontendPayload(

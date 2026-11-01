@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { useEffect, type ReactNode } from 'react';
 import { BottomNav } from '@/components/member/bottom-nav';
+import { SessionFab } from '@/components/member/session-fab';
 import { NudgeBanner } from '@/components/nudge-banner';
 import {
     telegramInitData,
@@ -65,6 +66,7 @@ export function MobileShell({
                 <NudgeBanner />
                 {children}
             </div>
+            <SessionFab />
             {!hideNav && <BottomNav />}
         </div>
     );
