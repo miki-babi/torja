@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { NotebookPen } from 'lucide-react';
+import { ArrowLeft, NotebookPen } from 'lucide-react';
 import { useState } from 'react';
 import { AddToPlaylist } from '@/components/member/add-to-playlist';
 import {
@@ -121,7 +121,15 @@ export default function MemberExerciseShow({
     return (
         <MobileShell>
             <Head title={ex.name} />
-            <Card className="overflow-hidden rounded-[24px] border-[#E4E4E7] bg-white">
+            <button
+                type="button"
+                onClick={() => window.history.back()}
+                aria-label="Back"
+                className="-ml-1 flex size-9 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#1F1F1F] text-[#8E8E93] transition-colors hover:border-[#AFFA01]/40 hover:text-[#F5F5F5]"
+            >
+                <ArrowLeft className="size-4" />
+            </button>
+            <Card className="mt-3 overflow-hidden rounded-[24px] border-[#E4E4E7] bg-white">
                 <img
                     src={ex.gif_url}
                     alt={`${ex.name} demo`}

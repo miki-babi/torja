@@ -1,5 +1,6 @@
+import { Link } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, Play } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { BodyPartPicker } from '@/components/member/body-part-picker';
 import { EquipmentPicker } from '@/components/member/equipment-picker';
@@ -16,6 +17,7 @@ import type {
 } from '@/components/member/types';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
+import { show as exerciseShow } from '@/routes/member/exercises';
 import { store as storeSession } from '@/routes/member/sessions';
 import { build } from '@/routes/member/workouts';
 
@@ -32,6 +34,41 @@ type BuiltWorkout = {
     playlist: ExercisePlaylist;
     summaries: ExerciseSummaries;
 };
+
+type StoredState = {
+    step: Step;
+    muscles: string[];
+    equipmentSel: string[];
+    built: BuiltWorkout | null;
+};
+
+const STORAGE_KEY = 'workout-builder:v1';
+
+/**
+ * Wizard state lives in sessionStorage so navigating to an exercise's
+ * player page and coming back restores the same result list instead of
+ * resetting the wizard.
+ */
+function readStored(): StoredState | null {
+    try {
+        if (typeof sessionStorage === 'undefined') {
+            return null;
+        }
+
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        return raw === null ? null : (JSON.parse(raw) as StoredState);
+    } catch {
+        return null;
+    }
+}
+
+function clearStored(): void {
+    try {
+        sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+        // Storage unavailable — nothing to clear.
+    }
+}
 
 /**
  * Four-step workout builder: start → pick target muscles → pick available
@@ -56,11 +93,31 @@ export function WorkoutBuilder({
     onStart: (session: WorkoutSession, playlist: ExercisePlaylist) => void;
 }) {
     const { t } = useTranslation();
-    const [step, setStep] = useState<Step>('start');
-    const [muscles, setMuscles] = useState<string[]>([]);
-    const [equipmentSel, setEquipmentSel] = useState<string[]>([]);
-    const [built, setBuilt] = useState<BuiltWorkout | null>(null);
+    const [stored] = useState<StoredState | null>(readStored);
+    const [step, setStep] = useState<Step>(
+        stored?.step === 'exercises' && stored.built === null
+            ? 'start'
+            : (stored?.step ?? 'start'),
+    );
+    const [muscles, setMuscles] = useState<string[]>(stored?.muscles ?? []);
+    const [equipmentSel, setEquipmentSel] = useState<string[]>(
+        stored?.equipmentSel ?? [],
+    );
+    const [built, setBuilt] = useState<BuiltWorkout | null>(
+        stored?.built ?? null,
+    );
     const [busy, setBusy] = useState(false);
+
+    useEffect(() => {
+        try {
+            sessionStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({ step, muscles, equipmentSel, built }),
+            );
+        } catch {
+            // Storage unavailable — the wizard just won't restore.
+        }
+    }, [step, muscles, equipmentSel, built]);
 
     async function preview() {
         if (busy) {
@@ -102,6 +159,7 @@ export function WorkoutBuilder({
             }>(storeSession().url, 'POST', {
                 exercise_playlist_id: built.playlist.id,
             });
+            clearStored();
             onStart(session, built.playlist);
         } catch (error) {
             toast.error(
@@ -227,25 +285,45 @@ export function WorkoutBuilder({
                     </div>
 
                     <div className="divide-y divide-[#2E2E2E]">
-                        {built.playlist.exercise_ids.map((id, index) => (
-                            <div
-                                key={id}
-                                className="flex items-center gap-3 py-3.5"
-                            >
-                                <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#141414] text-xs font-bold text-[#8E8E93]">
-                                    {index + 1}
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-semibold text-[#F5F5F5]">
-                                        {exerciseName(built.summaries, id)}
-                                    </p>
-                                    <p className="text-xs text-[#8E8E93]">
-                                        {exerciseDetail(built.summaries, id) ??
-                                            ''}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                        {built.playlist.exercise_ids.map((id, index) => {
+                            const summary = built.summaries[id];
+
+                            return (
+                                <Link
+                                    key={id}
+                                    href={exerciseShow(id).url}
+                                    className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-3.5 transition-colors hover:bg-[#1F1F1F]"
+                                >
+                                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#141414] text-xs font-bold text-[#8E8E93]">
+                                        {index + 1}
+                                    </span>
+                                    {summary?.image_url !== undefined ? (
+                                        <span className="shrink-0 overflow-hidden rounded-xl border border-[#2E2E2E] bg-white">
+                                            <img
+                                                src={summary.image_url}
+                                                alt=""
+                                                loading="lazy"
+                                                className="size-12 object-cover"
+                                            />
+                                        </span>
+                                    ) : (
+                                        <span className="size-12 shrink-0 rounded-xl border border-[#2E2E2E] bg-[#1F1F1F]" />
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-semibold text-[#F5F5F5]">
+                                            {exerciseName(built.summaries, id)}
+                                        </p>
+                                        <p className="truncate text-xs text-[#8E8E93]">
+                                            {exerciseDetail(
+                                                built.summaries,
+                                                id,
+                                            ) ?? ''}
+                                        </p>
+                                    </div>
+                                    <ChevronRight className="size-4 shrink-0 text-[#8E8E93]" />
+                                </Link>
+                            );
+                        })}
                     </div>
 
                     <button
