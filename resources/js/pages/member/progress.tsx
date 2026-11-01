@@ -1,5 +1,11 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ChevronRight, Flame, NotebookPen, TrendingUp } from 'lucide-react';
+import {
+    CalendarClock,
+    ChevronRight,
+    Flame,
+    NotebookPen,
+    TrendingUp,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
     Bar,
@@ -19,7 +25,17 @@ import {
     tracksWeight,
     type ExerciseSummaries,
 } from '@/components/member/exercise-data';
+import { ExerciseSearchDialog } from '@/components/member/exercise-search-dialog';
+import { LogPastWorkoutDialog } from '@/components/member/log-past-workout-dialog';
+import {
+    MeasurementsCard,
+    type MeasurementEntry,
+} from '@/components/member/measurements-card';
 import { MobileShell } from '@/components/member/mobile-shell';
+import {
+    PhotosCard,
+    type ProgressPhotoEntry,
+} from '@/components/member/photos-card';
 import { QuickLogSet } from '@/components/member/quick-log-set';
 import { TodaysLog } from '@/components/member/todays-log';
 import type {
@@ -31,6 +47,7 @@ import {
     type WeightLogEntry,
 } from '@/components/member/weight-card';
 import {
+    consistencyMap,
     exerciseHistory,
     exerciseSeries,
     prByExercise,
@@ -40,6 +57,8 @@ import {
     setsForExercise,
     setSummary,
     totalVolume,
+    volumeByBodyPart,
+    weeklyStats,
     weeklyVolumeSeries,
 } from '@/components/member/workout-progress';
 import { WorkoutSessionCard } from '@/components/member/workout-session';
@@ -92,8 +111,10 @@ function formatDay(date: string): string {
 export default function MemberProgress({
     playlists,
     sessions: initialSessions,
-    exerciseSummaries,
+    exerciseSummaries: initialSummaries,
     weightLogs: initialWeightLogs,
+    measurements: initialMeasurements,
+    photos: initialPhotos,
     streak,
     activityWeek,
 }: {
@@ -101,14 +122,21 @@ export default function MemberProgress({
     sessions: WorkoutSession[];
     exerciseSummaries: ExerciseSummaries;
     weightLogs: WeightLogEntry[];
+    measurements: MeasurementEntry[];
+    photos: ProgressPhotoEntry[];
     streak: number;
     activityWeek: ActivityDay[];
 }) {
     const { url } = usePage();
     const { t } = useTranslation();
     const [sessions, setSessions] = useState<WorkoutSession[]>(initialSessions);
+    const [exerciseSummaries, setExerciseSummaries] =
+        useState<ExerciseSummaries>(initialSummaries);
     const [weightLogs, setWeightLogs] =
         useState<WeightLogEntry[]>(initialWeightLogs);
+    const [measurements, setMeasurements] =
+        useState<MeasurementEntry[]>(initialMeasurements);
+    const [photos, setPhotos] = useState<ProgressPhotoEntry[]>(initialPhotos);
     const [activeSessionId, setActiveSessionId] = useState<number | null>(
         () => {
             const param = new URLSearchParams(url.split('?')[1] ?? '').get(
@@ -120,7 +148,14 @@ export default function MemberProgress({
     const [selectedExercise, setSelectedExercise] = useState<string | null>(
         null,
     );
-    const [logTarget, setLogTarget] = useState<string | null>(null);
+    const [logTarget, setLogTarget] = useState<{
+        slug: string;
+        name: string;
+        equipment: string;
+    } | null>(null);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [backfillOpen, setBackfillOpen] = useState(false);
+    const [metric, setMetric] = useState<'weight' | 'e1rm'>('weight');
 
     const todayKey = new Date().toISOString().slice(0, 10);
     const todaysSessions = sessions.filter((s) => s.date === todayKey);
@@ -168,6 +203,7 @@ export default function MemberProgress({
             : exerciseSeries(sessions, selected).map((p) => ({
                   label: formatDay(p.date),
                   kg: p.weight_kg,
+                  e1rm: p.e1rm,
                   reps: p.reps,
               }));
     const selectedPr = selected === null ? null : prs[selected];
@@ -177,6 +213,24 @@ export default function MemberProgress({
             : exerciseHistory(sessions, selected, undefined, 3);
 
     const volumeSeries = weeklyVolumeSeries(sessions, 10);
+    const weekDelta = weeklyStats(sessions);
+    const muscleSplit = volumeByBodyPart(sessions, exerciseSummaries).slice(
+        0,
+        6,
+    );
+    const muscleMax = muscleSplit[0]?.volume ?? 0;
+    const heatmap = consistencyMap(sessions, 84);
+    const heatmapMax = Math.max(...heatmap.map((d) => d.volume), 1);
+
+    /**
+     * Translated body-part name, falling back to the raw catalog value
+     * when no translation line exists.
+     */
+    function partLabel(part: string): string {
+        const key = `exercise_values.body_part.${part}`;
+        const text = t(key);
+        return text === key ? part : text;
+    }
 
     function upsertSession(next: WorkoutSession) {
         setSessions((list) =>
@@ -203,6 +257,26 @@ export default function MemberProgress({
                         })}
                     </span>
                 </div>
+            </div>
+
+            {/* Quick actions */}
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
+                <Button
+                    type="button"
+                    onClick={() => setSearchOpen(true)}
+                    className="bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black hover:brightness-105"
+                >
+                    <NotebookPen className="size-4" />
+                    {t('member.progress.log_set')}
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setBackfillOpen(true)}
+                >
+                    <CalendarClock className="size-4" />
+                    {t('member.progress.log_past')}
+                </Button>
             </div>
 
             {loggedSessions.length === 0 ? (
@@ -275,6 +349,15 @@ export default function MemberProgress({
                         ))}
                     </div>
 
+                    <p className="text-center text-xs text-[#8E8E93]">
+                        {t('member.progress.vs_last_week', {
+                            sessions: weekDelta.previous.sessions,
+                            volume: Math.round(
+                                weekDelta.previous.volume,
+                            ).toLocaleString(),
+                        })}
+                    </p>
+
                     {/* Today's log / active session */}
                     {activeSession === null ? (
                         <TodaysLog
@@ -321,6 +404,39 @@ export default function MemberProgress({
                                         />
                                     </div>
                                 ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Consistency heatmap — 12 weeks of training days */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">
+                                {t('member.progress.consistency')}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-flow-col grid-rows-7 gap-[3px]">
+                                {heatmap.map((day) => {
+                                    const ratio =
+                                        day.volume === 0
+                                            ? 0
+                                            : 0.35 +
+                                              0.65 * (day.volume / heatmapMax);
+                                    return (
+                                        <div
+                                            key={day.date}
+                                            title={`${day.date} — ${Math.round(day.volume).toLocaleString()} kg`}
+                                            className="aspect-square rounded-[3px]"
+                                            style={{
+                                                backgroundColor:
+                                                    day.volume === 0
+                                                        ? '#2E2E2E'
+                                                        : `rgba(175, 250, 1, ${ratio})`,
+                                            }}
+                                        />
+                                    );
+                                })}
                             </div>
                         </CardContent>
                     </Card>
@@ -387,6 +503,44 @@ export default function MemberProgress({
                         </CardContent>
                     </Card>
 
+                    {/* Muscle split */}
+                    {muscleSplit.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">
+                                    {t('member.progress.muscle_split')}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    {muscleSplit.map(({ part, volume }) => (
+                                        <div
+                                            key={part}
+                                            className="flex items-center gap-3"
+                                        >
+                                            <span className="w-20 shrink-0 truncate text-xs font-medium text-[#8E8E93] capitalize">
+                                                {partLabel(part)}
+                                            </span>
+                                            <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#2E2E2E]">
+                                                <div
+                                                    className="h-full rounded-full bg-[#AFFA01]"
+                                                    style={{
+                                                        width: `${Math.max(4, (volume / muscleMax) * 100)}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                            <span className="w-14 shrink-0 text-right text-xs font-semibold text-[#F5F5F5]">
+                                                {Math.round(
+                                                    volume,
+                                                ).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {/* Per-exercise progress */}
                     {selected !== null && (
                         <Card>
@@ -426,6 +580,30 @@ export default function MemberProgress({
                                         </button>
                                     ))}
                                 </div>
+
+                                {selectedWeighted && (
+                                    <div className="flex gap-1.5">
+                                        {(['weight', 'e1rm'] as const).map(
+                                            (m) => (
+                                                <button
+                                                    key={m}
+                                                    type="button"
+                                                    onClick={() => setMetric(m)}
+                                                    className={cn(
+                                                        'rounded-lg border px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase transition-colors',
+                                                        metric === m
+                                                            ? 'border-[#AFFA01]/60 bg-[#AFFA01]/10 text-[#AFFA01]'
+                                                            : 'border-[#2E2E2E] text-[#8E8E93]',
+                                                    )}
+                                                >
+                                                    {m === 'weight'
+                                                        ? 'kg'
+                                                        : 'e1RM'}
+                                                </button>
+                                            ),
+                                        )}
+                                    </div>
+                                )}
 
                                 {selectedSeries.length > 0 && (
                                     <div className="h-36 w-full">
@@ -472,14 +650,18 @@ export default function MemberProgress({
                                                     type="monotone"
                                                     dataKey={
                                                         selectedWeighted
-                                                            ? 'kg'
+                                                            ? metric === 'e1rm'
+                                                                ? 'e1rm'
+                                                                : 'kg'
                                                             : 'reps'
                                                     }
                                                     name={
                                                         selectedWeighted
-                                                            ? t(
-                                                                  'member.progress.best_weight',
-                                                              ) + ' (kg)'
+                                                            ? metric === 'e1rm'
+                                                                ? 'e1RM (kg)'
+                                                                : t(
+                                                                      'member.progress.best_weight',
+                                                                  ) + ' (kg)'
                                                             : t(
                                                                   'member.progress.reps_chart',
                                                               )
@@ -532,7 +714,18 @@ export default function MemberProgress({
                                 <Button
                                     variant="outline"
                                     className="w-full"
-                                    onClick={() => setLogTarget(selected)}
+                                    onClick={() =>
+                                        setLogTarget({
+                                            slug: selected,
+                                            name: exerciseName(
+                                                exerciseSummaries,
+                                                selected,
+                                            ),
+                                            equipment:
+                                                exerciseSummaries[selected]
+                                                    ?.equipment ?? '',
+                                        })
+                                    }
                                 >
                                     <NotebookPen className="size-4" />
                                     {t('member.progress.log_set')}
@@ -655,22 +848,76 @@ export default function MemberProgress({
                         ])
                     }
                 />
+                <MeasurementsCard
+                    measurements={measurements}
+                    onLogged={(entry) =>
+                        setMeasurements((list) => [
+                            entry,
+                            ...list.filter(
+                                (m) => m.logged_on !== entry.logged_on,
+                            ),
+                        ])
+                    }
+                />
+                <PhotosCard photos={photos} onChange={setPhotos} />
                 <BmiCard />
                 <BodyFatCard />
             </div>
 
+            <ExerciseSearchDialog
+                open={searchOpen}
+                onOpenChange={setSearchOpen}
+                onPick={(picked) => {
+                    setExerciseSummaries((map) => ({
+                        ...map,
+                        [picked.slug]: {
+                            name: picked.name,
+                            detail: picked.detail,
+                            equipment: picked.equipment,
+                            body_part: picked.body_part,
+                            image_url: picked.image_url,
+                        },
+                    }));
+                    setLogTarget({
+                        slug: picked.slug,
+                        name: picked.name,
+                        equipment: picked.equipment,
+                    });
+                }}
+            />
+
+            <LogPastWorkoutDialog
+                open={backfillOpen}
+                onOpenChange={setBackfillOpen}
+                exerciseSummaries={exerciseSummaries}
+                onLogged={(session, added) => {
+                    setSessions((list) =>
+                        list.some((s) => s.id === session.id)
+                            ? list.map((s) =>
+                                  s.id === session.id ? session : s,
+                              )
+                            : [session, ...list],
+                    );
+                    setExerciseSummaries((map) => {
+                        const next = { ...map };
+                        for (const ex of added) {
+                            next[ex.slug] ??= {
+                                name: ex.name,
+                                detail: ex.detail,
+                                equipment: ex.equipment,
+                                body_part: ex.body_part,
+                                image_url: ex.image_url,
+                            };
+                        }
+                        return next;
+                    });
+                }}
+            />
+
             <QuickLogSet
-                slug={logTarget ?? ''}
-                name={
-                    logTarget === null
-                        ? ''
-                        : exerciseName(exerciseSummaries, logTarget)
-                }
-                equipment={
-                    logTarget === null
-                        ? ''
-                        : (exerciseSummaries[logTarget]?.equipment ?? '')
-                }
+                slug={logTarget?.slug ?? ''}
+                name={logTarget?.name ?? ''}
+                equipment={logTarget?.equipment ?? ''}
                 sessions={sessions}
                 open={logTarget !== null}
                 onOpenChange={(open) => {

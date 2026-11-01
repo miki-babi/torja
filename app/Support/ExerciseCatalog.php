@@ -176,7 +176,7 @@ class ExerciseCatalog
      * rendering exercise names in playlists and sessions.
      *
      * @param  array<int, string>  $exerciseIds
-     * @return array<string, array{name: string, detail: string, equipment: string, image_url: string}>
+     * @return array<string, array{name: string, detail: string, equipment: string, body_part: string, image_url: string}>
      */
     public static function namesFor(array $exerciseIds): array
     {
@@ -186,7 +186,7 @@ class ExerciseCatalog
 
         $exercises = Exercise::query()
             ->whereIn('slug', $resolved->values()->unique()->all())
-            ->get(['slug', 'name', 'equipment', 'target', 'image_path'])
+            ->get(['slug', 'name', 'equipment', 'target', 'body_part', 'image_path'])
             ->keyBy('slug');
 
         return $resolved
@@ -195,6 +195,7 @@ class ExerciseCatalog
                     'name' => $exercises[$slug]->localizedName(),
                     'detail' => $exercises[$slug]->detail(),
                     'equipment' => $exercises[$slug]->equipment,
+                    'body_part' => $exercises[$slug]->body_part,
                     'image_url' => $exercises[$slug]->image_url,
                 ]
                 : null)

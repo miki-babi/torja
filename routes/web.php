@@ -179,6 +179,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.sessions.finish');
     Route::post('member/sessions/log-set', [Member\SessionController::class, 'logSet'])
         ->name('member.sessions.log-set');
+    Route::post('member/sessions/backfill', [Member\SessionController::class, 'storeBackfill'])
+        ->name('member.sessions.backfill');
     Route::get('member/sessions/{session}/exercises', [Member\SessionController::class, 'exercises'])
         ->name('member.sessions.exercises');
     Route::put('member/sessions/{session}/sets', [Member\SessionController::class, 'upsertSet'])
@@ -200,6 +202,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.weight-logs.store');
     Route::delete('member/weight-logs/{weightLog}', [Member\WeightLogController::class, 'destroy'])
         ->name('member.weight-logs.destroy');
+    Route::post('member/measurements', [Member\MeasurementController::class, 'store'])
+        ->name('member.measurements.store');
+    Route::delete('member/measurements/{measurement}', [Member\MeasurementController::class, 'destroy'])
+        ->name('member.measurements.destroy');
+    Route::post('member/progress-photos', [Member\ProgressPhotoController::class, 'store'])
+        ->name('member.progress-photos.store');
+    Route::delete('member/progress-photos/{progressPhoto}', [Member\ProgressPhotoController::class, 'destroy'])
+        ->name('member.progress-photos.destroy');
     Route::get('member/orders', [Member\ShopOrderController::class, 'index'])
         ->name('member.orders.index');
     Route::post('member/orders', [Member\ShopOrderController::class, 'store'])

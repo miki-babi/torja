@@ -24,6 +24,10 @@ class NudgeResolver
      */
     public function forRequest(Request $request): ?array
     {
+        // Every registered nudge points into the paid funnel (pro, plan
+        // preview, wizard), which is currently hidden from members.
+        return null;
+
         $user = $request->user();
 
         // Guests only get nudged back into the wizard, which is hidden for

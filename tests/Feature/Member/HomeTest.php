@@ -1,11 +1,12 @@
 <?php
 
+use App\Models\Exercise;
 use App\Models\ExercisePlaylist;
-use App\Models\NutritionProfile;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\WorkoutSession;
+use App\Models\WorkoutSet;
 use App\Support\HomeBanners;
-use Database\Seeders\FoodDatabaseSeeder;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -13,11 +14,8 @@ test('guests are redirected to login', function () {
     $this->get(route('member.home'))->assertRedirect(route('login'));
 });
 
-test('home shows no meal plan until the member builds one', function () {
-    $this->seed(FoodDatabaseSeeder::class);
-
+test('home shows the member name and zeroed week stats by default', function () {
     $user = User::factory()->create();
-    NutritionProfile::factory()->forUser($user)->completed()->create();
 
     $this->actingAs($user)
         ->get(route('member.home'))
@@ -25,26 +23,34 @@ test('home shows no meal plan until the member builds one', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('member/home')
             ->where('userName', Str::before($user->name, ' '))
-            ->where('planDay', null));
+            ->where('weekStats.sessions', 0)
+            ->where('weekStats.volume', 0));
 });
 
-test('home shows the member\'s own plan day once built', function () {
+test('home week stats count this week\'s logged sessions and volume', function () {
+    Exercise::factory()->create(['slug' => 'squat']);
     $user = User::factory()->create();
-    NutritionProfile::factory()->forUser($user)->completed()->create();
-
-    $this->actingAs($user)->postJson(route('member.meal-plans.store'), [
-        'name' => 'My plan',
-        'days' => [
-            ['meals' => [['meal_type' => 'breakfast', 'items' => [['name' => 'Oats']]]]],
-        ],
-    ])->assertCreated();
+    $session = WorkoutSession::factory()->create([
+        'user_id' => $user->id,
+        'date' => now()->toDateString(),
+    ]);
+    WorkoutSet::factory()->create([
+        'workout_session_id' => $session->id,
+        'exercise_id' => 'squat',
+        'weight_kg' => 80,
+        'reps' => 5,
+    ]);
+    WorkoutSession::factory()->create([
+        'user_id' => $user->id,
+        'date' => now()->subWeek()->toDateString(),
+    ]);
 
     $this->actingAs($user)
         ->get(route('member.home'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('member/home')
-            ->has('planDay.meals'));
+            ->where('weekStats.sessions', 1)
+            ->where('weekStats.volume', 400));
 });
 
 test('home does not generate a workout playlist', function () {

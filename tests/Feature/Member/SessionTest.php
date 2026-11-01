@@ -178,3 +178,57 @@ test('unknown exercises cannot be logged', function () {
         'reps' => 10,
     ])->assertUnprocessable();
 });
+
+test('backfill creates a finished session for a past date', function () {
+    Exercise::factory()->create(['slug' => 'squat']);
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->postJson(route('member.sessions.backfill'), [
+        'date' => '2026-10-20',
+        'sets' => [
+            ['exercise_id' => 'squat', 'weight_kg' => 80, 'reps' => 5],
+            ['exercise_id' => 'squat', 'weight_kg' => 80, 'reps' => 3],
+        ],
+    ])->assertCreated();
+
+    $session = WorkoutSession::where('user_id', $user->id)->sole();
+
+    expect($session->date->toDateString())->toBe('2026-10-20')
+        ->and($session->finished_at)->not->toBeNull()
+        ->and($session->sets)->toHaveCount(2)
+        ->and($session->sets->pluck('set_index')->all())->toEqual([0, 1]);
+});
+
+test('backfill merges into the same day free session', function () {
+    Exercise::factory()->create(['slug' => 'squat']);
+    $user = User::factory()->create();
+    $existing = WorkoutSession::factory()->create([
+        'user_id' => $user->id,
+        'date' => '2026-10-20',
+        'exercise_playlist_id' => null,
+    ]);
+
+    $this->actingAs($user)->postJson(route('member.sessions.backfill'), [
+        'date' => '2026-10-20',
+        'sets' => [['exercise_id' => 'squat', 'weight_kg' => 60, 'reps' => 8]],
+    ])->assertCreated();
+
+    expect(WorkoutSession::where('user_id', $user->id)->count())->toBe(1)
+        ->and($existing->refresh()->sets)->toHaveCount(1);
+});
+
+test('backfill rejects future dates and unknown exercises', function () {
+    Exercise::factory()->create(['slug' => 'squat']);
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->postJson(route('member.sessions.backfill'), [
+        'date' => now()->addDay()->toDateString(),
+        'sets' => [['exercise_id' => 'squat', 'weight_kg' => 60, 'reps' => 8]],
+    ])->assertUnprocessable();
+
+    $this->postJson(route('member.sessions.backfill'), [
+        'date' => '2026-10-20',
+        'sets' => [['exercise_id' => 'not-a-move', 'weight_kg' => 60, 'reps' => 8]],
+    ])->assertUnprocessable();
+});

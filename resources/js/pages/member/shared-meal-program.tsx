@@ -61,7 +61,6 @@ export default function MemberSharedMealProgram({
     isPro,
     alreadyClaimed,
     saveUrl,
-    proUrl,
     homeUrl,
     editUrl,
     claimedPlanUrl,
@@ -71,7 +70,6 @@ export default function MemberSharedMealProgram({
     isPro: boolean;
     alreadyClaimed: boolean;
     saveUrl: string;
-    proUrl: string;
     homeUrl: string;
     editUrl: string | null;
     claimedPlanUrl: string | null;
@@ -367,10 +365,7 @@ export default function MemberSharedMealProgram({
                                 {t('shared_meal_program.pro_included')}
                             </p>
                             {isGuest ? (
-                                <Button
-                                    className="w-full rounded-full"
-                                    asChild
-                                >
+                                <Button className="w-full rounded-full" asChild>
                                     <Link href={login()}>
                                         {t('shared_program.login_to_save')}
                                     </Link>
@@ -387,18 +382,7 @@ export default function MemberSharedMealProgram({
                                               'shared_meal_program.claim_program',
                                           )}
                                 </Button>
-                            ) : (
-                                <Button
-                                    className="w-full rounded-full"
-                                    asChild
-                                >
-                                    <Link href={proUrl}>
-                                        {t(
-                                            'shared_meal_program.upgrade_to_pro',
-                                        )}
-                                    </Link>
-                                </Button>
-                            )}
+                            ) : null}
                             <Button
                                 variant="outline"
                                 className="w-full rounded-full"

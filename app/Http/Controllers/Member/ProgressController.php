@@ -42,6 +42,14 @@ class ProgressController extends Controller
             'sessions' => $sessions->map->toFrontend()->all(),
             'exerciseSummaries' => ExerciseCatalog::namesFor($exerciseIds),
             'weightLogs' => $user->weightLogs()->limit(90)->get(),
+            'measurements' => $user->measurements()->limit(30)->get(),
+            'photos' => $user->progressPhotos()->limit(30)->get()
+                ->map(fn ($photo) => [
+                    'id' => $photo->id,
+                    'url' => $photo->url(),
+                    'taken_on' => $photo->taken_on->toDateString(),
+                ])
+                ->all(),
             'streak' => $user->activityStreak(),
             'activityWeek' => $user->activityWeek(),
         ]);

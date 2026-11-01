@@ -1,8 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    ArrowRight,
-    BadgeCheck,
-    Crown,
     Gift,
     Languages,
     LogOut,
@@ -15,7 +12,6 @@ import {
 import { useState } from 'react';
 import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
-import type { DiaryEntry, NutritionTargets } from '@/components/member/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -26,7 +22,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useInitials } from '@/hooks/use-initials';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { bmiCategory, calculateBmi } from '@/lib/body-metrics';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -69,12 +64,6 @@ function asString(value: unknown): string | null {
     return typeof value === 'string' && value !== '' ? value : null;
 }
 
-function dateKeyFor(offset: number): string {
-    const date = new Date();
-    date.setDate(date.getDate() + offset);
-    return date.toISOString().slice(0, 10);
-}
-
 export default function MemberProfile({
     account,
     telegram,
@@ -82,19 +71,12 @@ export default function MemberProfile({
     body,
     activity,
     pace,
-    targets,
-    planName,
     weightLogs,
-    isPro,
-    proUrl,
-    proCard,
     ordersUrl,
     ambassador,
     streak,
     activityWeek,
 }: {
-    isPro: boolean;
-    proUrl: string;
     ordersUrl: string;
     ambassador: {
         enabled: boolean;
@@ -102,7 +84,6 @@ export default function MemberProfile({
         balance: number;
         commission_etb: number;
     };
-    proCard: { title: string; body: string; button: string | null };
     account: {
         name: string | null;
         username: string | null;
@@ -119,22 +100,12 @@ export default function MemberProfile({
     body: Record<string, unknown> | null;
     activity: Record<string, unknown> | null;
     pace: Record<string, unknown> | null;
-    targets: NutritionTargets | null;
-    planName: string | null;
     weightLogs: { id: number; logged_on: string; weight_kg: number }[];
     streak: number;
     activityWeek: { date: string; label: string; active: boolean }[];
 }) {
     const getInitials = useInitials();
     const { t, locale, languages } = useTranslation();
-    const [diaryByDate] = useLocalStorage<Record<string, DiaryEntry[]>>(
-        'member:diary',
-        {},
-    );
-    const [waterByDate] = useLocalStorage<Record<string, number>>(
-        'member:water',
-        {},
-    );
     const [telegramConnected, setTelegramConnected] = useState(
         telegram.connected,
     );
@@ -173,26 +144,6 @@ export default function MemberProfile({
         weightKg !== null && heightCm !== null
             ? calculateBmi(weightKg, heightCm)
             : null;
-
-    const week = Array.from({ length: 7 }, (_, i) => {
-        const offset = i - 6;
-        const key = dateKeyFor(offset);
-        const entries = diaryByDate[key] ?? [];
-        return {
-            key,
-            label:
-                offset === 0
-                    ? 'Today'
-                    : new Date(`${key}T12:00:00`).toLocaleDateString(
-                          undefined,
-                          { weekday: 'short' },
-                      ),
-            kcal: entries.reduce((sum, e) => sum + e.kcal, 0),
-            meals: entries.length,
-            water: waterByDate[key] ?? 0,
-        };
-    });
-    const kcalTarget = targets?.kcal_target ?? 0;
 
     const stats = [
         { label: 'Age', value: asNumber(body?.age)?.toString() },
@@ -289,37 +240,6 @@ export default function MemberProfile({
             </div>
 
             <div className="mt-6 space-y-4">
-                <Card className="border-[#AFFA01]/30 bg-gradient-to-b from-[#1F1F1F] to-[#141414]">
-                    <CardContent className="flex items-center gap-3 pt-4">
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#AFFA01] text-black">
-                            {isPro ? (
-                                <BadgeCheck className="size-5" />
-                            ) : (
-                                <Crown className="size-5" />
-                            )}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-[#F5F5F5]">
-                                {proCard.title}
-                            </p>
-                            <p className="text-xs text-[#8E8E93]">
-                                {proCard.body}
-                            </p>
-                        </div>
-                    </CardContent>
-                    {!isPro && proCard.button !== null && (
-                        <div className="px-4 pb-4">
-                            <Link
-                                href={proUrl}
-                                className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] py-2.5 text-sm font-extrabold text-black shadow-md transition-transform active:scale-[0.98]"
-                            >
-                                {proCard.button}
-                                <ArrowRight className="size-4" />
-                            </Link>
-                        </div>
-                    )}
-                </Card>
-
                 {ambassador.enabled && (
                     <Link href={ambassador.url} className="block">
                         <Card className="transition-colors hover:border-[#AFFA01]/40">
@@ -373,147 +293,6 @@ export default function MemberProfile({
                                 ))}
                             </dl>
                         )}
-                    </CardContent>
-                </Card>
-
-                {targets !== null && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base">
-                                Daily targets
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-                                <div>
-                                    <dt className="text-xs text-muted-foreground">
-                                        Calories
-                                    </dt>
-                                    <dd className="text-sm font-medium">
-                                        {targets.kcal_target} kcal
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-xs text-muted-foreground">
-                                        Protein
-                                    </dt>
-                                    <dd className="text-sm font-medium">
-                                        {targets.protein_g} g
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-xs text-muted-foreground">
-                                        Carbs
-                                    </dt>
-                                    <dd className="text-sm font-medium">
-                                        {targets.carbs_g} g
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-xs text-muted-foreground">
-                                        Fat
-                                    </dt>
-                                    <dd className="text-sm font-medium">
-                                        {targets.fat_g} g
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-xs text-muted-foreground">
-                                        BMR
-                                    </dt>
-                                    <dd className="text-sm font-medium">
-                                        {targets.bmr} kcal
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-xs text-muted-foreground">
-                                        TDEE
-                                    </dt>
-                                    <dd className="text-sm font-medium">
-                                        {targets.tdee} kcal
-                                    </dd>
-                                </div>
-                            </dl>
-                            {planName !== null && (
-                                <p className="mt-3 text-xs text-muted-foreground">
-                                    Plan: {planName}
-                                </p>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
-
-                <Card>
-                    <CardHeader className="flex-row items-center justify-between">
-                        <CardTitle className="text-base">
-                            Weekly report
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-7 items-end gap-1.5">
-                            {week.map((day) => {
-                                const pct =
-                                    kcalTarget > 0
-                                        ? Math.min(
-                                              100,
-                                              (day.kcal / kcalTarget) * 100,
-                                          )
-                                        : 0;
-                                return (
-                                    <div
-                                        key={day.key}
-                                        className="flex flex-col items-center gap-1"
-                                    >
-                                        <span className="text-[10px] text-muted-foreground">
-                                            {Math.round(day.kcal)}
-                                        </span>
-                                        <div className="flex h-20 w-full items-end overflow-hidden rounded-sm bg-muted">
-                                            <div
-                                                className="w-full rounded-sm bg-lime-400"
-                                                style={{
-                                                    height: `${Math.max(pct, day.kcal > 0 ? 4 : 0)}%`,
-                                                }}
-                                            />
-                                        </div>
-                                        <span className="text-[10px] text-muted-foreground">
-                                            {day.label}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-3 text-center">
-                            <div>
-                                <p className="text-sm font-medium">
-                                    {week.reduce((s, d) => s + d.meals, 0)}
-                                </p>
-                                <p className="text-[10px] text-muted-foreground">
-                                    meals logged
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium">
-                                    {Math.round(
-                                        week.reduce((s, d) => s + d.kcal, 0),
-                                    )}
-                                </p>
-                                <p className="text-[10px] text-muted-foreground">
-                                    kcal this week
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium">
-                                    {(
-                                        week.reduce((s, d) => s + d.water, 0) /
-                                        1000
-                                    ).toFixed(1)}
-                                    L
-                                </p>
-                                <p className="text-[10px] text-muted-foreground">
-                                    water this week
-                                </p>
-                            </div>
-                        </div>
                     </CardContent>
                 </Card>
 

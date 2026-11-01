@@ -6,7 +6,6 @@ import {
     Package,
     Pill,
     Search,
-    UtensilsCrossed,
     Weight,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -150,7 +149,6 @@ function ProductRow({ product }: { product: ShopProduct }) {
 
 export default function MemberExplore({
     exercisePrograms,
-    mealPrograms,
     products,
     filters,
 }: {
@@ -215,16 +213,14 @@ export default function MemberExplore({
         );
     }
 
-    const allPrograms = [...exercisePrograms, ...mealPrograms];
+    const allPrograms = exercisePrograms;
     const savedPrograms = allPrograms.filter((program) => program.claimed);
     const chipPrograms =
         chip === 'all'
             ? allPrograms
             : chip === 'workouts'
               ? exercisePrograms
-              : chip === 'nutrition'
-                ? mealPrograms
-                : [];
+              : [];
     const isShop = chip === 'equipment' || chip === 'supplements';
     const category = chip === 'equipment' ? 'equipment' : 'supplement';
     const shopProducts = isShop
@@ -243,11 +239,6 @@ export default function MemberExplore({
             value: 'workouts',
             icon: Dumbbell,
             label: t('programs.chip_workouts'),
-        },
-        {
-            value: 'nutrition',
-            icon: UtensilsCrossed,
-            label: t('programs.chip_nutrition'),
         },
         {
             value: 'equipment',

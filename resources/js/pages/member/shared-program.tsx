@@ -75,7 +75,6 @@ export default function MemberSharedProgram({
     isPro,
     alreadyClaimed,
     saveUrl,
-    proUrl,
     homeUrl,
     editUrl,
     todaysSessions: initialTodaysSessions,
@@ -85,7 +84,6 @@ export default function MemberSharedProgram({
     isPro: boolean;
     alreadyClaimed: boolean;
     saveUrl: string;
-    proUrl: string;
     homeUrl: string;
     editUrl: string | null;
     todaysSessions: Record<string, WorkoutSession>;
@@ -537,10 +535,7 @@ export default function MemberSharedProgram({
                                 {t('shared_program.pro_included')}
                             </p>
                             {isGuest ? (
-                                <Button
-                                    className="w-full rounded-full"
-                                    asChild
-                                >
+                                <Button className="w-full rounded-full" asChild>
                                     <Link href={login()}>
                                         {t('shared_program.login_to_save')}
                                     </Link>
@@ -555,16 +550,7 @@ export default function MemberSharedProgram({
                                         ? t('shared_program.saving')
                                         : t('shared_program.claim_program')}
                                 </Button>
-                            ) : (
-                                <Button
-                                    className="w-full rounded-full"
-                                    asChild
-                                >
-                                    <Link href={proUrl}>
-                                        {t('shared_program.upgrade_to_pro')}
-                                    </Link>
-                                </Button>
-                            )}
+                            ) : null}
                             <Button
                                 variant="outline"
                                 className="w-full rounded-full"

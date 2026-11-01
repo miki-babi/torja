@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { WorkoutSession } from './types';
 import {
+    consistencyMap,
     exerciseHistory,
     exerciseSeries,
     lastSessionWithExercise,
@@ -11,6 +12,8 @@ import {
     setsForExercise,
     setSummary,
     totalVolume,
+    volumeByBodyPart,
+    weeklyStats,
     weeklyVolumeSeries,
 } from './workout-progress';
 
@@ -133,21 +136,31 @@ describe('history helpers', () => {
 });
 
 describe('exerciseSeries', () => {
-    it('returns the best set per session, oldest first', () => {
+    it('returns the best set per session, oldest first, with e1rm', () => {
         const series = exerciseSeries(SESSIONS, 'bench-press');
         expect(series).toEqual([
-            { date: '2026-10-15', weight_kg: 60, reps: 10 },
-            { date: '2026-10-20', weight_kg: 70, reps: 8 },
+            {
+                date: '2026-10-15',
+                weight_kg: 60,
+                reps: 10,
+                e1rm: 80,
+            },
+            {
+                date: '2026-10-20',
+                weight_kg: 70,
+                reps: 8,
+                e1rm: 88.7,
+            },
         ]);
     });
 
-    it('reports a null weight for unweighted days', () => {
+    it('reports null weight and e1rm for unweighted days', () => {
         const series = exerciseSeries(
             [session(1, '2026-10-01', [set(1, 'push-up', 0, null, 15)])],
             'push-up',
         );
         expect(series).toEqual([
-            { date: '2026-10-01', weight_kg: null, reps: 15 },
+            { date: '2026-10-01', weight_kg: null, reps: 15, e1rm: null },
         ]);
     });
 
@@ -181,6 +194,58 @@ describe('weeklyVolumeSeries', () => {
         const series = weeklyVolumeSeries([], 3, new Date('2026-10-24'));
         expect(series).toHaveLength(3);
         expect(series.every((b) => b.volume === 0)).toBe(true);
+    });
+});
+
+describe('weeklyStats', () => {
+    it('splits sessions and volume into this week vs last', () => {
+        // Now = Saturday 2026-10-24; week starts Monday Oct 19.
+        const stats = weeklyStats(SESSIONS, new Date('2026-10-24T12:00:00'));
+        expect(stats.current).toEqual({ sessions: 1, volume: 980 });
+        expect(stats.previous).toEqual({ sessions: 1, volume: 1000 });
+    });
+
+    it('ignores empty sessions', () => {
+        const stats = weeklyStats(
+            [session(1, '2026-10-20', [])],
+            new Date('2026-10-24T12:00:00'),
+        );
+        expect(stats.current).toEqual({ sessions: 0, volume: 0 });
+    });
+});
+
+describe('volumeByBodyPart', () => {
+    it('groups lifted volume by muscle, best first', () => {
+        const parts = volumeByBodyPart(SESSIONS, {
+            'bench-press': { body_part: 'chest' },
+            squat: { body_part: 'upper legs' },
+        });
+        expect(parts).toEqual([
+            { part: 'chest', volume: 980 + 600 },
+            { part: 'upper legs', volume: 400 },
+        ]);
+    });
+
+    it('buckets unknown exercises under other', () => {
+        const parts = volumeByBodyPart(SESSIONS, {
+            'bench-press': { body_part: 'chest' },
+        });
+        expect(parts[1]).toEqual({ part: 'other', volume: 400 });
+    });
+});
+
+describe('consistencyMap', () => {
+    it('returns a zero-filled day map oldest first', () => {
+        const map = consistencyMap(
+            SESSIONS,
+            3,
+            new Date('2026-10-20T12:00:00'),
+        );
+        expect(map).toEqual([
+            { date: '2026-10-18', volume: 0 },
+            { date: '2026-10-19', volume: 0 },
+            { date: '2026-10-20', volume: 980 },
+        ]);
     });
 });
 

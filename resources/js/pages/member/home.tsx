@@ -1,26 +1,21 @@
 import { Head, Link } from '@inertiajs/react';
 import {
+    ChevronRight,
     Compass,
     Dumbbell,
     Flame,
     Sparkles,
     TrendingUp,
-    Utensils,
-    UtensilsCrossed,
 } from 'lucide-react';
 import {
     BannerCarousel,
     type HomeBanner,
 } from '@/components/member/banner-carousel';
-import { MealPlanCard } from '@/components/member/meal-plan-card';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { TodaysWorkoutCard } from '@/components/member/todays-workout-card';
-import type { PlanDay } from '@/components/member/types';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n';
-import { exercise, meal, progress, today } from '@/routes/member';
-import { create as createPlan } from '@/routes/member/meal-plans';
+import { exercise, progress, today } from '@/routes/member';
 import { index as exploreIndex } from '@/routes/explore';
 
 function greetingKey(): string {
@@ -32,12 +27,12 @@ function greetingKey(): string {
 
 export default function MemberHome({
     userName,
-    planDay,
+    weekStats,
     banners,
     streak,
 }: {
     userName: string;
-    planDay: PlanDay | null;
+    weekStats: { sessions: number; volume: number };
     banners: HomeBanner[];
     streak: number;
 }) {
@@ -98,13 +93,6 @@ export default function MemberHome({
                     <span>{t('member.home.chip_progress')}</span>
                 </Link>
                 <Link
-                    href={meal()}
-                    className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] px-3.5 py-2 text-xs font-semibold text-[#F5F5F5] transition-colors hover:border-[#AFFA01]/30"
-                >
-                    <Utensils className="size-3.5 text-[#AFFA01]" />
-                    <span>{t('member.home.chip_meal_plan')}</span>
-                </Link>
-                <Link
                     href={exploreIndex()}
                     className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] px-3.5 py-2 text-xs font-semibold text-[#F5F5F5] transition-colors hover:border-[#AFFA01]/30"
                 >
@@ -120,28 +108,31 @@ export default function MemberHome({
                 </section>
             )}
 
-            {/* Meal Plan Section */}
+            {/* Weekly progress snapshot */}
             <section className="mt-5">
-                {planDay !== null ? (
-                    <MealPlanCard planDay={planDay} />
-                ) : (
-                    <Card>
-                        <CardContent className="flex flex-col items-center gap-2 p-4 text-center">
-                            <UtensilsCrossed className="size-5 text-muted-foreground" />
-                            <p className="text-sm font-medium">
-                                {t('member.meal_builder.no_plan')}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                {t('member.meal_builder.no_plan_hint')}
-                            </p>
-                            <Button asChild className="mt-2">
-                                <Link href={createPlan().url}>
-                                    {t('member.meal_builder.create_plan')}
-                                </Link>
-                            </Button>
+                <Link href={progress()} className="block">
+                    <Card className="transition-colors hover:border-[#AFFA01]/40">
+                        <CardContent className="flex items-center gap-3 p-4">
+                            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#AFFA01]/10 text-[#AFFA01]">
+                                <TrendingUp className="size-5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-[#F5F5F5]">
+                                    {t('member.home.week_title')}
+                                </p>
+                                <p className="text-xs text-[#8E8E93]">
+                                    {t('member.home.week_stats', {
+                                        sessions: weekStats.sessions,
+                                        volume: Math.round(
+                                            weekStats.volume,
+                                        ).toLocaleString(),
+                                    })}
+                                </p>
+                            </div>
+                            <ChevronRight className="size-4 shrink-0 text-[#8E8E93]" />
                         </CardContent>
                     </Card>
-                )}
+                </Link>
             </section>
         </MobileShell>
     );

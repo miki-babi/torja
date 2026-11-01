@@ -38,7 +38,13 @@ export type ExerciseDetail = ExerciseSummary & {
 /** slug → {name, detail, equipment, image_url} map passed by controllers for ids on the page. */
 export type ExerciseSummaries = Record<
     string,
-    { name: string; detail: string; image_url?: string; equipment?: string }
+    {
+        name: string;
+        detail: string;
+        image_url?: string;
+        equipment?: string;
+        body_part?: string;
+    }
 >;
 
 export type BodyPart = {

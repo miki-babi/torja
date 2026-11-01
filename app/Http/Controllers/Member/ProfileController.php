@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
-use App\Services\Nutrition\MealPlanPreviewBuilder;
-use App\Services\Nutrition\NutritionTargetCalculator;
 use App\Services\Nutrition\ProfileResolver;
 use App\Support\AmbassadorProgram;
-use App\Support\ProPage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,34 +13,24 @@ class ProfileController extends Controller
 {
     public function __construct(
         private readonly ProfileResolver $profiles,
-        private readonly NutritionTargetCalculator $targets,
-        private readonly MealPlanPreviewBuilder $preview,
     ) {}
 
     /**
-     * Member profile: account info, quiz answers, targets and the active plan.
+     * Member profile: account info, quiz answers and the body stats. The
+     * paid funnel (targets card, Pro upsell) is hidden from members.
      */
     public function __invoke(Request $request): Response
     {
         $profile = $this->profiles->for($request);
         $user = $request->user();
-        $copy = ProPage::forMember();
-        $isPro = $user?->isPro() ?? false;
 
         return Inertia::render('member/profile', [
-            'isPro' => $isPro,
-            'proUrl' => route('pro.show'),
             'ordersUrl' => route('member.orders.index'),
             'ambassador' => [
                 'enabled' => AmbassadorProgram::isEnabled(),
                 'url' => route('member.ambassador'),
                 'balance' => $user?->ambassadorBalance() ?? 0,
                 'commission_etb' => AmbassadorProgram::commissionEtb(),
-            ],
-            'proCard' => [
-                'title' => $isPro ? $copy['pro_title'] : $copy['card_title'],
-                'body' => $isPro ? $copy['pro_body'] : $copy['card_body'],
-                'button' => $isPro ? null : $copy['card_button'],
             ],
             'account' => [
                 'name' => $user?->name,
@@ -64,15 +51,6 @@ class ProfileController extends Controller
             'profileCompleted' => $profile->completed_at !== null,
             'streak' => $user->activityStreak(),
             'activityWeek' => $user->activityWeek(),
-            'targets' => $this->targets->for($profile),
-            'planName' => $this->preview->for($profile)['plan_name'] ?? null,
-            'weightLogs' => $user->weightLogs()->limit(8)->get()
-                ->map(fn ($log) => [
-                    'id' => $log->id,
-                    'logged_on' => $log->logged_on->toDateString(),
-                    'weight_kg' => (float) $log->weight_kg,
-                ])
-                ->all(),
             'weightLogs' => $user->weightLogs()->limit(8)->get()
                 ->map(fn ($log) => [
                     'id' => $log->id,

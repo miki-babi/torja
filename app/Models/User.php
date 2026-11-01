@@ -271,6 +271,26 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * The user's body-measurement check-ins, newest first.
+     *
+     * @return HasMany<BodyMeasurement, $this>
+     */
+    public function measurements(): HasMany
+    {
+        return $this->hasMany(BodyMeasurement::class)->orderByDesc('logged_on');
+    }
+
+    /**
+     * The user's progress photos, newest first.
+     *
+     * @return HasMany<ProgressPhoto, $this>
+     */
+    public function progressPhotos(): HasMany
+    {
+        return $this->hasMany(ProgressPhoto::class)->orderByDesc('taken_on');
+    }
+
+    /**
      * The user's food-diary entries.
      *
      * @return HasMany<FoodDiaryEntry, $this>

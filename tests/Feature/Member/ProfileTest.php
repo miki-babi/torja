@@ -9,7 +9,7 @@ test('guests are redirected to login', function () {
     $this->get(route('member.profile'))->assertRedirect(route('login'));
 });
 
-test('members see their account info, stats and targets', function () {
+test('members see their account info and stats', function () {
     $this->seed(FoodDatabaseSeeder::class);
 
     $user = User::factory()->create();
@@ -22,27 +22,20 @@ test('members see their account info, stats and targets', function () {
             ->component('member/profile')
             ->where('account.name', $user->name)
             ->where('account.email', $user->email)
-            ->where('isPro', false)
-            ->where('proCard.title', 'Toraj Pro')
-            ->where('proCard.button', 'Go Pro')
             ->where('profileCompleted', true)
             ->has('body')
-            ->has('goal')
-            ->has('targets')
-            ->has('planName'));
+            ->has('goal'));
 });
 
-test('pro members see the pro state card', function () {
+test('pro members see the profile page', function () {
     $this->actingAs(proUser())
         ->get(route('member.profile'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('isPro', true)
-            ->where('proCard.title', "You're Pro")
-            ->where('proCard.button', null));
+            ->component('member/profile'));
 });
 
-test('incomplete profiles still load with null targets', function () {
+test('incomplete profiles still load', function () {
     $user = User::factory()->create();
     NutritionProfile::factory()->forUser($user)->create();
 
@@ -50,6 +43,5 @@ test('incomplete profiles still load with null targets', function () {
         ->get(route('member.profile'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('profileCompleted', false)
-            ->where('targets', null));
+            ->where('profileCompleted', false));
 });

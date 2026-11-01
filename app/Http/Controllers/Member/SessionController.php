@@ -163,6 +163,69 @@ class SessionController extends Controller
     }
 
     /**
+     * Backfill a whole past workout in one request. Sets append onto the
+     * day's free session — created when missing — so logging the same date
+     * twice merges instead of stacking duplicate sessions. The session is
+     * marked finished since it represents completed work.
+     */
+    public function storeBackfill(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'date' => ['required', 'date', 'before_or_equal:today', 'after:-5 years'],
+            'sets' => ['required', 'array', 'min:1', 'max:200'],
+            'sets.*.exercise_id' => ['required', 'string', 'max:100'],
+            'sets.*.weight_kg' => ['nullable', 'numeric', 'min:0', 'max:1000'],
+            'sets.*.reps' => ['required', 'integer', 'min:1', 'max:1000'],
+        ]);
+
+        foreach ($data['sets'] as &$set) {
+            $set['exercise_id'] = ExerciseCatalog::resolve($set['exercise_id']);
+        }
+        unset($set);
+
+        validator($data['sets'], [
+            '*.exercise_id' => [Rule::exists('exercises', 'slug')],
+        ])->validate();
+
+        $session = WorkoutSession::where('user_id', $request->user()->id)
+            ->whereDate('date', $data['date'])
+            ->whereNull('exercise_playlist_id')
+            ->first();
+
+        $session ??= WorkoutSession::create([
+            'user_id' => $request->user()->id,
+            'date' => $data['date'],
+            'exercise_playlist_id' => null,
+            'finished_at' => now(),
+        ]);
+
+        $nextIndex = $session->sets()
+            ->selectRaw('exercise_id, MAX(set_index) + 1 as next_index')
+            ->groupBy('exercise_id')
+            ->pluck('next_index', 'exercise_id')
+            ->all();
+
+        foreach ($data['sets'] as $set) {
+            $exerciseId = $set['exercise_id'];
+            $index = $nextIndex[$exerciseId] ?? 0;
+            $nextIndex[$exerciseId] = $index + 1;
+            $session->sets()->create([
+                'exercise_id' => $exerciseId,
+                'set_index' => $index,
+                'weight_kg' => $set['weight_kg'] ?? null,
+                'reps' => $set['reps'],
+            ]);
+        }
+
+        app(Tracker::class)->record('session.backfilled', subject: $session, properties: [
+            'date' => $session->date->toDateString(),
+            'sets' => count($data['sets']),
+        ]);
+
+        return response()->json(['session' => $session->refresh()->toFrontend()], 201);
+    }
+
+    /**
      * "Add exercise" picker page for an active session: search the catalog and
      * pick one to log a set against, then return to the referring screen.
      */

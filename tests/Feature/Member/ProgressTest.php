@@ -22,6 +22,8 @@ test('members can view the progress page', function () {
             ->has('sessions')
             ->has('exerciseSummaries')
             ->has('weightLogs')
+            ->has('measurements')
+            ->has('photos')
             ->has('streak')
             ->has('activityWeek', 7));
 });
