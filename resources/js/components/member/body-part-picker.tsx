@@ -62,7 +62,7 @@ export function BodyPartPicker({
                             className={cn(
                                 'flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border px-1 transition-all',
                                 active
-                                    ? 'border-[#AFFA01] bg-[#AFFA01]/10 text-[#AFFA01] shadow-[0_0_12px_rgba(175,250,1,0.2)]'
+                                    ? 'border-[#AFFA01] bg-[#AFFA01]/10 text-[#AFFA01]'
                                     : 'border-[#2E2E2E] bg-[#1F1F1F] text-[#8E8E93] hover:border-[#AFFA01]/40 hover:text-[#F5F5F5]',
                             )}
                         >

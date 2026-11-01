@@ -37,7 +37,7 @@ export function PlanMealsCard({
                         key={`${m.type}-${index}`}
                         className="flex items-start gap-3 px-6 py-3 transition-colors hover:bg-[#262626]"
                     >
-                        <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[#AFFA01] shadow-[0_0_6px_rgba(175,250,1,0.6)]" />
+                        <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[#AFFA01]" />
                         <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-[#F5F5F5]">
                                 {m.id !== undefined ? (

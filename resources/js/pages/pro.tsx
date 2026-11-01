@@ -115,7 +115,7 @@ export default function Pro({
                         </SheetDescription>
                     </SheetHeader>
 
-                    <div className="rounded-2xl border border-[#AFFA01]/40 bg-[#1F1F1F] p-4 shadow-[0_0_0_4px_rgba(175,250,1,0.08)]">
+                    <div className="rounded-2xl border border-[#AFFA01]/40 bg-[#1F1F1F] p-4">
                         <div className="flex items-start justify-between gap-3">
                             <div>
                                 <p className="text-3xl font-extrabold tracking-tight">

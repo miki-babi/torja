@@ -58,7 +58,7 @@ export function HabitsCard({ habits: initial }: { habits: HomeHabit[] }) {
                                     className={cn(
                                         'flex size-6 shrink-0 items-center justify-center rounded-full border transition-all',
                                         h.done
-                                            ? 'border-[#AFFA01] bg-[#AFFA01] text-black shadow-[0_0_10px_rgba(175,250,1,0.4)]'
+                                            ? 'border-[#AFFA01] bg-[#AFFA01] text-black'
                                             : 'border-[#3E3E3E] bg-[#121212]',
                                     )}
                                 >

@@ -184,7 +184,7 @@ function BannerSlide({
                 draggable={false}
                 className="absolute inset-0 size-full object-cover"
             />
-            <span className="absolute right-3 bottom-2.5 rounded-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-3 py-1.5 text-xs font-bold tracking-wide text-black uppercase shadow-[0_2px_10px_rgba(175,250,1,0.3)]">
+            <span className="absolute right-3 bottom-2.5 rounded-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-3 py-1.5 text-xs font-bold tracking-wide text-black uppercase">
                 {banner.cta !== '' ? banner.cta : fallbackCta}
             </span>
         </span>

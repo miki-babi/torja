@@ -177,7 +177,7 @@ export default function MemberExerciseShow({
             <button
                 type="button"
                 onClick={() => setLogOpen(true)}
-                className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black shadow-[0_4px_16px_rgba(175,250,1,0.3)] transition-all hover:brightness-105 active:scale-[0.98]"
+                className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black transition-all hover:brightness-105 active:scale-[0.98]"
             >
                 <NotebookPen className="size-5" />
                 <span className="text-sm font-bold tracking-wide uppercase">

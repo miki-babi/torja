@@ -16,7 +16,7 @@ export function TodaysWorkoutCard({
 }) {
     const targetUrl = typeof href === 'string' ? href : href.url;
     return (
-        <div className="relative overflow-hidden rounded-[24px] border border-[#2E2E2E] shadow-[0_12px_24px_rgba(175,250,1,0.12)]">
+        <div className="relative overflow-hidden rounded-[24px] border border-[#2E2E2E]">
             <div className="relative h-[280px] w-full">
                 {/* Background Image */}
                 <img
@@ -51,7 +51,7 @@ export function TodaysWorkoutCard({
                         {/* Fit Green Play CTA */}
                         <Link
                             href={targetUrl}
-                            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black shadow-[0_4px_16px_rgba(175,250,1,0.3)] transition-all hover:brightness-105 active:scale-[0.98]"
+                            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black transition-all hover:brightness-105 active:scale-[0.98]"
                         >
                             <Play className="size-5 fill-current" />
                             <span className="text-sm font-bold tracking-wide uppercase">

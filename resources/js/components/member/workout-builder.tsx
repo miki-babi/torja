@@ -273,7 +273,7 @@ export function WorkoutBuilder({
 
                     <div className="fixed inset-x-0 bottom-20 z-40 mx-auto max-w-md px-4">
                         <Button
-                            className="h-12 w-full justify-center rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black shadow-[0_4px_16px_rgba(175,250,1,0.3)] hover:brightness-105"
+                            className="h-12 w-full justify-center rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black hover:brightness-105"
                             onClick={start}
                             disabled={busy}
                         >

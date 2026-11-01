@@ -39,7 +39,7 @@ export function TargetsCard({
                     </p>
                     <div className="mx-auto mt-2 h-2 w-full max-w-xs overflow-hidden rounded-full bg-[#2E2E2E]">
                         <div
-                            className="h-full rounded-full bg-gradient-to-r from-[#D7F457] to-[#AFFA01] shadow-[0_0_8px_rgba(175,250,1,0.3)] transition-all"
+                            className="h-full rounded-full bg-gradient-to-r from-[#D7F457] to-[#AFFA01] transition-all"
                             style={{ width: `${kcalPercent}%` }}
                         />
                     </div>

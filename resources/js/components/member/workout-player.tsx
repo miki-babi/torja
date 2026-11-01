@@ -332,7 +332,7 @@ export function WorkoutPlayer({
                             className={cn(
                                 'h-1.5 flex-1 rounded-full transition-all',
                                 isCurrent
-                                    ? 'bg-[#AFFA01] shadow-[0_0_10px_rgba(175,250,1,0.5)]'
+                                    ? 'bg-[#AFFA01]'
                                     : exLogged
                                       ? 'bg-[#AFFA01]/60'
                                       : 'bg-[#2E2E2E]',
@@ -556,7 +556,7 @@ export function WorkoutPlayer({
                         disabled={setJustCompleted}
                         onClick={handleCompleteSet}
                         className={cn(
-                            'flex h-14 flex-[2] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-6 text-base font-bold text-black shadow-[0_8px_24px_rgba(175,250,1,0.28)] transition-all active:scale-[0.98] disabled:opacity-80',
+                            'flex h-14 flex-[2] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-6 text-base font-bold text-black transition-all active:scale-[0.98] disabled:opacity-80',
                             setJustCompleted && 'scale-[1.02] bg-[#AFFA01]',
                         )}
                     >
