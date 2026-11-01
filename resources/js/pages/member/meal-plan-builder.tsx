@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, Plus, Search, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
@@ -352,8 +352,9 @@ function DayStep({
 }
 
 /**
- * Food picker inside a meal card: catalog search results (tap to add)
- * plus a free-text custom item field.
+ * Food picker inside a meal card: a single field that live-searches the
+ * catalog on every keystroke — tap a result to add it; when nothing
+ * matches, an Add button appends the typed text as an item.
  */
 function ItemPicker({
     onAdd,
@@ -365,32 +366,46 @@ function ItemPicker({
     const { t } = useTranslation();
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<FoodResult[]>([]);
-    const [custom, setCustom] = useState('');
     const [searching, setSearching] = useState(false);
+    const latest = useRef<symbol>(Symbol('init'));
 
-    async function search() {
-        setSearching(true);
-        try {
-            const res = await fetch(
-                `${foodSearch().url}?q=${encodeURIComponent(query)}`,
-            );
-            const { foods } = (await res.json()) as { foods: FoodResult[] };
-            setResults(foods);
-        } catch {
-            toast.error('Could not search foods');
-        } finally {
+    useEffect(() => {
+        const trimmed = query.trim();
+        if (trimmed === '') {
+            setResults([]);
             setSearching(false);
-        }
-    }
-
-    function addCustom() {
-        const name = custom.trim();
-        if (name === '') {
             return;
         }
-        onAdd({ food_id: null, name });
-        setCustom('');
-    }
+
+        setSearching(true);
+        const token = Symbol('search');
+        latest.current = token;
+
+        const timer = setTimeout(async () => {
+            try {
+                const res = await fetch(
+                    `${foodSearch().url}?q=${encodeURIComponent(trimmed)}`,
+                );
+                const { foods } = (await res.json()) as {
+                    foods: FoodResult[];
+                };
+                if (latest.current === token) {
+                    setResults(foods);
+                    setSearching(false);
+                }
+            } catch {
+                if (latest.current === token) {
+                    toast.error('Could not search foods');
+                    setSearching(false);
+                }
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [query]);
+
+    const trimmedQuery = query.trim();
+    const noMatch = trimmedQuery !== '' && !searching && results.length === 0;
 
     return (
         <div className="space-y-2 border-t border-[#2E2E2E] pt-2">
@@ -400,8 +415,10 @@ function ItemPicker({
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            void search();
+                        if (e.key === 'Enter' && noMatch) {
+                            onAdd({ food_id: null, name: trimmedQuery });
+                            setQuery('');
+                            setResults([]);
                         }
                     }}
                     placeholder={t('member.meal_builder.search_foods')}
@@ -440,29 +457,26 @@ function ItemPicker({
                         )}
                     </button>
                 ))}
-                {searching && <p className="py-1 text-xs text-[#8E8E93]">…</p>}
-            </div>
 
-            <div className="flex items-center gap-2">
-                <Input
-                    value={custom}
-                    onChange={(e) => setCustom(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            addCustom();
-                        }
-                    }}
-                    placeholder={t('member.meal_builder.custom_placeholder')}
-                    className="h-9 text-xs"
-                />
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={addCustom}
-                    disabled={custom.trim() === ''}
-                >
-                    {t('member.meal_builder.custom_item')}
-                </Button>
+                {noMatch && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onAdd({ food_id: null, name: trimmedQuery });
+                            setQuery('');
+                            setResults([]);
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl border border-[#AFFA01]/40 bg-[#141414] px-3 py-2 text-left"
+                    >
+                        <Plus className="size-4 shrink-0 text-[#AFFA01]" />
+                        <span className="min-w-0 flex-1 truncate text-sm text-[#F5F5F5]">
+                            {trimmedQuery}
+                        </span>
+                        <span className="shrink-0 text-xs font-semibold text-[#AFFA01]">
+                            {t('member.meal_builder.add')}
+                        </span>
+                    </button>
+                )}
             </div>
 
             <button

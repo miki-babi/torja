@@ -15,6 +15,7 @@ return new class extends Migration
     private const LINES = [
         'member.meal_builder' => [
             'add_day' => ['en' => 'Add day', 'am' => 'ቀን ጨምር'],
+            'add' => ['en' => 'Add', 'am' => 'ጨምር'],
         ],
     ];
 
