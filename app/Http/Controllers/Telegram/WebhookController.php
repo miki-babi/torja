@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Telegram;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\Telegram\BroadcastCallbacks;
+use App\Support\Telegram\MenuKeyboard;
+use App\Support\Telegram\TelegramApi;
 use App\Support\Telegram\UserResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 
 /**
  * Receives Telegram bot updates. Two `/start` flows are served:
@@ -19,6 +20,10 @@ use Illuminate\Support\Facades\Http;
  *   fly when unknown), so the polling login page can open a session.
  * - `<token>` — account linking: matches `telegram_link_token` generated on
  *   the member profile page and binds `telegram_chat_id` for reminders.
+ *
+ * Private-chat texts matching a {@see MenuKeyboard} button are answered
+ * with a message carrying an inline `web_app` button; every other bot
+ * reply ships the persistent reply keyboard so the menu stays visible.
  */
 class WebhookController extends Controller
 {
@@ -51,16 +56,28 @@ class WebhookController extends Controller
         $chatId = $message['chat']['id'] ?? null;
         $text = $message['text'] ?? '';
 
-        if (! is_string($text) || ! str_starts_with($text, '/start') || $chatId === null) {
+        if (! is_string($text) || $chatId === null) {
             return response()->json(['ok' => true]);
         }
 
-        $token = trim(substr($text, strlen('/start')));
+        if (str_starts_with($text, '/start')) {
+            $token = trim(substr($text, strlen('/start')));
 
-        if (str_starts_with($token, 'login_')) {
-            $this->handleLogin($message, $chatId, $token);
-        } else {
-            $this->handleLink($message, $chatId, $token);
+            if (str_starts_with($token, 'login_')) {
+                $this->handleLogin($message, $chatId, $token);
+            } else {
+                $this->handleLink($message, $chatId, $token);
+            }
+
+            return response()->json(['ok' => true]);
+        }
+
+        if (($message['chat']['type'] ?? null) === 'private') {
+            $response = app(MenuKeyboard::class)->responseFor($text);
+
+            if ($response !== null) {
+                $this->send($chatId, $response['text'], $response['reply_markup']);
+            }
         }
 
         return response()->json(['ok' => true]);
@@ -145,21 +162,27 @@ class WebhookController extends Controller
     }
 
     /**
-     * Post a confirmation message back to the chat.
+     * Post a confirmation message back to the chat with the menu keyboard.
      */
     private function reply(mixed $chatId, string $text): void
     {
-        $token = config('services.telegram.bot_token');
+        $this->send($chatId, $text, app(MenuKeyboard::class)->markup());
+    }
 
-        if (empty($token)) {
+    /**
+     * sendMessage via the shared Bot API client; failures are reported but
+     * never break the webhook acknowledgement.
+     *
+     * @param  array<string, mixed>  $replyMarkup
+     */
+    private function send(mixed $chatId, string $text, array $replyMarkup): void
+    {
+        if (empty(config('services.telegram.bot_token'))) {
             return;
         }
 
         try {
-            Http::timeout(5)->post("https://api.telegram.org/bot{$token}/sendMessage", [
-                'chat_id' => $chatId,
-                'text' => $text,
-            ]);
+            app(TelegramApi::class)->sendMessage($chatId, $text, $replyMarkup);
         } catch (\Throwable $e) {
             report($e);
         }
