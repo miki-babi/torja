@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import type {
     BodyPart,
@@ -12,6 +12,7 @@ import type {
 import { WorkoutBuilder } from '@/components/member/workout-builder';
 import { WorkoutSessionCard } from '@/components/member/workout-session';
 import { useTranslation } from '@/lib/i18n';
+import { play } from '@/routes/member/playlists';
 
 export default function MemberToday({
     bodyParts,
@@ -28,8 +29,7 @@ export default function MemberToday({
 }) {
     const { url } = usePage();
     const { t } = useTranslation();
-    const [playlists, setPlaylists] =
-        useState<ExercisePlaylist[]>(initialPlaylists);
+    const [playlists] = useState<ExercisePlaylist[]>(initialPlaylists);
     const [sessions, setSessions] = useState<WorkoutSession[]>(initialSessions);
     const [activeSessionId, setActiveSessionId] = useState<number | null>(
         () => {
@@ -57,13 +57,14 @@ export default function MemberToday({
         setActiveSessionId(next.id);
     }
 
-    function onBuilt(session: WorkoutSession, playlist: ExercisePlaylist) {
-        setPlaylists((list) =>
-            list.some((p) => p.id === playlist.id)
-                ? list.map((p) => (p.id === playlist.id ? playlist : p))
-                : [playlist, ...list],
-        );
-        upsertSession(session);
+    function resume(session: WorkoutSession) {
+        if (session.exercise_playlist_id !== null) {
+            router.visit(play(session.exercise_playlist_id).url);
+
+            return;
+        }
+
+        setActiveSessionId(session.id);
     }
 
     return (
@@ -80,8 +81,7 @@ export default function MemberToday({
                         equipment={equipment}
                         todaysSessions={todaysSessions}
                         playlists={playlists}
-                        onResume={(session) => setActiveSessionId(session.id)}
-                        onStart={onBuilt}
+                        onResume={resume}
                     />
                 ) : (
                     <WorkoutSessionCard

@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -18,7 +18,7 @@ import type {
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 import { show as exerciseShow } from '@/routes/member/exercises';
-import { store as storeSession } from '@/routes/member/sessions';
+import { play } from '@/routes/member/playlists';
 import { build } from '@/routes/member/workouts';
 
 type Step = 'start' | 'muscle' | 'equipment' | 'exercises';
@@ -62,14 +62,6 @@ function readStored(): StoredState | null {
     }
 }
 
-function clearStored(): void {
-    try {
-        sessionStorage.removeItem(STORAGE_KEY);
-    } catch {
-        // Storage unavailable — nothing to clear.
-    }
-}
-
 /**
  * Four-step workout builder: start → pick target muscles → pick available
  * equipment → review the generated exercise list → start. Each step fills
@@ -83,14 +75,12 @@ export function WorkoutBuilder({
     todaysSessions,
     playlists,
     onResume,
-    onStart,
 }: {
     bodyParts: BodyPart[];
     equipment: string[];
     todaysSessions: WorkoutSession[];
     playlists: ExercisePlaylist[];
     onResume: (session: WorkoutSession) => void;
-    onStart: (session: WorkoutSession, playlist: ExercisePlaylist) => void;
 }) {
     const { t } = useTranslation();
     const [stored] = useState<StoredState | null>(readStored);
@@ -148,28 +138,14 @@ export function WorkoutBuilder({
         }
     }
 
-    async function start() {
-        if (busy || built === null) {
+    function start() {
+        if (built === null) {
             return;
         }
-        setBusy(true);
-        try {
-            const { session } = await memberApi<{
-                session: WorkoutSession;
-            }>(storeSession().url, 'POST', {
-                exercise_playlist_id: built.playlist.id,
-            });
-            clearStored();
-            onStart(session, built.playlist);
-        } catch (error) {
-            toast.error(
-                error instanceof Error
-                    ? error.message
-                    : 'Could not start workout',
-            );
-        } finally {
-            setBusy(false);
-        }
+
+        router.visit(
+            `${play(built.playlist.id).url}?back=${encodeURIComponent('/today')}`,
+        );
     }
 
     const stepLabel = t('member.builder.step', {
