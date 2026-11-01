@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\ExercisePlaylist;
+use App\Models\Food;
 use App\Models\NutritionProfile;
 use App\Models\Setting;
 use App\Models\User;
@@ -13,7 +14,7 @@ test('guests are redirected to login', function () {
     $this->get(route('member.home'))->assertRedirect(route('login'));
 });
 
-test('members see their plan day and workout on home', function () {
+test('home shows no meal plan until the member builds one', function () {
     $this->seed(FoodDatabaseSeeder::class);
 
     $user = User::factory()->create();
@@ -25,6 +26,27 @@ test('members see their plan day and workout on home', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('member/home')
             ->where('userName', Str::before($user->name, ' '))
+            ->where('planDay', null));
+});
+
+test('home shows the member\'s own plan day once built', function () {
+    $food = Food::factory()->create();
+
+    $user = User::factory()->create();
+    NutritionProfile::factory()->forUser($user)->completed()->create();
+
+    $this->actingAs($user)->postJson(route('member.meal-plans.store'), [
+        'name' => 'My plan',
+        'days' => [
+            ['meals' => [['meal_type' => 'breakfast', 'items' => [['food_id' => $food->id]]]]],
+        ],
+    ])->assertCreated();
+
+    $this->actingAs($user)
+        ->get(route('member.home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('member/home')
             ->has('planDay.meals'));
 });
 

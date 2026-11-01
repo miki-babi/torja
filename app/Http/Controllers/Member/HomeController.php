@@ -27,15 +27,23 @@ class HomeController extends Controller
     {
         $profile = $this->profiles->for($request);
 
-        // Map the weekday onto the plan's 7 days until real start-date
-        // tracking exists. Locked users only ever see the day-one sample.
-        $day = $request->user()->isPro()
+        $plan = $request->user()->mealPlans()
+            ->whereNull('meal_program_id')
+            ->latest('id')
+            ->first();
+
+        // Map the weekday onto the member's own plan days — a shorter
+        // plan cycles through its days. Locked users see day one only.
+        $maxDay = $plan === null ? 0 : max(1, (int) $plan->meals()->max('day'));
+
+        $day = ($request->user()->isPro()
             ? Carbon::now()->dayOfWeekIso
-            : 1;
+            : 1);
+        $day = $maxDay === 0 ? 0 : (($day - 1) % $maxDay) + 1;
 
         return Inertia::render('member/home', [
             'userName' => Str::before(trim((string) $request->user()?->name), ' ') ?: 'there',
-            'planDay' => $this->preview->for($profile, $day),
+            'planDay' => $plan === null ? null : $this->preview->dayFor($plan, $profile, $day),
             'streak' => $request->user()->activityStreak(),
             'banners' => HomeBanners::forMember(),
         ]);
