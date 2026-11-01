@@ -93,9 +93,9 @@ export default function MemberExercise({
         useState<ExerciseSummaries>(initialSummaries);
     const [activeSessionId, setActiveSessionId] = useState<number | null>(
         () => {
-            const param = new URLSearchParams(
-                url.split('?')[1] ?? '',
-            ).get('session');
+            const param = new URLSearchParams(url.split('?')[1] ?? '').get(
+                'session',
+            );
             return param === null ? null : Number(param);
         },
     );
@@ -254,7 +254,7 @@ export default function MemberExercise({
                                 </span>
                             )}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-center gap-2">
                             <button
                                 type="button"
                                 onClick={() => setLogTarget(ex)}
