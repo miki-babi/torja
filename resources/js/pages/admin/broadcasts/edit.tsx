@@ -26,7 +26,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { store, test, update } from '@/routes/admin/broadcasts';
+import { sentEdit, store, test, update } from '@/routes/admin/broadcasts';
 import type {
     AdminBroadcast,
     BroadcastAudienceConfig,
@@ -113,6 +113,7 @@ type Props = {
     types: string[];
     buttonKinds: string[];
     appUrl: string;
+    editingSent?: boolean;
 };
 
 export default function BroadcastEdit({
@@ -122,6 +123,7 @@ export default function BroadcastEdit({
     linkedCount,
     types,
     appUrl,
+    editingSent = false,
 }: Props) {
     const isNew = broadcast === null;
 
@@ -192,6 +194,8 @@ export default function BroadcastEdit({
         }));
         if (isNew) {
             form.post(store().url, { preserveScroll: true });
+        } else if (editingSent) {
+            form.put(sentEdit.url(broadcast.id), { preserveScroll: true });
         } else {
             form.put(update.url(broadcast.id), { preserveScroll: true });
         }
@@ -530,30 +534,34 @@ export default function BroadcastEdit({
                                     save('draft');
                                 }}
                             >
-                                Save draft
+                                {editingSent ? 'Save edits' : 'Save draft'}
                             </Button>
-                            <Button
-                                variant="secondary"
-                                disabled={form.processing}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    save('now');
-                                }}
-                            >
-                                Send now
-                            </Button>
-                            <Button
-                                disabled={form.processing}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    save('schedule');
-                                }}
-                            >
-                                {form.data.recurrence !== 'none'
-                                    ? 'Schedule recurring'
-                                    : 'Schedule send'}
-                            </Button>
-                            {!isNew && (
+                            {!editingSent && (
+                                <>
+                                    <Button
+                                        variant="secondary"
+                                        disabled={form.processing}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            save('now');
+                                        }}
+                                    >
+                                        Send now
+                                    </Button>
+                                    <Button
+                                        disabled={form.processing}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            save('schedule');
+                                        }}
+                                    >
+                                        {form.data.recurrence !== 'none'
+                                            ? 'Schedule recurring'
+                                            : 'Schedule send'}
+                                    </Button>
+                                </>
+                            )}
+                            {!isNew && !editingSent && (
                                 <Button
                                     type="button"
                                     variant="ghost"

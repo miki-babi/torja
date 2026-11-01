@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\DispatchTelegramBroadcast;
+use App\Jobs\EditTelegramBroadcastRun;
 use App\Jobs\RecallTelegramBroadcastRun;
 use App\Jobs\SendTelegramBroadcastChunk;
 use App\Models\TelegramBroadcast;
@@ -417,6 +418,56 @@ test('webhook callback queries answer with toast and track clicks', function () 
         ->where('user_id', $user->id)
         ->where('name', 'broadcast.button_clicked')
         ->exists())->toBeTrue();
+});
+
+test('sent broadcasts can be edited and the edit applied to deliveries', function () {
+    $broadcast = TelegramBroadcast::factory()->create([
+        'status' => 'sent',
+        'telegram_text' => 'Old text',
+    ]);
+
+    $this->actingAs($this->admin)
+        ->get(route('admin.broadcasts.edit-sent', $broadcast))
+        ->assertOk();
+
+    $this->actingAs($this->admin)
+        ->put(route('admin.broadcasts.sent-edit', $broadcast), validBroadcastPayload([
+            'body_html' => '<p>New text</p>',
+        ]))
+        ->assertRedirect();
+
+    expect($broadcast->fresh()->telegram_text)->toBe('New text')
+        ->and($broadcast->fresh()->status->value)->toBe('sent');
+});
+
+test('apply edit sends editMessageText for every delivered message', function () {
+    Http::fake([
+        'api.telegram.org/*' => Http::response(['ok' => true, 'result' => true]),
+    ]);
+
+    $broadcast = TelegramBroadcast::factory()->create(['telegram_text' => 'New text']);
+    $run = $broadcast->runs()->create(['trigger' => 'manual', 'started_at' => now()]);
+    $delivery = TelegramBroadcastDelivery::query()->create([
+        'broadcast_id' => $broadcast->id,
+        'run_id' => $run->id,
+        'user_id' => User::factory()->create()->id,
+        'chat_id' => '42',
+        'status' => 'sent',
+        'message_ids' => [7],
+    ]);
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.broadcasts.runs.edit', [$broadcast, $run]))
+        ->assertRedirect();
+
+    (new EditTelegramBroadcastRun($run->id, [$delivery->id]))->handle(app(BroadcastSender::class));
+
+    expect($delivery->fresh()->edited_at)->not->toBeNull();
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'editMessageText')
+        && $request['chat_id'] === '42'
+        && $request['message_id'] === 7
+        && $request['text'] === 'New text');
 });
 
 test('recall deletes sent messages from chats', function () {

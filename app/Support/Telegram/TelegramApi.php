@@ -161,6 +161,51 @@ class TelegramApi
     }
 
     /**
+     * editMessageText — rewrite a delivered text message in place.
+     *
+     * @param  array<string, mixed>|null  $replyMarkup
+     */
+    public function editMessageText(int|string $chatId, int $messageId, string $text, ?array $replyMarkup = null): ApiResult
+    {
+        return $this->post('editMessageText', $this->withMarkup([
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'text' => $text,
+            'parse_mode' => 'HTML',
+        ], $replyMarkup));
+    }
+
+    /**
+     * editMessageCaption — rewrite the caption on a delivered media
+     * message in place.
+     *
+     * @param  array<string, mixed>|null  $replyMarkup
+     */
+    public function editMessageCaption(int|string $chatId, int $messageId, ?string $caption, ?array $replyMarkup = null): ApiResult
+    {
+        return $this->post('editMessageCaption', $this->withMarkup([
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'caption' => $caption ?? '',
+            'parse_mode' => 'HTML',
+        ], $replyMarkup));
+    }
+
+    /**
+     * editMessageReplyMarkup — swap only the keyboard of a delivered
+     * message (used when the content itself can't be edited — polls,
+     * albums).
+     */
+    public function editMessageReplyMarkup(int|string $chatId, int $messageId, ?array $replyMarkup = null): ApiResult
+    {
+        return $this->post('editMessageReplyMarkup', [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'reply_markup' => $replyMarkup ?? [],
+        ]);
+    }
+
+    /**
      * getMe — the bot identity, for the admin webhook status card.
      */
     public function getMe(): ApiResult

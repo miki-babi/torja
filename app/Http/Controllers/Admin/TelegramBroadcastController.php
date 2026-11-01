@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreTelegramBroadcastRequest;
 use App\Http\Requests\Admin\UpdateTelegramBroadcastRequest;
 use App\Jobs\DispatchTelegramBroadcast;
+use App\Jobs\EditTelegramBroadcastRun;
 use App\Jobs\RecallTelegramBroadcastRun;
 use App\Jobs\SendTelegramBroadcastChunk;
 use App\Models\TelegramBroadcast;
@@ -87,6 +88,7 @@ class TelegramBroadcastController extends Controller
                 'status' => $d->status,
                 'error' => $d->error,
                 'sent_at' => $d->sent_at?->toDateTimeString(),
+                'edited_at' => $d->edited_at?->toDateTimeString(),
                 'deleted_at' => $d->deleted_at?->toDateTimeString(),
                 'user' => $d->user === null ? null : [
                     'id' => $d->user->id,
@@ -246,6 +248,75 @@ class TelegramBroadcastController extends Controller
         $run->update(['finished_at' => null]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Retrying :count failed deliveries.', ['count' => $ids->count()])]);
+
+        return back();
+    }
+
+    /**
+     * The composer, unlocked for editing a broadcast that already sent —
+     * the save posts to `sent-edit` which keeps the status untouched.
+     */
+    public function editSent(TelegramBroadcast $broadcast): Response
+    {
+        abort_unless($broadcast->status === TelegramBroadcastStatus::Sent, 403, 'Only sent broadcasts can be edited this way.');
+
+        return Inertia::render('admin/broadcasts/edit', $this->composerProps($broadcast) + [
+            'editingSent' => true,
+        ]);
+    }
+
+    /**
+     * Save content edits on a sent broadcast — same payload, status
+     * stays `sent`.
+     */
+    public function updateSent(UpdateTelegramBroadcastRequest $request, TelegramBroadcast $broadcast): RedirectResponse
+    {
+        abort_unless($broadcast->status === TelegramBroadcastStatus::Sent, 403);
+
+        $broadcast->update($request->payload());
+
+        Log::info('broadcast.sent_edit_saved', ['broadcast_id' => $broadcast->id]);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Broadcast updated. Apply the edits to push them to delivered messages.')]);
+
+        return to_route('admin.broadcasts.show', $broadcast);
+    }
+
+    /**
+     * Push the saved content into already-delivered messages —
+     * editMessage* for every stored message id, chunked like recall.
+     */
+    public function applyEdit(TelegramBroadcast $broadcast, TelegramBroadcastRun $run): RedirectResponse
+    {
+        abort_unless($run->broadcast_id === $broadcast->id, 404);
+
+        $ids = $run->deliveries()
+            ->where('status', 'sent')
+            ->whereNull('deleted_at')
+            ->whereNotNull('message_ids')
+            ->pluck('id');
+
+        if ($ids->isEmpty()) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => __('No delivered messages left to edit.')]);
+
+            return back();
+        }
+
+        $delay = 0;
+        foreach ($ids->chunk(25) as $chunk) {
+            BroadcastQueue::dispatch(
+                new EditTelegramBroadcastRun($run->id, $chunk->all()),
+                $delay++,
+            );
+        }
+
+        Log::info('broadcast.edit_applied', [
+            'broadcast_id' => $broadcast->id,
+            'run_id' => $run->id,
+            'deliveries' => $ids->count(),
+        ]);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Editing :count delivered messages.', ['count' => $ids->count()])]);
 
         return back();
     }

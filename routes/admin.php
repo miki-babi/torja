@@ -88,6 +88,12 @@ Route::middleware(['auth', 'verified', 'admin'])
             ->name('broadcasts.runs.resend-failed');
         Route::post('broadcasts/{broadcast}/runs/{run}/recall', [TelegramBroadcastController::class, 'recall'])
             ->name('broadcasts.runs.recall');
+        Route::get('broadcasts/{broadcast}/edit-sent', [TelegramBroadcastController::class, 'editSent'])
+            ->name('broadcasts.edit-sent');
+        Route::put('broadcasts/{broadcast}/sent-edit', [TelegramBroadcastController::class, 'updateSent'])
+            ->name('broadcasts.sent-edit');
+        Route::post('broadcasts/{broadcast}/runs/{run}/edit', [TelegramBroadcastController::class, 'applyEdit'])
+            ->name('broadcasts.runs.edit');
 
         Route::get('telegram/webhook', [TelegramWebhookController::class, 'show'])
             ->name('telegram.webhook.show');

@@ -26,7 +26,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['broadcast_id', 'run_id', 'user_id', 'chat_id', 'status', 'message_ids', 'error', 'attempts', 'sent_at', 'deleted_at'])]
+#[Fillable(['broadcast_id', 'run_id', 'user_id', 'chat_id', 'status', 'message_ids', 'error', 'attempts', 'sent_at', 'edited_at', 'deleted_at'])]
 class TelegramBroadcastDelivery extends Model
 {
     /**
@@ -37,6 +37,7 @@ class TelegramBroadcastDelivery extends Model
         return [
             'message_ids' => 'array',
             'sent_at' => 'datetime',
+            'edited_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
     }

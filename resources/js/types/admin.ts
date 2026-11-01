@@ -299,6 +299,7 @@ export type BroadcastDelivery = {
     status: string;
     error: string | null;
     sent_at: string | null;
+    edited_at: string | null;
     deleted_at: string | null;
     user: {
         id: number;

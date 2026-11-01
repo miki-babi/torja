@@ -57,6 +57,41 @@ class BroadcastSender
     }
 
     /**
+     * Edit an already-delivered message in place — text for text
+     * broadcasts, caption for single media, and only the keyboard where
+     * the content itself can't be edited (albums, polls).
+     */
+    public function editInChat(TelegramBroadcast $broadcast, string|int $chatId, int $messageId): ApiResult
+    {
+        $api = app(TelegramApi::class);
+        $markup = BroadcastKeyboard::markup($broadcast->buttons, $broadcast->id);
+
+        $result = match ($broadcast->type) {
+            TelegramBroadcastType::Text => $api->editMessageText(
+                $chatId, $messageId, $broadcast->telegram_text ?? '', $markup,
+            ),
+            TelegramBroadcastType::Photo, TelegramBroadcastType::Video,
+            TelegramBroadcastType::Document, TelegramBroadcastType::Animation => $api->editMessageCaption(
+                $chatId, $messageId, $broadcast->telegram_text, $markup,
+            ),
+            TelegramBroadcastType::MediaGroup, TelegramBroadcastType::Poll => $api->editMessageReplyMarkup(
+                $chatId, $messageId, $markup,
+            ),
+        };
+
+        if (! $result->ok) {
+            Log::warning('broadcast.edit_failed', [
+                'broadcast_id' => $broadcast->id,
+                'type' => $broadcast->type->value,
+                'error_code' => $result->errorCode,
+                'description' => $result->description,
+            ]);
+        }
+
+        return $result;
+    }
+
+    /**
      * One media item with the broadcast caption.
      *
      * @param  array<int, array<string, mixed>>  $media

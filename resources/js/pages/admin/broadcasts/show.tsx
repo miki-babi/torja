@@ -32,13 +32,18 @@ import {
 import {
     cancel,
     edit,
+    editSent,
     pause,
     resume,
     sendNow,
     show,
     test,
 } from '@/routes/admin/broadcasts';
-import { recall, resendFailed } from '@/routes/admin/broadcasts/runs';
+import {
+    edit as applyRunEdit,
+    recall,
+    resendFailed,
+} from '@/routes/admin/broadcasts/runs';
 import type {
     AdminBroadcast,
     BroadcastDelivery,
@@ -101,6 +106,14 @@ export default function BroadcastShow({
                                 <Button variant="outline" asChild>
                                     <Link href={edit.url(broadcast.id)}>
                                         <Pencil className="size-4" /> Edit
+                                    </Link>
+                                </Button>
+                            )}
+                            {broadcast.status === 'sent' && (
+                                <Button variant="outline" asChild>
+                                    <Link href={editSent.url(broadcast.id)}>
+                                        <Pencil className="size-4" /> Edit sent
+                                        message
                                     </Link>
                                 </Button>
                             )}
@@ -271,6 +284,33 @@ export default function BroadcastShow({
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="sm"
+                                                                        title="Apply saved edits to delivered messages"
+                                                                        onClick={() =>
+                                                                            confirm({
+                                                                                title: 'Edit delivered messages?',
+                                                                                description:
+                                                                                    'The saved broadcast content will replace the text, caption or buttons of every delivered message in this run.',
+                                                                                onConfirm: () =>
+                                                                                    router.post(
+                                                                                        applyRunEdit.url(
+                                                                                            {
+                                                                                                broadcast:
+                                                                                                    broadcast.id,
+                                                                                                run: run.id,
+                                                                                            },
+                                                                                        ),
+                                                                                    ),
+                                                                            })
+                                                                        }
+                                                                    >
+                                                                        <Pencil className="size-3" />
+                                                                    </Button>
+                                                                )}
+                                                                {run.sent_count >
+                                                                    run.deleted_count && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
                                                                         title="Delete messages from chats"
                                                                         onClick={() =>
                                                                             confirm({
@@ -423,6 +463,9 @@ export default function BroadcastShow({
                                                                 }
                                                             >
                                                                 {delivery.status}
+                                                                {delivery.edited_at !==
+                                                                    null &&
+                                                                    ' · edited'}
                                                                 {delivery.deleted_at !==
                                                                     null &&
                                                                     ' · recalled'}
