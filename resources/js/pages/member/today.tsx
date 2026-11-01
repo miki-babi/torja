@@ -1,7 +1,9 @@
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import type { ExerciseSummaries } from '@/components/member/exercise-data';
-import type { BodyPart } from '@/components/member/exercise-data';
+import type {
+    BodyPart,
+    ExerciseSummaries,
+} from '@/components/member/exercise-data';
 import { MobileShell } from '@/components/member/mobile-shell';
 import type {
     ExercisePlaylist,
@@ -34,20 +36,12 @@ export default function MemberToday({
             const param = new URLSearchParams(url.split('?')[1] ?? '').get(
                 'session',
             );
-            if (param !== null) {
-                return Number(param);
-            }
-
-            // Resume the latest session logged today so an in-progress
-            // workout is not lost behind the builder.
-            const todayKey = new Date().toISOString().slice(0, 10);
-            const todays = initialSessions.filter((s) => s.date === todayKey);
-            return todays.length === 0
-                ? null
-                : Math.max(...todays.map((s) => s.id));
+            return param === null ? null : Number(param);
         },
     );
 
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const todaysSessions = sessions.filter((s) => s.date === todayKey);
     const activeSession =
         sessions.find((s) => s.id === activeSessionId) ?? null;
     const activePlaylist =
@@ -84,6 +78,9 @@ export default function MemberToday({
                     <WorkoutBuilder
                         bodyParts={bodyParts}
                         equipment={equipment}
+                        todaysSessions={todaysSessions}
+                        playlists={playlists}
+                        onResume={(session) => setActiveSessionId(session.id)}
                         onStart={onBuilt}
                     />
                 ) : (

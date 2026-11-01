@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exercise;
-use App\Models\WorkoutSession;
 use App\Services\WorkoutGenerator;
 use App\Support\ExerciseCatalog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,7 +18,8 @@ class WorkoutBuilderController extends Controller
 
     /**
      * Build a workout from the muscle and equipment picks made on /today
-     * and start today's session on the generated playlist.
+     * and return the generated playlist so the wizard can preview it
+     * before the member starts a session on it via member.sessions.store.
      */
     public function __invoke(Request $request): JsonResponse
     {
@@ -43,28 +42,11 @@ class WorkoutBuilderController extends Controller
             ], 422);
         }
 
-        $session = WorkoutSession::where('user_id', $request->user()->id)
-            ->whereDate('date', now()->toDateString())
-            ->where('exercise_playlist_id', $playlist->id)
-            ->first();
-
-        $resumed = $session !== null;
-
-        $session ??= WorkoutSession::create([
-            'user_id' => $request->user()->id,
-            'date' => now()->toDateString(),
-            'exercise_playlist_id' => $playlist->id,
-        ]);
-
-        app(Tracker::class)->record('session.started', subject: $session, properties: [
-            'playlist_id' => $playlist->id,
-            'resumed' => $resumed,
-            'built' => true,
-        ]);
-
         return response()->json([
-            'session' => $session->toFrontend(),
             'playlist' => $playlist->toFrontend(),
+            'exerciseSummaries' => ExerciseCatalog::namesFor(
+                $playlist->items->pluck('exercise_id')->all(),
+            ),
         ], 201);
     }
 }

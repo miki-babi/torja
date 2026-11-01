@@ -41,7 +41,7 @@ test('today page provides builder data without generating a workout', function (
     expect(ExercisePlaylist::where('user_id', $user->id)->count())->toBe(0);
 });
 
-test('builder generates a playlist filtered by muscle and equipment and starts a session', function () {
+test('builder generates a preview playlist filtered by muscle and equipment', function () {
     Exercise::factory()->forBodyPart('chest')->count(8)->create(['equipment' => 'barbell']);
     Exercise::factory()->forBodyPart('chest')->count(8)->create(['equipment' => 'band']);
     Exercise::factory()->forBodyPart('back')->count(8)->create(['equipment' => 'barbell']);
@@ -53,7 +53,7 @@ test('builder generates a playlist filtered by muscle and equipment and starts a
         'equipment' => ['barbell'],
     ]);
 
-    $response->assertCreated()->assertJsonStructure(['session', 'playlist']);
+    $response->assertCreated()->assertJsonStructure(['playlist', 'exerciseSummaries']);
 
     $playlist = ExercisePlaylist::where('user_id', $user->id)
         ->whereDate('generated_for', today())
@@ -63,7 +63,29 @@ test('builder generates a playlist filtered by muscle and equipment and starts a
 
     expect($playlist->items)->toHaveCount(6)
         ->and($exercises->pluck('body_part')->unique()->values()->all())->toBe(['chest'])
-        ->and($exercises->pluck('equipment')->unique()->values()->all())->toBe(['barbell']);
+        ->and($exercises->pluck('equipment')->unique()->values()->all())->toBe(['barbell'])
+        ->and($response->json('playlist.id'))->toBe($playlist->id);
+
+    // Building only previews the workout — no session until the member starts.
+    expect(WorkoutSession::where('user_id', $user->id)->count())->toBe(0);
+});
+
+test('starting a built workout opens a session on the playlist', function () {
+    Exercise::factory()->forBodyPart('chest')->count(6)->create();
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->postJson(route('member.workouts.build'), [
+        'muscles' => ['chest'],
+    ])->assertCreated();
+
+    $playlist = ExercisePlaylist::where('user_id', $user->id)->sole();
+
+    $response = $this->actingAs($user)->postJson(route('member.sessions.store'), [
+        'exercise_playlist_id' => $playlist->id,
+    ]);
+
+    $response->assertCreated();
 
     $session = WorkoutSession::where('user_id', $user->id)->sole();
 
