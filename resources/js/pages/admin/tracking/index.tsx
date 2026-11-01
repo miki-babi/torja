@@ -52,6 +52,7 @@ type Integration = {
     is_enabled: boolean;
     consent_required: boolean;
     has_secret: boolean;
+    snippet: string | null;
 };
 
 type FormData = {
@@ -62,7 +63,7 @@ type FormData = {
     event_map: Record<string, string>;
     is_enabled: boolean;
     consent_required: boolean;
-    config: { access_token: string };
+    config: { access_token: string; snippet: string };
 };
 
 const PROVIDERS = ['meta', 'tiktok', 'google', 'custom'];
@@ -74,7 +75,7 @@ const EMPTY_FORM: FormData = {
     event_map: {},
     is_enabled: false,
     consent_required: true,
-    config: { access_token: '' },
+    config: { access_token: '', snippet: '' },
 };
 
 export default function AdminTrackingIndex({
@@ -113,7 +114,10 @@ export default function AdminTrackingIndex({
             event_map: { ...integration.event_map },
             is_enabled: integration.is_enabled,
             consent_required: integration.consent_required,
-            config: { access_token: '' },
+            config: {
+                access_token: '',
+                snippet: integration.snippet ?? '',
+            },
         });
     }
 
@@ -514,6 +518,7 @@ function IntegrationForm({
                     value={form.data.config.access_token}
                     onChange={(e) =>
                         form.setData('config', {
+                            ...form.data.config,
                             access_token: e.target.value,
                         })
                     }
@@ -524,6 +529,29 @@ function IntegrationForm({
                     }
                     autoComplete="off"
                 />
+            </div>
+
+            <div className="grid gap-1.5">
+                <Label htmlFor="snippet">Raw script snippet (optional)</Label>
+                <textarea
+                    id="snippet"
+                    value={form.data.config.snippet}
+                    onChange={(e) =>
+                        form.setData('config', {
+                            ...form.data.config,
+                            snippet: e.target.value,
+                        })
+                    }
+                    rows={8}
+                    placeholder="<!-- Paste the provider's base code here, e.g. the Meta Pixel Code -->"
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
+                />
+                <InputError message={form.errors['config.snippet']} />
+                <p className="text-xs text-muted-foreground">
+                    When set, this exact code is injected into the page
+                    &lt;head&gt; instead of the built-in loader. For Meta,
+                    PageView still fires on every page navigation.
+                </p>
             </div>
 
             <div className="flex gap-4">

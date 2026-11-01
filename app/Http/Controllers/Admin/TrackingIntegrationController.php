@@ -34,6 +34,7 @@ class TrackingIntegrationController extends Controller
                     'is_enabled' => $i->is_enabled,
                     'consent_required' => $i->consent_required,
                     'has_secret' => ! empty($i->config['access_token']),
+                    'snippet' => $i->config['snippet'] ?? null,
                 ]),
             'scopeOptions' => TrackingScope::SCOPES,
             'eventOptions' => $this->eventCatalog(),
@@ -47,13 +48,16 @@ class TrackingIntegrationController extends Controller
     {
         $data = $this->validated($request);
 
-        $accessToken = $data['config']['access_token'] ?? null;
+        $config = $data['config'] ?? null;
         unset($data['config']);
 
         $integration = TrackingIntegration::create($data);
 
-        if (is_string($accessToken) && $accessToken !== '') {
-            $integration->setAccessToken($accessToken);
+        if (is_array($config)) {
+            $integration->updateConfig(
+                $config['access_token'] ?? null,
+                $config['snippet'] ?? null,
+            );
         }
 
         return back();
@@ -67,13 +71,16 @@ class TrackingIntegrationController extends Controller
     {
         $data = $this->validated($request);
 
-        $accessToken = $data['config']['access_token'] ?? null;
+        $config = $data['config'] ?? null;
         unset($data['config']);
 
         $trackingIntegration->update($data);
 
-        if (is_string($accessToken) && $accessToken !== '') {
-            $trackingIntegration->setAccessToken($accessToken);
+        if (is_array($config)) {
+            $trackingIntegration->updateConfig(
+                $config['access_token'] ?? null,
+                $config['snippet'] ?? null,
+            );
         }
 
         return back();
@@ -105,6 +112,7 @@ class TrackingIntegrationController extends Controller
             'is_enabled' => ['required', 'boolean'],
             'consent_required' => ['required', 'boolean'],
             'config.access_token' => ['nullable', 'string', 'max:255'],
+            'config.snippet' => ['nullable', 'string', 'max:20000'],
         ]);
     }
 

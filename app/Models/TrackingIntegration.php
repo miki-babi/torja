@@ -72,7 +72,7 @@ class TrackingIntegration extends Model
      * Enabled integrations for the given route scope — only the fields the
      * browser needs; secrets in `config` are never serialized here.
      *
-     * @return array<int, array{id: int, provider: string, name: string, external_id: string, event_map: array<string, string>, consent_required: bool}>
+     * @return array<int, array{id: int, provider: string, name: string, external_id: string, event_map: array<string, string>, consent_required: bool, snippet: string|null}>
      */
     public static function frontendPayload(?string $routeName): array
     {
@@ -80,7 +80,7 @@ class TrackingIntegration extends Model
 
         $rows = Cache::remember(self::CACHE_KEY, 60, fn (): array => self::query()
             ->where('is_enabled', true)
-            ->get(['id', 'provider', 'name', 'external_id', 'scopes', 'event_map', 'consent_required'])
+            ->get(['id', 'provider', 'name', 'external_id', 'scopes', 'event_map', 'consent_required', 'config'])
             ->map(fn (self $i): array => $i->getAttributes())
             ->all());
 
@@ -96,6 +96,7 @@ class TrackingIntegration extends Model
                 'external_id' => $i->external_id,
                 'event_map' => $i->event_map ?? [],
                 'consent_required' => $i->consent_required,
+                'snippet' => $i->config['snippet'] ?? null,
             ])
             ->values()
             ->all();
@@ -110,15 +111,39 @@ class TrackingIntegration extends Model
     }
 
     /**
+     * Merge admin-submitted values into the JSON config. The access token
+     * stays encrypted-at-rest and is only replaced when a new value is
+     * given; the raw script snippet is plain text (it executes in the
+     * browser anyway) and an empty value removes it.
+     */
+    public function updateConfig(?string $accessToken, ?string $snippet): void
+    {
+        $config = $this->config ?? [];
+
+        if (is_string($accessToken) && $accessToken !== '') {
+            $config['access_token'] = Crypt::encryptString($accessToken);
+        }
+
+        if (is_string($snippet) && $snippet !== '') {
+            $config['snippet'] = $snippet;
+        } else {
+            unset($config['snippet']);
+        }
+
+        $this->update(['config' => $config === [] ? null : $config]);
+    }
+
+    /**
      * Store a CAPI access token encrypted-at-rest inside the JSON config.
      * Kept as a per-value ciphertext because the `config` column itself is
      * JSON and cannot hold the whole-column encrypted blob.
      */
     public function setAccessToken(string $plainToken): void
     {
-        $this->update([
-            'config' => ['access_token' => Crypt::encryptString($plainToken)],
-        ]);
+        $config = $this->config ?? [];
+        $config['access_token'] = Crypt::encryptString($plainToken);
+
+        $this->update(['config' => $config]);
     }
 
     /**

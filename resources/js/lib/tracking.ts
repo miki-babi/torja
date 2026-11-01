@@ -15,6 +15,7 @@ export type TrackingIntegration = {
     external_id: string;
     event_map: Record<string, string>;
     consent_required: boolean;
+    snippet?: string | null;
 };
 
 type QueuedEvent = { name: string; properties?: Record<string, unknown> };
@@ -52,6 +53,13 @@ type Fbq = (...args: unknown[]) => void;
 let active: TrackingIntegration[] = [];
 let queue: QueuedEvent[] = [];
 let flushing = false;
+
+/**
+ * Keys of raw snippets already injected this session — initIntegration runs
+ * on every navigation, but a pasted snippet must only execute once per
+ * unique payload.
+ */
+const injectedSnippets = new Set<string>();
 
 /**
  * Replace the active integration list (called on boot and each navigation).
@@ -98,10 +106,64 @@ function ensureFbq(): Fbq | null {
 }
 
 /**
+ * Parse a pasted provider snippet and append it to <head>, replacing each
+ * <script> node with a freshly created element so it actually executes
+ * (fragment-inserted scripts are inert). For Meta snippets the embedded
+ * `fbq('track', 'PageView')` is stripped first — `firePageView()` stays the
+ * single PageView source on every navigation.
+ */
+function injectSnippet(html: string, { stripPageView = false } = {}) {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    const source = stripPageView
+        ? html.replace(
+              /fbq\(\s*['"]track['"]\s*,\s*['"]PageView['"]\s*\)\s*;?/g,
+              '',
+          )
+        : html;
+
+    const fragment = document.createRange().createContextualFragment(source);
+
+    fragment.querySelectorAll('script').forEach((original) => {
+        const script = document.createElement('script');
+
+        for (const attribute of original.attributes) {
+            script.setAttribute(attribute.name, attribute.value);
+        }
+
+        script.text = original.textContent ?? '';
+        original.replaceWith(script);
+    });
+
+    document.head.appendChild(fragment);
+}
+
+/**
  * Inject the provider script and initialise the pixel for one integration.
+ * An admin-pasted raw snippet takes precedence and is injected verbatim;
+ * otherwise Meta integrations fall back to the built-in fbq loader.
  */
 export function initIntegration(integration: TrackingIntegration) {
-    if (integration.provider !== 'meta' || !consentSatisfied(integration)) {
+    if (!consentSatisfied(integration)) {
+        return;
+    }
+
+    if (integration.snippet) {
+        const key = `${integration.id}:${integration.snippet}`;
+
+        if (!injectedSnippets.has(key)) {
+            injectedSnippets.add(key);
+            injectSnippet(integration.snippet, {
+                stripPageView: integration.provider === 'meta',
+            });
+        }
+
+        return;
+    }
+
+    if (integration.provider !== 'meta') {
         return;
     }
 
