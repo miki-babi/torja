@@ -20,7 +20,6 @@ test('members can view the exercise page', function () {
             ->component('member/exercise')
             ->has('playlists')
             ->has('sessions')
-            ->has('exerciseSummaries')
             ->has('bodyParts', 10)
             ->has('equipment')
             ->has('levels')

@@ -4,6 +4,7 @@ import {
     Dumbbell,
     Flame,
     Sparkles,
+    TrendingUp,
     Utensils,
     UtensilsCrossed,
 } from 'lucide-react';
@@ -18,7 +19,7 @@ import type { PlanDay } from '@/components/member/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n';
-import { exercise, meal, today } from '@/routes/member';
+import { exercise, meal, progress, today } from '@/routes/member';
 import { create as createPlan } from '@/routes/member/meal-plans';
 import { index as exploreIndex } from '@/routes/explore';
 
@@ -88,6 +89,13 @@ export default function MemberHome({
                 >
                     <Dumbbell className="size-3.5 text-[#AFFA01]" />
                     <span>{t('member.home.chip_workout')}</span>
+                </Link>
+                <Link
+                    href={progress()}
+                    className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] px-3.5 py-2 text-xs font-semibold text-[#F5F5F5] transition-colors hover:border-[#AFFA01]/30"
+                >
+                    <TrendingUp className="size-3.5 text-[#AFFA01]" />
+                    <span>{t('member.home.chip_progress')}</span>
                 </Link>
                 <Link
                     href={meal()}

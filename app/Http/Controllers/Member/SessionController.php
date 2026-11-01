@@ -174,7 +174,7 @@ class SessionController extends Controller
 
         return Inertia::render('member/session-add-exercise', [
             'session' => $session->load('sets')->toFrontend(),
-            'backUrl' => str_starts_with($back, '/') ? $back : route('member.exercise'),
+            'backUrl' => str_starts_with($back, '/') ? $back : route('member.progress'),
             'bodyParts' => ExerciseCatalog::bodyPartFilters(),
             'equipment' => Exercise::query()->distinct()->orderBy('equipment')->pluck('equipment')->all(),
         ]);

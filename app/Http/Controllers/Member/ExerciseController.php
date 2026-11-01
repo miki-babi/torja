@@ -12,9 +12,10 @@ use Inertia\Response;
 class ExerciseController extends Controller
 {
     /**
-     * Exercise explore/track screen. Filters and the first result page come
-     * from the exercises table; playlists and recent sessions from the user's
-     * data. The explore list loads further pages from member.exercises.search.
+     * Exercise explore screen. Filters and the first result page come from
+     * the exercises table; playlists and recent sessions (for quick-log
+     * prefill) from the user's data. The list loads further pages from
+     * member.exercises.search. Progress tracking lives on member.progress.
      */
     public function __invoke(Request $request): Response
     {
@@ -31,15 +32,9 @@ class ExerciseController extends Controller
             ->limit(20)
             ->get();
 
-        $exerciseIds = $playlists->flatMap->items->pluck('exercise_id')
-            ->merge($sessions->flatMap->sets->pluck('exercise_id'))
-            ->unique()
-            ->all();
-
         return Inertia::render('member/exercise', [
             'playlists' => $playlists->map->toFrontend()->all(),
             'sessions' => $sessions->map->toFrontend()->all(),
-            'exerciseSummaries' => ExerciseCatalog::namesFor($exerciseIds),
             'bodyParts' => ExerciseCatalog::bodyPartFilters(),
             'equipment' => Exercise::query()->distinct()->orderBy('equipment')->pluck('equipment')->all(),
             'levels' => ['beginner', 'intermediate', 'advanced'],
@@ -50,7 +45,6 @@ class ExerciseController extends Controller
                 ->map->toSummary()
                 ->all(),
             'initialTotal' => Exercise::count(),
-            'weightLogs' => $user->weightLogs()->limit(60)->get(),
         ]);
     }
 }

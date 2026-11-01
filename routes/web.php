@@ -123,6 +123,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('member/workouts/build', Member\WorkoutBuilderController::class)
         ->name('member.workouts.build');
     Route::get('exercise', Member\ExerciseController::class)->name('member.exercise');
+    Route::get('progress', Member\ProgressController::class)->name('member.progress');
     Route::get('member/exercises/search', Member\ExerciseSearchController::class)
         ->name('member.exercises.search');
     Route::get('exercise/{exercise}', Member\ExerciseShowController::class)

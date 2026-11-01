@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { WorkoutSession } from './types';
 import {
     exerciseHistory,
+    exerciseSeries,
     lastSessionWithExercise,
     prByExercise,
     sessionExerciseCount,
@@ -10,6 +11,7 @@ import {
     setsForExercise,
     setSummary,
     totalVolume,
+    weeklyVolumeSeries,
 } from './workout-progress';
 
 function session(
@@ -127,6 +129,58 @@ describe('history helpers', () => {
     it('lists history most recent first, limited', () => {
         const history = exerciseHistory(SESSIONS, 'bench-press', undefined, 1);
         expect(history.map((s) => s.id)).toEqual([2]);
+    });
+});
+
+describe('exerciseSeries', () => {
+    it('returns the best set per session, oldest first', () => {
+        const series = exerciseSeries(SESSIONS, 'bench-press');
+        expect(series).toEqual([
+            { date: '2026-10-15', weight_kg: 60, reps: 10 },
+            { date: '2026-10-20', weight_kg: 70, reps: 8 },
+        ]);
+    });
+
+    it('reports a null weight for unweighted days', () => {
+        const series = exerciseSeries(
+            [session(1, '2026-10-01', [set(1, 'push-up', 0, null, 15)])],
+            'push-up',
+        );
+        expect(series).toEqual([
+            { date: '2026-10-01', weight_kg: null, reps: 15 },
+        ]);
+    });
+
+    it('skips sessions that never logged the exercise', () => {
+        expect(exerciseSeries(SESSIONS, 'deadlift')).toEqual([]);
+        expect(
+            exerciseSeries(
+                [session(1, '2026-10-01', [set(1, 'squat', 0, 80, 5)])],
+                'bench-press',
+            ),
+        ).toEqual([]);
+    });
+});
+
+describe('weeklyVolumeSeries', () => {
+    it('buckets volume into Monday-anchored weeks', () => {
+        // 'now' is a Saturday; week of Oct 19 starts Monday Oct 19.
+        const series = weeklyVolumeSeries(
+            SESSIONS,
+            2,
+            new Date('2026-10-24T12:00:00'),
+        );
+        expect(series).toHaveLength(2);
+        // 2026-10-15 is in the Oct 12 week: 600 + 400 = 1000.
+        expect(series[0].volume).toBe(1000);
+        // 2026-10-20 is in the Oct 19 week: 980.
+        expect(series[1].volume).toBe(980);
+    });
+
+    it('reports zero for empty weeks', () => {
+        const series = weeklyVolumeSeries([], 3, new Date('2026-10-24'));
+        expect(series).toHaveLength(3);
+        expect(series.every((b) => b.volume === 0)).toBe(true);
     });
 });
 

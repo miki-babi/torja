@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Infinity as InfinityIcon,
     NotebookPen,
@@ -10,40 +10,27 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { AddToPlaylist } from '@/components/member/add-to-playlist';
-import { BmiCard } from '@/components/member/bmi-card';
-import { BodyFatCard } from '@/components/member/body-fat-card';
 import {
     BodyPartPicker,
     useBodyPartLabel,
 } from '@/components/member/body-part-picker';
 import { EquipmentPicker } from '@/components/member/equipment-picker';
-import {
-    type ExerciseSummaries,
-    type ExerciseSummary,
-} from '@/components/member/exercise-data';
+import { type ExerciseSummary } from '@/components/member/exercise-data';
 import { searchExercises } from '@/components/member/exercise-search';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { PlaylistManager } from '@/components/member/playlist-manager';
 import { QuickLogSet } from '@/components/member/quick-log-set';
-import { SessionSummary } from '@/components/member/session-summary';
-import { TodaysLog } from '@/components/member/todays-log';
 import type {
     ExercisePlaylist,
     WorkoutSession,
 } from '@/components/member/types';
-import {
-    WeightCard,
-    type WeightLogEntry,
-} from '@/components/member/weight-card';
-import { WorkoutSessionCard } from '@/components/member/workout-session';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { progress } from '@/routes/member';
 import { show as exerciseShow } from '@/routes/member/exercises';
-
-type Tab = 'explore' | 'track';
 
 const LEVEL_ICONS: Record<string, LucideIcon> = {
     '': InfinityIcon,
@@ -55,30 +42,23 @@ const LEVEL_ICONS: Record<string, LucideIcon> = {
 export default function MemberExercise({
     playlists: initialPlaylists,
     sessions: initialSessions,
-    exerciseSummaries: initialSummaries,
     bodyParts,
     equipment,
     levels,
     initialExercises,
     initialTotal,
-    weightLogs: initialWeightLogs,
 }: {
     playlists: ExercisePlaylist[];
     sessions: WorkoutSession[];
-    exerciseSummaries: ExerciseSummaries;
     bodyParts: { id: string; label: string; count: number }[];
     equipment: string[];
     levels: string[];
     initialExercises: ExerciseSummary[];
     initialTotal: number;
-    weightLogs: WeightLogEntry[];
 }) {
     const { url } = usePage();
     const { t, locale } = useTranslation();
     const partLabel = useBodyPartLabel();
-    const [tab, setTab] = useState<Tab>(
-        url.includes('tab=track') ? 'track' : 'explore',
-    );
     const [bodyPart, setBodyPart] = useState<string[]>([]);
     const [equipmentSel, setEquipmentSel] = useState<string[]>([]);
     const [levelSel, setLevelSel] = useState<string>('');
@@ -89,30 +69,21 @@ export default function MemberExercise({
     const [playlists, setPlaylists] =
         useState<ExercisePlaylist[]>(initialPlaylists);
     const [sessions, setSessions] = useState<WorkoutSession[]>(initialSessions);
-    const [exerciseSummaries, setExerciseSummaries] =
-        useState<ExerciseSummaries>(initialSummaries);
-    const [activeSessionId, setActiveSessionId] = useState<number | null>(
-        () => {
-            const param = new URLSearchParams(url.split('?')[1] ?? '').get(
-                'session',
-            );
-            return param === null ? null : Number(param);
-        },
-    );
     const [createOpen, setCreateOpen] = useState(false);
     const [logTarget, setLogTarget] = useState<ExerciseSummary | null>(null);
-    const [weightLogs, setWeightLogs] =
-        useState<WeightLogEntry[]>(initialWeightLogs);
     const [fallback, setFallback] = useState<ExerciseSummary[]>([]);
     const skipFirstSearch = useRef(true);
 
-    const todayKey = new Date().toISOString().slice(0, 10);
-    const todaysSessions = sessions.filter((s) => s.date === todayKey);
-    const activeSession =
-        sessions.find((s) => s.id === activeSessionId) ?? null;
-    const activePlaylist =
-        playlists.find((p) => p.id === activeSession?.exercise_playlist_id) ??
-        null;
+    // `?session=` moved to /progress — forward stale links (e.g. an
+    // add-exercise back URL captured while the track tab still existed).
+    useEffect(() => {
+        const param = new URLSearchParams(url.split('?')[1] ?? '').get(
+            'session',
+        );
+        if (param !== null) {
+            router.visit(progress({ query: { session: Number(param) } }).url);
+        }
+    }, [url]);
 
     useEffect(() => {
         if (skipFirstSearch.current) {
@@ -267,17 +238,7 @@ export default function MemberExercise({
                                 playlists={playlists}
                                 exerciseId={ex.slug}
                                 exerciseName={ex.name}
-                                onChange={(updated) => {
-                                    setExerciseSummaries((map) => ({
-                                        ...map,
-                                        [ex.slug]: {
-                                            name: ex.name,
-                                            detail: ex.detail,
-                                            equipment: ex.equipment,
-                                        },
-                                    }));
-                                    updatePlaylist(updated);
-                                }}
+                                onChange={updatePlaylist}
                                 onCreateNew={() => setCreateOpen(true)}
                             />
                         </div>
@@ -295,13 +256,8 @@ export default function MemberExercise({
         );
     }
 
-    function upsertSession(next: WorkoutSession) {
-        setSessions((list) =>
-            list.some((s) => s.id === next.id)
-                ? list.map((s) => (s.id === next.id ? next : s))
-                : [next, ...list],
-        );
-        setActiveSessionId(next.id);
+    function openSession(next: WorkoutSession) {
+        router.visit(progress({ query: { session: next.id } }).url);
     }
 
     function loadMore() {
@@ -324,189 +280,122 @@ export default function MemberExercise({
     return (
         <MobileShell>
             <Head title={t('member.exercise.title')} />
-            <div className="grid grid-cols-2 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] p-1.5">
-                {(['explore', 'track'] as const).map((tabName) => (
-                    <button
-                        key={tabName}
-                        type="button"
-                        onClick={() => setTab(tabName)}
-                        className={cn(
-                            'rounded-xl py-2 text-xs font-bold tracking-wider uppercase transition-all',
-                            tab === tabName
-                                ? 'bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] text-black shadow-md'
-                                : 'text-[#8E8E93] hover:text-[#F5F5F5]',
-                        )}
-                    >
-                        {t(`member.exercise.${tabName}`)}
-                    </button>
-                ))}
-            </div>
+            <div className="mt-6 space-y-4">
+                <PlaylistManager
+                    playlists={playlists}
+                    onChange={setPlaylists}
+                    createOpen={createOpen}
+                    onCreateOpenChange={setCreateOpen}
+                    onStartSession={openSession}
+                />
 
-            {tab === 'explore' ? (
-                <div className="mt-6 space-y-4">
-                    <PlaylistManager
-                        playlists={playlists}
-                        onChange={setPlaylists}
-                        createOpen={createOpen}
-                        onCreateOpenChange={setCreateOpen}
-                        onStartSession={upsertSession}
+                <div className="relative">
+                    <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-[#8E8E93]" />
+                    <Input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder={t('member.exercise.search_placeholder')}
+                        className="pl-10"
                     />
+                </div>
 
-                    <div className="relative">
-                        <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-[#8E8E93]" />
-                        <Input
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder={t(
-                                'member.exercise.search_placeholder',
-                            )}
-                            className="pl-10"
-                        />
+                <div>
+                    <h2 className="mb-2.5 text-xs font-bold tracking-wider text-[#AFFA01] uppercase">
+                        {t('member.exercise.choose_body_part')}
+                    </h2>
+                    <BodyPartPicker
+                        bodyParts={bodyParts}
+                        value={bodyPart}
+                        onChange={setBodyPart}
+                    />
+                </div>
+
+                <div>
+                    <h2 className="mb-2 text-sm font-medium">
+                        {t('member.exercise.choose_equipment')}
+                    </h2>
+                    <EquipmentPicker
+                        equipment={equipment}
+                        value={equipmentSel}
+                        onChange={setEquipmentSel}
+                    />
+                </div>
+
+                <div>
+                    <h2 className="mb-2 text-sm font-medium">
+                        {t('member.exercise.choose_level')}
+                    </h2>
+                    <div className="grid grid-cols-4 gap-2">
+                        {['', ...levels].map((level) => {
+                            const Icon = LEVEL_ICONS[level] ?? SignalLow;
+                            return (
+                                <button
+                                    key={level}
+                                    type="button"
+                                    onClick={() =>
+                                        setLevelSel(
+                                            levelSel === level ? '' : level,
+                                        )
+                                    }
+                                    className={cn(
+                                        'flex h-14 flex-col items-center justify-center gap-1 rounded-xl border px-1',
+                                        levelSel === level
+                                            ? 'border-lime-500 bg-lime-300/40 text-[#F5F5F5]'
+                                            : 'border-input text-muted-foreground',
+                                    )}
+                                >
+                                    <Icon className="size-5 shrink-0" />
+                                    <span className="text-[10px] leading-none capitalize">
+                                        {level === ''
+                                            ? t('member.exercise.level_all')
+                                            : tv('level', level)}
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
+                </div>
 
-                    <div>
-                        <h2 className="mb-2.5 text-xs font-bold tracking-wider text-[#AFFA01] uppercase">
-                            {t('member.exercise.choose_body_part')}
-                        </h2>
-                        <BodyPartPicker
-                            bodyParts={bodyParts}
-                            value={bodyPart}
-                            onChange={setBodyPart}
-                        />
-                    </div>
+                {results.length === 0 && !loading && (
+                    <Card>
+                        <CardContent className="p-0">
+                            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                                {t('member.exercise.no_results')}
+                            </p>
+                        </CardContent>
+                    </Card>
+                )}
 
+                {results.length === 0 && !loading && fallback.length > 0 && (
                     <div>
-                        <h2 className="mb-2 text-sm font-medium">
-                            {t('member.exercise.choose_equipment')}
-                        </h2>
-                        <EquipmentPicker
-                            equipment={equipment}
-                            value={equipmentSel}
-                            onChange={setEquipmentSel}
-                        />
-                    </div>
-
-                    <div>
-                        <h2 className="mb-2 text-sm font-medium">
-                            {t('member.exercise.choose_level')}
-                        </h2>
-                        <div className="grid grid-cols-4 gap-2">
-                            {['', ...levels].map((level) => {
-                                const Icon = LEVEL_ICONS[level] ?? SignalLow;
-                                return (
-                                    <button
-                                        key={level}
-                                        type="button"
-                                        onClick={() =>
-                                            setLevelSel(
-                                                levelSel === level ? '' : level,
-                                            )
-                                        }
-                                        className={cn(
-                                            'flex h-14 flex-col items-center justify-center gap-1 rounded-xl border px-1',
-                                            levelSel === level
-                                                ? 'border-lime-500 bg-lime-300/40 text-[#F5F5F5]'
-                                                : 'border-input text-muted-foreground',
-                                        )}
-                                    >
-                                        <Icon className="size-5 shrink-0" />
-                                        <span className="text-[10px] leading-none capitalize">
-                                            {level === ''
-                                                ? t('member.exercise.level_all')
-                                                : tv('level', level)}
-                                        </span>
-                                    </button>
-                                );
+                        <p className="mb-2 text-xs font-medium text-muted-foreground">
+                            {t('member.exercise.fallback_title', {
+                                part: bodyPartLabel,
                             })}
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                            {fallback.map(exerciseCard)}
                         </div>
                     </div>
+                )}
 
-                    {results.length === 0 && !loading && (
-                        <Card>
-                            <CardContent className="p-0">
-                                <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                                    {t('member.exercise.no_results')}
-                                </p>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {results.length === 0 &&
-                        !loading &&
-                        fallback.length > 0 && (
-                            <div>
-                                <p className="mb-2 text-xs font-medium text-muted-foreground">
-                                    {t('member.exercise.fallback_title', {
-                                        part: bodyPartLabel,
-                                    })}
-                                </p>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {fallback.map(exerciseCard)}
-                                </div>
-                            </div>
-                        )}
-
-                    <div className="grid grid-cols-2 gap-3">
-                        {results.map(exerciseCard)}
-                    </div>
-
-                    {results.length < total && (
-                        <Button
-                            variant="outline"
-                            className="w-full"
-                            disabled={loading}
-                            onClick={loadMore}
-                        >
-                            {loading
-                                ? t('common.loading')
-                                : `${t('member.exercise.load_more')} (${total - results.length})`}
-                        </Button>
-                    )}
+                <div className="grid grid-cols-2 gap-3">
+                    {results.map(exerciseCard)}
                 </div>
-            ) : (
-                <div className="mt-6 space-y-4">
-                    <SessionSummary
-                        sessions={sessions}
-                        exerciseSummaries={exerciseSummaries}
-                    />
 
-                    {activeSession === null && (
-                        <TodaysLog
-                            sessions={todaysSessions}
-                            playlists={playlists}
-                            exerciseSummaries={exerciseSummaries}
-                            onOpen={(s) => setActiveSessionId(s.id)}
-                        />
-                    )}
-
-                    {activeSession !== null && (
-                        <WorkoutSessionCard
-                            session={activeSession}
-                            playlist={activePlaylist}
-                            sessions={sessions}
-                            exerciseSummaries={exerciseSummaries}
-                            onSessionChange={upsertSession}
-                            onBack={() => setActiveSessionId(null)}
-                        />
-                    )}
-
-                    <WeightCard
-                        logs={weightLogs}
-                        onLogged={(log) =>
-                            setWeightLogs((list) => [
-                                log,
-                                ...list.filter(
-                                    (l) => l.logged_on !== log.logged_on,
-                                ),
-                            ])
-                        }
-                    />
-
-                    <BmiCard />
-
-                    <BodyFatCard />
-                </div>
-            )}
+                {results.length < total && (
+                    <Button
+                        variant="outline"
+                        className="w-full"
+                        disabled={loading}
+                        onClick={loadMore}
+                    >
+                        {loading
+                            ? t('common.loading')
+                            : `${t('member.exercise.load_more')} (${total - results.length})`}
+                    </Button>
+                )}
+            </div>
 
             <QuickLogSet
                 slug={logTarget?.slug ?? ''}
@@ -527,17 +416,6 @@ export default function MemberExercise({
                               )
                             : [session, ...list],
                     );
-                    if (logTarget !== null) {
-                        setExerciseSummaries((map) => ({
-                            ...map,
-                            [logTarget.slug]: {
-                                name: logTarget.name,
-                                detail: logTarget.detail,
-                                equipment: logTarget.equipment,
-                                image_url: logTarget.image_url,
-                            },
-                        }));
-                    }
                 }}
             />
         </MobileShell>

@@ -118,6 +118,95 @@ export function setsForExercise(
         .sort((a, b) => a.set_index - b.set_index);
 }
 
+/**
+ * Best set per session for one exercise, oldest first. Days with weighted
+ * sets report the heaviest weight (ties broken by reps); days logged
+ * without weight report the top reps with a null weight so the caller can
+ * chart reps instead.
+ */
+export function exerciseSeries(
+    sessions: WorkoutSession[],
+    exerciseId: string,
+): { date: string; weight_kg: number | null; reps: number | null }[] {
+    const points: {
+        date: string;
+        weight_kg: number | null;
+        reps: number | null;
+    }[] = [];
+
+    for (const session of [...sessions].sort((a, b) =>
+        a.date.localeCompare(b.date),
+    )) {
+        const sets = session.sets.filter(
+            (set) => set.exercise_id === exerciseId,
+        );
+        if (sets.length === 0) {
+            continue;
+        }
+
+        const best = sets.reduce((top, set) => {
+            const weight = set.weight_kg ?? 0;
+            const reps = set.reps ?? 0;
+            const topWeight = top.weight_kg ?? 0;
+            const topReps = top.reps ?? 0;
+            return weight > topWeight ||
+                (weight === topWeight && reps > topReps)
+                ? set
+                : top;
+        });
+
+        const weight = best.weight_kg ?? 0;
+        points.push({
+            date: session.date,
+            weight_kg: weight > 0 ? weight : null,
+            reps: best.reps,
+        });
+    }
+
+    return points;
+}
+
+/**
+ * Total lifted volume per calendar week (weeks start Monday), oldest
+ * first. `weeks` buckets always come back — empty weeks report zero so
+ * the chart keeps a continuous axis.
+ */
+export function weeklyVolumeSeries(
+    sessions: WorkoutSession[],
+    weeks = 10,
+    now: Date = new Date(),
+): { label: string; volume: number }[] {
+    const day = new Date(now);
+    day.setHours(0, 0, 0, 0);
+    // Week starts Monday.
+    const weekStart = new Date(day);
+    weekStart.setDate(day.getDate() - ((day.getDay() + 6) % 7));
+
+    const buckets = Array.from({ length: weeks }, (_, i) => {
+        const start = new Date(weekStart);
+        start.setDate(weekStart.getDate() - (weeks - 1 - i) * 7);
+        return {
+            start,
+            end: new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000),
+            label: start.toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+            }),
+            volume: 0,
+        };
+    });
+
+    for (const session of sessions) {
+        const date = new Date(`${session.date}T12:00:00`);
+        const bucket = buckets.find((b) => date >= b.start && date < b.end);
+        if (bucket) {
+            bucket.volume += sessionVolume(session);
+        }
+    }
+
+    return buckets.map(({ label, volume }) => ({ label, volume }));
+}
+
 export function setSummary(sets: WorkoutSetEntry[]): string {
     if (sets.length === 0) {
         return '';

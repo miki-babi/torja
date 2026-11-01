@@ -2,6 +2,7 @@
 
 use App\Models\Payment;
 use App\Models\User;
+use App\Support\ExerciseCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,6 +19,10 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    // The memo-cached exercise slug→part maps outlive RefreshDatabase
+    // rollbacks — flush so rolled-back exercises can't leak into the
+    // next test's builder draws or body-part filters.
+    ->beforeEach(fn () => ExerciseCatalog::flush())
     ->in('Feature');
 
 /*
