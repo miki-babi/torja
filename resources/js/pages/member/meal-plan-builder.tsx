@@ -2,6 +2,10 @@ import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, Plus, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import {
+    DiscoverPrograms,
+    type CatalogProgram,
+} from '@/components/member/discover-programs';
 import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { mealTypeLabel } from '@/components/member/types';
@@ -50,9 +54,11 @@ function dayHasItems(meals: PlanMeal[]): boolean {
 export default function MealPlanBuilder({
     mealTypes,
     maxDays,
+    mealPrograms,
 }: {
     mealTypes: string[];
     maxDays: number;
+    mealPrograms: CatalogProgram[];
 }) {
     const { t } = useTranslation();
     const [step, setStep] = useState(0);
@@ -149,6 +155,10 @@ export default function MealPlanBuilder({
                                 )}
                             />
                         </div>
+                        <DiscoverPrograms
+                            title={t('programs.discover_meals')}
+                            programs={mealPrograms}
+                        />
                     </div>
                 )}
 

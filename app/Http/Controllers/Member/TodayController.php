@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\Exercise;
 use App\Support\ExerciseCatalog;
+use App\Support\ProgramCatalog;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -47,6 +48,7 @@ class TodayController extends Controller
             'playlists' => $playlists->map->toFrontend()->all(),
             'sessions' => $sessions->map->toFrontend()->all(),
             'exerciseSummaries' => ExerciseCatalog::namesFor($exerciseIds),
+            'exercisePrograms' => ProgramCatalog::exercisePrograms($user),
         ]);
     }
 }

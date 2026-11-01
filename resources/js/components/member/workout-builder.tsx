@@ -3,6 +3,10 @@ import { ArrowLeft, ChevronRight, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { BodyPartPicker } from '@/components/member/body-part-picker';
+import {
+    DiscoverPrograms,
+    type CatalogProgram,
+} from '@/components/member/discover-programs';
 import { EquipmentPicker } from '@/components/member/equipment-picker';
 import {
     exerciseDetail,
@@ -69,9 +73,11 @@ function readStored(): StoredState | null {
 export function WorkoutBuilder({
     bodyParts,
     equipment,
+    exercisePrograms,
 }: {
     bodyParts: BodyPart[];
     equipment: string[];
+    exercisePrograms: CatalogProgram[];
 }) {
     const { t } = useTranslation();
     const [stored] = useState<StoredState | null>(readStored);
@@ -167,6 +173,10 @@ export function WorkoutBuilder({
                         <Play className="size-4 fill-current" />
                         {t('member.home.start_workout')}
                     </Button>
+                    <DiscoverPrograms
+                        title={t('programs.discover_workouts')}
+                        programs={exercisePrograms}
+                    />
                 </div>
             )}
 

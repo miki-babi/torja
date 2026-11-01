@@ -1,6 +1,7 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
+import type { CatalogProgram } from '@/components/member/discover-programs';
 import type {
     BodyPart,
     ExerciseSummaries,
@@ -24,6 +25,7 @@ export default function MemberToday({
     playlists: initialPlaylists,
     sessions: initialSessions,
     exerciseSummaries,
+    exercisePrograms,
     backUrl,
 }: {
     bodyParts: BodyPart[];
@@ -31,6 +33,7 @@ export default function MemberToday({
     playlists: ExercisePlaylist[];
     sessions: WorkoutSession[];
     exerciseSummaries: ExerciseSummaries;
+    exercisePrograms: CatalogProgram[];
     backUrl: string;
 }) {
     const { url } = usePage();
@@ -95,6 +98,7 @@ export default function MemberToday({
                     <WorkoutBuilder
                         bodyParts={bodyParts}
                         equipment={equipment}
+                        exercisePrograms={exercisePrograms}
                     />
                 ) : (
                     <WorkoutSessionCard

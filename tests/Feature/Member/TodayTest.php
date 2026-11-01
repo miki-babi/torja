@@ -2,6 +2,7 @@
 
 use App\Models\Exercise;
 use App\Models\ExercisePlaylist;
+use App\Models\ExerciseProgram;
 use App\Models\User;
 use App\Models\WorkoutSession;
 use App\Support\ExerciseCatalog;
@@ -39,6 +40,20 @@ test('today page provides builder data without generating a workout', function (
             ->missing('muscleFocus'));
 
     expect(ExercisePlaylist::where('user_id', $user->id)->count())->toBe(0);
+});
+
+test('today page lists published workout programs for discovery', function () {
+    ExerciseProgram::factory()->published()->create(['name' => 'Home Split']);
+    ExerciseProgram::factory()->create(['name' => 'Draft']);
+    ExerciseProgram::factory()->published()->unshared()->create(['name' => 'Unshared']);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('member.today'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('exercisePrograms', 1)
+            ->where('exercisePrograms.0.name', 'Home Split')
+            ->where('exercisePrograms.0.kind', 'exercise'));
 });
 
 test('builder generates a preview playlist filtered by muscle and equipment', function () {

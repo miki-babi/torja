@@ -10,25 +10,16 @@ import {
     Weight,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import {
+    PROGRAM_COUNT_KEYS as COUNT_KEYS,
+    type CatalogProgram,
+} from '@/components/member/discover-programs';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { index as exploreIndex } from '@/routes/explore';
-
-type CatalogProgram = {
-    key: string;
-    kind: 'exercise' | 'meal';
-    name: string;
-    description: string | null;
-    image_url: string | null;
-    meta_count: number;
-    view_url: string;
-    save_url: string;
-    claimed: boolean;
-    member_url: string | null;
-};
 
 type Chip = 'all' | 'workouts' | 'nutrition' | 'equipment' | 'supplements';
 
@@ -51,14 +42,6 @@ function exploreQuery(
         q: q === '' ? undefined : q,
     };
 }
-
-const COUNT_KEYS = {
-    exercise: {
-        one: 'programs.workout_count',
-        many: 'programs.workouts_count',
-    },
-    meal: { one: 'programs.day_count', many: 'programs.days_count' },
-} as const;
 
 function ProgramRow({ program }: { program: CatalogProgram }) {
     const { t } = useTranslation();
@@ -94,7 +77,7 @@ function ProgramRow({ program }: { program: CatalogProgram }) {
                 </p>
             </div>
             {program.claimed && (
-                <Badge className="shrink-0 bg-[#AFFA01] text-black font-bold">
+                <Badge className="shrink-0 bg-[#AFFA01] font-bold text-black">
                     <Check className="size-3 stroke-[3]" />
                     {t('programs.saved')}
                 </Badge>
@@ -202,7 +185,12 @@ export default function MemberExplore({
                 {
                     preserveState: true,
                     preserveScroll: true,
-                    only: ['exercisePrograms', 'mealPrograms', 'products', 'filters'],
+                    only: [
+                        'exercisePrograms',
+                        'mealPrograms',
+                        'products',
+                        'filters',
+                    ],
                 },
             );
         }, 300);
@@ -298,14 +286,14 @@ export default function MemberExplore({
                 />
             )}
 
-            <div className="mt-5 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <div className="mt-5 flex scrollbar-none items-center gap-2 overflow-x-auto pb-1">
                 {chips.map(({ value, icon: Icon, label }) => (
                     <button
                         key={value}
                         type="button"
                         onClick={() => selectChip(value)}
                         className={cn(
-                            'flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold uppercase tracking-wider transition-all',
+                            'flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold tracking-wider uppercase transition-all',
                             chip === value
                                 ? 'border-transparent bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] text-black shadow-md'
                                 : 'border-[#2E2E2E] bg-[#1F1F1F] text-[#8E8E93] hover:text-[#F5F5F5]',
@@ -325,10 +313,7 @@ export default function MemberExplore({
                 ) : (
                     <div className="mt-4 divide-y divide-[#2E2E2E]">
                         {shopProducts.map((product) => (
-                            <ProductRow
-                                key={product.id}
-                                product={product}
-                            />
+                            <ProductRow key={product.id} product={product} />
                         ))}
                     </div>
                 )
@@ -360,7 +345,6 @@ export default function MemberExplore({
                     )}
                 </>
             )}
-
         </MobileShell>
     );
 }
