@@ -408,25 +408,36 @@ function ItemPicker({
     const noMatch = trimmedQuery !== '' && !searching && results.length === 0;
 
     return (
-        <div className="space-y-2 border-t border-[#2E2E2E] pt-2">
-            <div className="relative">
-                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8E8E93]" />
-                <Input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && noMatch) {
-                            onAdd({ food_id: null, name: trimmedQuery });
-                            setQuery('');
-                            setResults([]);
-                        }
-                    }}
-                    placeholder={t('member.meal_builder.search_foods')}
-                    className="pl-9"
-                />
+        <div className="fixed inset-0 z-50 flex flex-col bg-background">
+            <div className="flex items-center gap-2 px-4 pt-6 pb-3">
+                <button
+                    type="button"
+                    onClick={onDone}
+                    aria-label={t('member.meal_builder.done')}
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#1F1F1F] text-[#8E8E93] transition-colors hover:text-[#F5F5F5]"
+                >
+                    <ArrowLeft className="size-4" />
+                </button>
+                <div className="relative flex-1">
+                    <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8E8E93]" />
+                    <Input
+                        autoFocus
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && noMatch) {
+                                onAdd({ food_id: null, name: trimmedQuery });
+                                setQuery('');
+                                setResults([]);
+                            }
+                        }}
+                        placeholder={t('member.meal_builder.search_foods')}
+                        className="pl-9"
+                    />
+                </div>
             </div>
 
-            <div className="max-h-48 space-y-1 overflow-y-auto">
+            <div className="flex-1 space-y-1 overflow-y-auto px-4 pb-6">
                 {results.map((food) => (
                     <button
                         key={food.id}
@@ -478,14 +489,6 @@ function ItemPicker({
                     </button>
                 )}
             </div>
-
-            <button
-                type="button"
-                onClick={onDone}
-                className="text-xs font-semibold text-[#8E8E93] transition-colors hover:text-[#F5F5F5]"
-            >
-                {t('member.meal_builder.done')}
-            </button>
         </div>
     );
 }
