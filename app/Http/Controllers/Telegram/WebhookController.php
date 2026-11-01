@@ -120,15 +120,26 @@ class WebhookController extends Controller
     }
 
     /**
-     * Bind a profile link token to the sender's chat.
+     * Bind a profile link token to the sender's chat. A bare `/start`
+     * carries no token — greet with the menu instead of reporting an
+     * expired link. Group updates are ignored so a group chat id can
+     * never be bound to a member's account.
      *
      * @param  array<string, mixed>  $message
      */
     private function handleLink(array $message, mixed $chatId, string $token): void
     {
-        $user = $token === ''
-            ? null
-            : User::query()->where('telegram_link_token', $token)->first();
+        if (($message['chat']['type'] ?? null) !== 'private') {
+            return;
+        }
+
+        if ($token === '') {
+            $this->reply($chatId, 'Welcome to '.config('app.name').'! Use the menu below to open the app or invite friends.');
+
+            return;
+        }
+
+        $user = User::query()->where('telegram_link_token', $token)->first();
 
         if ($user !== null) {
             $from = is_array($message['from'] ?? null) ? $message['from'] : [];
@@ -157,7 +168,7 @@ class WebhookController extends Controller
 
             $this->reply($chatId, 'Connected — you will now receive reminders from '.config('app.name').' here.');
         } else {
-            $this->reply($chatId, 'This link has expired. Open your Toraj profile and tap "Connect Telegram" again.');
+            $this->reply($chatId, 'This link has expired. Open your '.config('app.name').' profile and tap "Connect Telegram" again.');
         }
     }
 

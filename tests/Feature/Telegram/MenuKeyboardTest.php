@@ -34,6 +34,40 @@ test('bot replies carry the persistent menu keyboard', function () {
     );
 });
 
+test('a bare start greets with the menu instead of an expired link', function () {
+    $this->postJson(route('telegram.webhook'), menuUpdate('/start'))
+        ->assertOk();
+
+    Http::assertSent(
+        fn ($request) => $request->url() === 'https://api.telegram.org/bottest-token/sendMessage'
+            && str_starts_with((string) $request['text'], 'Welcome to '.config('app.name'))
+            && ! str_contains((string) $request['text'], 'expired')
+            && isset($request['reply_markup']['keyboard'][0][0]['text'])
+    );
+});
+
+test('link starts in group chats are ignored', function () {
+    $user = User::factory()->create(['telegram_link_token' => 'link-token-123']);
+
+    $this->postJson(route('telegram.webhook'), menuUpdate('/start link-token-123', 'group'))
+        ->assertOk();
+
+    Http::assertSentCount(0);
+
+    expect($user->fresh()->telegram_chat_id)->toBeNull()
+        ->and($user->fresh()->telegram_link_token)->toBe('link-token-123');
+});
+
+test('unknown link tokens still report an expired link', function () {
+    $this->postJson(route('telegram.webhook'), menuUpdate('/start bogus-token'))
+        ->assertOk();
+
+    Http::assertSent(
+        fn ($request) => str_contains((string) $request['text'], 'This link has expired')
+            && str_contains((string) $request['text'], (string) config('app.name'))
+    );
+});
+
 test('open app button replies with an inline mini app button', function () {
     $this->postJson(route('telegram.webhook'), menuUpdate('🚀 Open App'))
         ->assertOk();
