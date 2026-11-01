@@ -179,6 +179,7 @@ export function WorkoutBuilder({
                         bodyParts={bodyParts}
                         value={muscles}
                         onChange={setMuscles}
+                        large
                     />
                     <StepNav
                         onBack={() => setStep('start')}

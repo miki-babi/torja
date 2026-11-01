@@ -30,16 +30,23 @@ export function BodyPartPicker({
     bodyParts,
     value,
     onChange,
+    large = false,
 }: {
     bodyParts: BodyPart[];
     value: string[];
     onChange: (value: string[]) => void;
+    large?: boolean;
 }) {
     const partLabel = useBodyPartLabel();
 
     return (
         <>
-            <div className="grid grid-cols-5 gap-2">
+            <div
+                className={cn(
+                    'grid gap-2',
+                    large ? 'grid-cols-4' : 'grid-cols-5',
+                )}
+            >
                 {bodyParts.map(({ id }) => {
                     const Icon = bodyPartIcon(id);
                     const image = bodyPartImage(id);
@@ -70,12 +77,25 @@ export function BodyPartPicker({
                                 <img
                                     src={image}
                                     alt=""
-                                    className="size-10 shrink-0 object-contain"
+                                    className={cn(
+                                        'shrink-0 object-contain',
+                                        large ? 'size-14' : 'size-10',
+                                    )}
                                 />
                             ) : (
-                                <Icon className="size-5 shrink-0" />
+                                <Icon
+                                    className={cn(
+                                        'shrink-0',
+                                        large ? 'size-7' : 'size-5',
+                                    )}
+                                />
                             )}
-                            <span className="text-[10px] leading-none font-semibold">
+                            <span
+                                className={cn(
+                                    'leading-none font-semibold',
+                                    large ? 'text-xs' : 'text-[10px]',
+                                )}
+                            >
                                 {partLabel(id)}
                             </span>
                         </button>
