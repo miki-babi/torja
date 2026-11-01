@@ -3,6 +3,8 @@
 use App\Models\Exercise;
 use App\Models\TrackedEvent;
 use App\Models\User;
+use App\Models\WorkoutSession;
+use App\Models\WorkoutSet;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
@@ -44,7 +46,7 @@ test('inline queries answer with gif results and deep-link buttons', function ()
         && str_contains($request['results'][0]['caption'], '<b>Barbell Bench Press</b>')
         && $request['results'][0]['reply_markup']['inline_keyboard'][0][0]['url']
             === 'https://t.me/trainpro_bot/app?startapp=ex_barbell-bench-press'
-        && $request['button']['web_app']['url'] === 'https://app.test/exercise'
+        && ! isset($request['button'])
         && ! isset($request['next_offset']));
 });
 
@@ -84,7 +86,28 @@ test('inline queries paginate through next_offset', function () {
         && ! isset($request['next_offset']));
 });
 
-test('an empty query returns the mini app button without results', function () {
+test('an empty query lists the most-logged exercises first', function () {
+    Exercise::factory()->create(['name' => 'Alpha', 'slug' => 'alpha']);
+    Exercise::factory()->create(['name' => 'Beta', 'slug' => 'beta']);
+    Exercise::factory()->create(['name' => 'Gamma', 'slug' => 'gamma']);
+
+    $session = WorkoutSession::factory()->create();
+    WorkoutSet::factory()->create([
+        'workout_session_id' => $session->id,
+        'exercise_id' => 'beta',
+        'set_index' => 0,
+    ]);
+    WorkoutSet::factory()->create([
+        'workout_session_id' => $session->id,
+        'exercise_id' => 'beta',
+        'set_index' => 1,
+    ]);
+    WorkoutSet::factory()->create([
+        'workout_session_id' => $session->id,
+        'exercise_id' => 'gamma',
+        'set_index' => 0,
+    ]);
+
     $this->postJson(route('telegram.webhook'), [
         'inline_query' => [
             'id' => 'iq1',
@@ -94,22 +117,7 @@ test('an empty query returns the mini app button without results', function () {
     ])->assertOk();
 
     Http::assertSent(fn ($request) => str_contains($request->url(), 'answerInlineQuery')
-        && $request['results'] === []
-        && $request['button']['web_app']['url'] === 'https://app.test/exercise');
-});
-
-test('the picker button is omitted when no mini app url is configured', function () {
-    config()->set('services.telegram.mini_app_url', null);
-
-    $this->postJson(route('telegram.webhook'), [
-        'inline_query' => [
-            'id' => 'iq1',
-            'query' => '',
-            'from' => ['id' => 4242],
-        ],
-    ])->assertOk();
-
-    Http::assertSent(fn ($request) => str_contains($request->url(), 'answerInlineQuery')
+        && array_column($request['results'], 'id') === ['beta', 'gamma', 'alpha']
         && ! isset($request['button']));
 });
 

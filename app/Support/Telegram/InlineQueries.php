@@ -4,6 +4,7 @@ namespace App\Support\Telegram;
 
 use App\Models\Exercise;
 use App\Models\User;
+use App\Models\WorkoutSet;
 use App\Support\Tracking\Tracker;
 
 /**
@@ -14,9 +15,9 @@ use App\Support\Tracking\Tracker;
  * (web_app buttons are rejected on inline-mode messages, so the deep
  * link is how the shared exercise opens in the Mini App).
  *
- * Every answer also carries a `button` — the picker-level "Switch to
- * Mini App" entry that opens the in-app exercise browser — whenever a
- * Mini App URL is configured.
+ * An empty query still returns results — exercises ordered by how often
+ * members log sets for them — so the picker shows content immediately,
+ * the way inline bots like @gif and @bing do.
  */
 class InlineQueries
 {
@@ -42,12 +43,7 @@ class InlineQueries
             ? (string) ($inlineQuery['from']['language_code'] ?? '')
             : '';
 
-        $results = [];
-        $nextOffset = null;
-
-        if ($term !== '') {
-            [$results, $nextOffset] = $this->search($term, $offset, $language);
-        }
+        [$results, $nextOffset] = $this->search($term, $offset, $language);
 
         $options = [
             'cache_time' => 300,
@@ -56,12 +52,6 @@ class InlineQueries
 
         if ($nextOffset !== null) {
             $options['next_offset'] = (string) $nextOffset;
-        }
-
-        $button = $this->miniAppButton();
-
-        if ($button !== null) {
-            $options['button'] = $button;
         }
 
         try {
@@ -99,9 +89,12 @@ class InlineQueries
     }
 
     /**
-     * Name-matched exercises mapped to inline results, plus the next
-     * offset when another page exists. One extra row is fetched to
-     * detect the next page without a COUNT query.
+     * Exercises mapped to inline results, plus the next offset when
+     * another page exists. One extra row is fetched to detect the next
+     * page without a COUNT query. Non-empty terms name-match; an empty
+     * term lists the catalog by logged-set popularity — a joined GROUP
+     * BY rather than a correlated count, since `exercise_id` isn't the
+     * leftmost column of the workout_sets unique index.
      *
      * @return array{0: array<int, array<string, mixed>>, 1: int|null}
      */
@@ -109,11 +102,22 @@ class InlineQueries
     {
         $escaped = addcslashes($term, '%_\\');
 
+        $popularity = WorkoutSet::query()
+            ->select('exercise_id')
+            ->selectRaw('count(*) as set_count')
+            ->groupBy('exercise_id');
+
         $exercises = Exercise::query()
-            ->where(fn ($query) => $query
-                ->where('name', 'like', "%{$escaped}%")
-                ->orWhere('name_am', 'like', "%{$escaped}%"))
-            ->orderBy('name')
+            ->select('exercises.*')
+            ->when($term !== '', fn ($query) => $query
+                ->where(fn ($w) => $w
+                    ->where('name', 'like', "%{$escaped}%")
+                    ->orWhere('name_am', 'like', "%{$escaped}%"))
+                ->orderBy('exercises.name'))
+            ->when($term === '', fn ($query) => $query
+                ->leftJoinSub($popularity, 'set_counts', 'set_counts.exercise_id', '=', 'exercises.slug')
+                ->orderByRaw('COALESCE(set_counts.set_count, 0) DESC')
+                ->orderBy('exercises.name'))
             ->offset($offset)
             ->limit(self::PAGE_SIZE + 1)
             ->get();
@@ -180,26 +184,6 @@ class InlineQueries
             htmlspecialchars($exercise->detail(), ENT_QUOTES, 'UTF-8'),
             'Level: '.htmlspecialchars(ucfirst($exercise->level), ENT_QUOTES, 'UTF-8'),
         ]);
-    }
-
-    /**
-     * The `answerInlineQuery` picker button opening the Mini App's
-     * exercise browser, or null when no Mini App URL is configured.
-     *
-     * @return array{text: string, web_app: array{url: string}}|null
-     */
-    private function miniAppButton(): ?array
-    {
-        $url = config('services.telegram.mini_app_url');
-
-        if (! is_string($url) || $url === '') {
-            return null;
-        }
-
-        return [
-            'text' => '🔍 Browse all exercises in '.$this->appName(),
-            'web_app' => ['url' => rtrim($url, '/').'/exercise'],
-        ];
     }
 
     /**
