@@ -15,7 +15,7 @@ use App\Support\ExerciseCatalog;
  */
 class WorkoutGenerator
 {
-    private const EXERCISES_PER_WORKOUT = 6;
+    private const EXERCISES_PER_WORKOUT = 10;
 
     /**
      * Create a generated playlist matching the picks, or null when no

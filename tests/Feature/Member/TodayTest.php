@@ -42,7 +42,7 @@ test('today page provides builder data without generating a workout', function (
 });
 
 test('builder generates a preview playlist filtered by muscle and equipment', function () {
-    Exercise::factory()->forBodyPart('chest')->count(8)->create(['equipment' => 'barbell']);
+    Exercise::factory()->forBodyPart('chest')->count(12)->create(['equipment' => 'barbell']);
     Exercise::factory()->forBodyPart('chest')->count(8)->create(['equipment' => 'band']);
     Exercise::factory()->forBodyPart('back')->count(8)->create(['equipment' => 'barbell']);
 
@@ -61,7 +61,7 @@ test('builder generates a preview playlist filtered by muscle and equipment', fu
 
     $exercises = Exercise::whereIn('slug', $playlist->items->pluck('exercise_id'));
 
-    expect($playlist->items)->toHaveCount(6)
+    expect($playlist->items)->toHaveCount(10)
         ->and($exercises->pluck('body_part')->unique()->values()->all())->toBe(['chest'])
         ->and($exercises->pluck('equipment')->unique()->values()->all())->toBe(['barbell'])
         ->and($response->json('playlist.id'))->toBe($playlist->id);
@@ -127,7 +127,7 @@ test('builder with no picks draws from the full body', function () {
 
     $playlist = ExercisePlaylist::where('user_id', $user->id)->sole();
 
-    expect($playlist->items)->toHaveCount(6)
+    expect($playlist->items)->toHaveCount(10)
         ->and($playlist->name)->toBe('Full body workout');
 });
 
