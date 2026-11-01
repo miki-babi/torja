@@ -18,10 +18,11 @@ use Illuminate\Support\Carbon;
  * @property int $user_id
  * @property int|null $exercise_playlist_id
  * @property Carbon $date
+ * @property Carbon|null $finished_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['user_id', 'exercise_playlist_id', 'date'])]
+#[Fillable(['user_id', 'exercise_playlist_id', 'date', 'finished_at'])]
 class WorkoutSession extends Model
 {
     /** @use HasFactory<WorkoutSessionFactory> */
@@ -32,10 +33,26 @@ class WorkoutSession extends Model
      *
      * @return array<string, string>
      */
+    /**
+     * Starting a session finishes any other open session from the same day
+     * — only one workout can be active at a time.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (WorkoutSession $session): void {
+            static::where('user_id', $session->user_id)
+                ->whereDate('date', $session->date)
+                ->whereKeyNot($session->id)
+                ->whereNull('finished_at')
+                ->update(['finished_at' => now()]);
+        });
+    }
+
     protected function casts(): array
     {
         return [
             'date' => 'date',
+            'finished_at' => 'datetime',
         ];
     }
 

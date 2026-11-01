@@ -19,6 +19,7 @@ import { memberApi } from '@/components/member/member-api';
 import type { WorkoutSession } from '@/components/member/types';
 import { WorkoutShareCard } from '@/components/member/workout-share-card';
 import { cn } from '@/lib/utils';
+import { finish as finishSession } from '@/routes/member/sessions';
 import { destroy, upsert } from '@/routes/member/sessions/sets';
 
 export const DEFAULT_SETS = 3;
@@ -193,6 +194,7 @@ export function WorkoutPlayer({
         setDurationMinutes(
             Math.max(1, Math.round((Date.now() - startedAt.current) / 60000)),
         );
+        void memberApi(finishSession(session.id).url, 'POST').catch(() => {});
         setCompleted(true);
     }
 
@@ -233,7 +235,9 @@ export function WorkoutPlayer({
 
     function handleSkipExercise() {
         triggerHaptic();
-        if (exerciseIndex + 1 < total) {
+        if (currentSetIndex + 1 < targetSets) {
+            setCurrentSetIndex((prev) => prev + 1);
+        } else if (exerciseIndex + 1 < total) {
             setExerciseIndex((prev) => prev + 1);
             setCurrentSetIndex(0);
         } else {

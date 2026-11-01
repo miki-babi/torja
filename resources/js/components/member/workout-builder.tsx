@@ -11,10 +11,7 @@ import {
     type ExerciseSummaries,
 } from '@/components/member/exercise-data';
 import { memberApi } from '@/components/member/member-api';
-import type {
-    ExercisePlaylist,
-    WorkoutSession,
-} from '@/components/member/types';
+import type { ExercisePlaylist } from '@/components/member/types';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 import { show as exerciseShow } from '@/routes/member/exercises';
@@ -72,15 +69,9 @@ function readStored(): StoredState | null {
 export function WorkoutBuilder({
     bodyParts,
     equipment,
-    todaysSessions,
-    playlists,
-    onResume,
 }: {
     bodyParts: BodyPart[];
     equipment: string[];
-    todaysSessions: WorkoutSession[];
-    playlists: ExercisePlaylist[];
-    onResume: (session: WorkoutSession) => void;
 }) {
     const { t } = useTranslation();
     const [stored] = useState<StoredState | null>(readStored);
@@ -176,37 +167,6 @@ export function WorkoutBuilder({
                         <Play className="size-4 fill-current" />
                         {t('member.home.start_workout')}
                     </Button>
-
-                    {todaysSessions.length > 0 && (
-                        <div className="space-y-2 pt-2">
-                            <p className="text-xs font-semibold text-[#8E8E93]">
-                                {t('member.builder.continue_session')}
-                            </p>
-                            {todaysSessions.map((session) => (
-                                <Button
-                                    key={session.id}
-                                    variant="secondary"
-                                    className="w-full justify-start"
-                                    onClick={() => onResume(session)}
-                                >
-                                    {session.exercise_playlist_id === null
-                                        ? t('member.builder.free_session')
-                                        : (playlists.find(
-                                              (p) =>
-                                                  p.id ===
-                                                  session.exercise_playlist_id,
-                                          )?.name ??
-                                          t('member.builder.free_session'))}
-                                    <span className="ml-auto text-xs text-muted-foreground">
-                                        {session.sets.length}{' '}
-                                        {session.sets.length === 1
-                                            ? 'set'
-                                            : 'sets'}
-                                    </span>
-                                </Button>
-                            ))}
-                        </div>
-                    )}
                 </div>
             )}
 

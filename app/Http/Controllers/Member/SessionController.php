@@ -55,6 +55,18 @@ class SessionController extends Controller
     }
 
     /**
+     * Mark a session finished — removes it from the resume-workout FAB.
+     */
+    public function finish(Request $request, WorkoutSession $session): JsonResponse
+    {
+        abort_unless($session->user_id === $request->user()->id, 403);
+
+        $session->update(['finished_at' => $session->finished_at ?? now()]);
+
+        return response()->json(['session' => $session->refresh()->toFrontend()]);
+    }
+
+    /**
      * Create or update one logged set.
      */
     public function upsertSet(Request $request, WorkoutSession $session): JsonResponse

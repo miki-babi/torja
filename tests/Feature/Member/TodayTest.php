@@ -173,6 +173,29 @@ test('active session prop exposes today\'s latest session', function () {
         ->assertInertia(fn ($page) => $page->where('activeSession.id', $session->id));
 });
 
+test('starting a new session finishes the previous one', function () {
+    $user = User::factory()->create();
+
+    $first = WorkoutSession::factory()->create(['user_id' => $user->id, 'date' => today()]);
+    $second = WorkoutSession::factory()->create(['user_id' => $user->id, 'date' => today()]);
+
+    expect($first->fresh()->finished_at)->not->toBeNull()
+        ->and($second->fresh()->finished_at)->toBeNull();
+});
+
+test('finishing a session clears the active session prop', function () {
+    $user = User::factory()->create();
+    $session = WorkoutSession::factory()->create(['user_id' => $user->id, 'date' => today()]);
+
+    $this->actingAs($user)->postJson(route('member.sessions.finish', $session))
+        ->assertOk();
+
+    expect($session->fresh()->finished_at)->not->toBeNull();
+
+    $this->actingAs($user)->get(route('member.today'))
+        ->assertInertia(fn ($page) => $page->where('activeSession', null));
+});
+
 test('generated playlists are hidden from the exercise page list', function () {
     $user = User::factory()->create();
     seedBuilderExerciseCatalog();

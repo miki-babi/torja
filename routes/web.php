@@ -174,6 +174,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.playlists.exercises.destroy');
     Route::post('member/sessions', [Member\SessionController::class, 'store'])
         ->name('member.sessions.store');
+    Route::post('member/sessions/{session}/finish', [Member\SessionController::class, 'finish'])
+        ->name('member.sessions.finish');
     Route::post('member/sessions/log-set', [Member\SessionController::class, 'logSet'])
         ->name('member.sessions.log-set');
     Route::get('member/sessions/{session}/exercises', [Member\SessionController::class, 'exercises'])

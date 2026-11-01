@@ -61,6 +61,7 @@ class HandleInertiaRequests extends Middleware
             'activeSession' => $request->user()
                 ? $request->user()->workoutSessions()
                     ->whereDate('date', today())
+                    ->whereNull('finished_at')
                     ->latest('id')
                     ->first(['id', 'exercise_playlist_id'])
                     ?->only(['id', 'exercise_playlist_id'])

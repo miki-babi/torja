@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import type {
     BodyPart,
@@ -12,7 +12,6 @@ import type {
 import { WorkoutBuilder } from '@/components/member/workout-builder';
 import { WorkoutSessionCard } from '@/components/member/workout-session';
 import { useTranslation } from '@/lib/i18n';
-import { play } from '@/routes/member/playlists';
 
 export default function MemberToday({
     bodyParts,
@@ -40,8 +39,6 @@ export default function MemberToday({
         },
     );
 
-    const todayKey = new Date().toISOString().slice(0, 10);
-    const todaysSessions = sessions.filter((s) => s.date === todayKey);
     const activeSession =
         sessions.find((s) => s.id === activeSessionId) ?? null;
     const activePlaylist =
@@ -57,16 +54,6 @@ export default function MemberToday({
         setActiveSessionId(next.id);
     }
 
-    function resume(session: WorkoutSession) {
-        if (session.exercise_playlist_id !== null) {
-            router.visit(play(session.exercise_playlist_id).url);
-
-            return;
-        }
-
-        setActiveSessionId(session.id);
-    }
-
     return (
         <MobileShell>
             <Head title={t('member.builder.title')} />
@@ -79,9 +66,6 @@ export default function MemberToday({
                     <WorkoutBuilder
                         bodyParts={bodyParts}
                         equipment={equipment}
-                        todaysSessions={todaysSessions}
-                        playlists={playlists}
-                        onResume={resume}
                     />
                 ) : (
                     <WorkoutSessionCard
