@@ -128,6 +128,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('exercise/{exercise}', Member\ExerciseShowController::class)
         ->name('member.exercises.show');
     Route::get('meal', Member\MealController::class)->name('member.meal');
+    Route::get('meal-plans/create', Member\MealPlanBuilderController::class)
+        ->name('member.meal-plans.create');
+    Route::post('meal-plans', Member\MealPlanStoreController::class)
+        ->name('member.meal-plans.store');
     Route::get('meal/{mealPlanMeal}', Member\MealShowController::class)
         ->name('member.meals.show');
     Route::put('meal/{mealPlanMeal}/items/{item}/swap', [Member\MealSwapController::class, 'store'])

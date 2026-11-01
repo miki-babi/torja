@@ -1,10 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import {
-    ChevronLeft,
-    ChevronRight,
-    Lock,
-    UtensilsCrossed,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Lock, UtensilsCrossed } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FoodDiaryCard } from '@/components/member/food-diary-card';
 import { LogFoodDialog } from '@/components/member/log-food-dialog';
@@ -29,6 +24,7 @@ import {
     index as diaryIndex,
     store as storeDiaryEntry,
 } from '@/routes/member/diary';
+import { create as createPlan } from '@/routes/member/meal-plans';
 import { show as pro } from '@/routes/pro';
 
 function newId(): string {
@@ -265,7 +261,24 @@ export default function MemberMeal({
                     <TargetsCard targets={targets} consumed={consumed} />
                 )}
 
-                {planDay !== null ? (
+                {Object.keys(planDays).length === 0 ? (
+                    <Card>
+                        <CardContent className="flex flex-col items-center gap-2 p-4 text-center">
+                            <UtensilsCrossed className="size-5 text-muted-foreground" />
+                            <p className="text-sm font-medium">
+                                {t('member.meal_builder.no_plan')}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                {t('member.meal_builder.no_plan_hint')}
+                            </p>
+                            <Button asChild className="mt-2">
+                                <Link href={createPlan().url}>
+                                    {t('member.meal_builder.create_plan')}
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : planDay !== null ? (
                     <PlanMealsCard
                         planName={planDay.plan_name}
                         meals={planDay.meals}

@@ -31,15 +31,22 @@ class MealController extends Controller
 
         $unlocked = $request->user()->isPro();
 
+        $plan = $request->user()->mealPlans()
+            ->whereNull('meal_program_id')
+            ->latest('id')
+            ->first();
+
         app(Tracker::class)->record('meal.viewed', properties: [
             'profile_completed' => $profile->isCompleted(),
             'unlocked' => $unlocked,
         ]);
 
+        $maxDay = $plan === null ? 0 : (int) $plan->meals()->max('day');
+
         return Inertia::render('member/meal', [
             'targets' => $this->targets->for($profile),
-            'planDays' => collect($unlocked ? range(1, 7) : [1])
-                ->mapWithKeys(fn (int $day) => [$day => $this->preview->for($profile, $day)])
+            'planDays' => $plan === null ? [] : collect($unlocked ? range(1, $maxDay) : [1])
+                ->mapWithKeys(fn (int $day) => [$day => $this->preview->dayFor($plan, $profile, $day)])
                 ->all(),
             'unlocked' => $unlocked,
             'price' => ProPage::price(),
