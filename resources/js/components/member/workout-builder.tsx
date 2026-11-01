@@ -10,13 +10,6 @@ import type {
     WorkoutSession,
 } from '@/components/member/types';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n';
 import { build } from '@/routes/member/workouts';
 
@@ -30,8 +23,9 @@ const STEP_INDEX: Record<Step, number> = {
 
 /**
  * Three-step workout builder: start → pick target muscles → pick available
- * equipment → start. The server generates a playlist matching the picks and
- * opens a session on it. Empty selections mean "full body" / "any
+ * equipment → start. Each step fills the page like the exercise page's
+ * picker sections. The server generates a playlist matching the picks and
+ * opens a session on it; empty selections mean "full body" / "any
  * equipment".
  */
 export function WorkoutBuilder({
@@ -80,25 +74,21 @@ export function WorkoutBuilder({
     });
 
     return (
-        <Card>
-            <CardHeader>
-                <p className="text-[11px] font-bold tracking-wider text-[#AFFA01] uppercase">
-                    {stepLabel}
-                </p>
-                <CardTitle className="text-base">
-                    {step === 'start' && t('member.builder.title')}
-                    {step === 'muscle' && t('member.builder.step_muscle')}
-                    {step === 'equipment' &&
-                        t('member.exercise.choose_equipment')}
-                </CardTitle>
-                {step === 'start' && (
-                    <CardDescription>
-                        {t('member.builder.subtitle')}
-                    </CardDescription>
-                )}
-            </CardHeader>
-            <CardContent className="space-y-3">
-                {step === 'start' && (
+        <div className="space-y-5">
+            <p className="text-[11px] font-bold tracking-wider text-[#AFFA01] uppercase">
+                {stepLabel}
+            </p>
+
+            {step === 'start' && (
+                <div className="space-y-4">
+                    <div>
+                        <h2 className="text-lg font-bold text-[#F5F5F5]">
+                            {t('member.builder.title')}
+                        </h2>
+                        <p className="mt-1 text-sm text-[#8E8E93]">
+                            {t('member.builder.subtitle')}
+                        </p>
+                    </div>
                     <Button
                         className="h-12 w-full justify-center rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black hover:brightness-105"
                         onClick={() => setStep('muscle')}
@@ -106,40 +96,46 @@ export function WorkoutBuilder({
                         <Play className="size-4 fill-current" />
                         {t('member.home.start_workout')}
                     </Button>
-                )}
+                </div>
+            )}
 
-                {step === 'muscle' && (
-                    <>
-                        <BodyPartPicker
-                            bodyParts={bodyParts}
-                            value={muscles}
-                            onChange={setMuscles}
-                        />
-                        <StepNav
-                            onBack={() => setStep('start')}
-                            onNext={() => setStep('equipment')}
-                            nextLabel={t('member.builder.continue')}
-                        />
-                    </>
-                )}
+            {step === 'muscle' && (
+                <div className="space-y-4">
+                    <h2 className="text-lg font-bold text-[#F5F5F5]">
+                        {t('member.builder.step_muscle')}
+                    </h2>
+                    <BodyPartPicker
+                        bodyParts={bodyParts}
+                        value={muscles}
+                        onChange={setMuscles}
+                    />
+                    <StepNav
+                        onBack={() => setStep('start')}
+                        onNext={() => setStep('equipment')}
+                        nextLabel={t('member.builder.continue')}
+                    />
+                </div>
+            )}
 
-                {step === 'equipment' && (
-                    <>
-                        <EquipmentPicker
-                            equipment={equipment}
-                            value={equipmentSel}
-                            onChange={setEquipmentSel}
-                        />
-                        <StepNav
-                            onBack={() => setStep('muscle')}
-                            onNext={start}
-                            nextLabel={t('member.home.start_workout')}
-                            busy={busy}
-                        />
-                    </>
-                )}
-            </CardContent>
-        </Card>
+            {step === 'equipment' && (
+                <div className="space-y-4">
+                    <h2 className="text-lg font-bold text-[#F5F5F5]">
+                        {t('member.exercise.choose_equipment')}
+                    </h2>
+                    <EquipmentPicker
+                        equipment={equipment}
+                        value={equipmentSel}
+                        onChange={setEquipmentSel}
+                    />
+                    <StepNav
+                        onBack={() => setStep('muscle')}
+                        onNext={start}
+                        nextLabel={t('member.home.start_workout')}
+                        busy={busy}
+                    />
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -167,7 +163,7 @@ function StepNav({
                 {t('member.builder.back')}
             </button>
             <Button
-                className="ml-auto h-10 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-5 font-bold text-black hover:brightness-105"
+                className="ml-auto h-11 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] px-5 font-bold text-black hover:brightness-105"
                 onClick={onNext}
                 disabled={busy}
             >
