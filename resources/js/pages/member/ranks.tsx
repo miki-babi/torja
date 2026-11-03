@@ -1,6 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    Check,
     Copy,
     Crown,
     Flame,
@@ -9,7 +8,6 @@ import {
     Search,
     Trophy,
     UserPlus,
-    X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -30,8 +28,6 @@ import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import {
-    accept as friendAccept,
-    destroy as friendDestroy,
     search as friendSearch,
     store as friendStore,
 } from '@/routes/member/ranks/friends';
@@ -62,8 +58,6 @@ type MyGroup = {
     is_owner: boolean;
     chat_id: number | null;
 };
-
-type PendingRow = { id: number; name: string; avatar: string | null };
 
 type SuggestedUser = { id: number; name: string; avatar: string | null };
 
@@ -379,8 +373,7 @@ export default function MemberRanks({
     entries: initialEntries,
     groups: initialGroups,
     selectedGroup: initialSelected,
-    pendingIn: initialPendingIn,
-    pendingOut: initialPendingOut,
+
     suggestedUsers: initialSuggested,
     joinableGroups: initialJoinable,
     gym: initialGym,
@@ -396,8 +389,7 @@ export default function MemberRanks({
     entries: Entry[];
     groups: MyGroup[];
     selectedGroup?: number;
-    pendingIn: PendingRow[];
-    pendingOut: PendingRow[];
+
     suggestedUsers: SuggestedUser[];
     joinableGroups: JoinableGroup[];
     gym: GymPick | null;
@@ -414,8 +406,7 @@ export default function MemberRanks({
     const [selectedGroup, setSelectedGroup] = useState<number | undefined>(
         initialSelected,
     );
-    const [pendingIn, setPendingIn] = useState(initialPendingIn);
-    const [pendingOut] = useState(initialPendingOut);
+
     const [suggested, setSuggested] = useState(initialSuggested);
     const [joinable, setJoinable] = useState(initialJoinable);
     const [friendQuery, setFriendQuery] = useState('');
@@ -685,108 +676,6 @@ export default function MemberRanks({
 
                     {scope === 'friends' && (
                         <div className="mt-4 space-y-4">
-                            {(pendingIn.length > 0 ||
-                                pendingOut.length > 0) && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-base">
-                                            {t('member.ranks.requests')}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-2">
-                                        {pendingIn.map((p) => (
-                                            <div
-                                                key={p.id}
-                                                className="flex items-center gap-2"
-                                            >
-                                                <Avatar className="size-8">
-                                                    <AvatarImage
-                                                        src={
-                                                            p.avatar ??
-                                                            undefined
-                                                        }
-                                                        alt={p.name}
-                                                    />
-                                                    <AvatarFallback className="text-[10px]">
-                                                        {initials(p.name)}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <span className="flex-1 truncate text-sm">
-                                                    {p.name}
-                                                </span>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={async () => {
-                                                        await memberApi(
-                                                            friendAccept({
-                                                                friendship:
-                                                                    p.id,
-                                                            }).url,
-                                                            'POST',
-                                                        );
-                                                        setPendingIn((l) =>
-                                                            l.filter(
-                                                                (x) =>
-                                                                    x.id !==
-                                                                    p.id,
-                                                            ),
-                                                        );
-                                                        changeScope('friends');
-                                                    }}
-                                                >
-                                                    <Check className="size-4" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={async () => {
-                                                        await memberApi(
-                                                            friendDestroy({
-                                                                friendship:
-                                                                    p.id,
-                                                            }).url,
-                                                            'DELETE',
-                                                        );
-                                                        setPendingIn((l) =>
-                                                            l.filter(
-                                                                (x) =>
-                                                                    x.id !==
-                                                                    p.id,
-                                                            ),
-                                                        );
-                                                    }}
-                                                >
-                                                    <X className="size-4" />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                        {pendingOut.map((p) => (
-                                            <div
-                                                key={p.id}
-                                                className="flex items-center gap-2 text-sm text-muted-foreground"
-                                            >
-                                                <Avatar className="size-8">
-                                                    <AvatarImage
-                                                        src={
-                                                            p.avatar ??
-                                                            undefined
-                                                        }
-                                                        alt={p.name}
-                                                    />
-                                                    <AvatarFallback className="text-[10px]">
-                                                        {initials(p.name)}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <span className="truncate">
-                                                    {p.name} ·{' '}
-                                                    {t('member.ranks.pending')}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </CardContent>
-                                </Card>
-                            )}
-
                             <Card>
                                 <CardHeader className="flex-row items-center justify-between">
                                     <CardTitle className="text-base">
@@ -1033,8 +922,7 @@ export default function MemberRanks({
                                 </div>
                             </div>
 
-                            {(joinable.length > 0 ||
-                                groupResults !== null) && (
+                            {(joinable.length > 0 || groupResults !== null) && (
                                 <div>
                                     <p className="text-[10px] font-extrabold tracking-widest text-[#8E8E93] uppercase">
                                         {t('member.ranks.discover_groups')}

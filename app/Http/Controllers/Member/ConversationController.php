@@ -78,7 +78,31 @@ class ConversationController extends Controller
             ->selectRaw('conversation_id, COUNT(*) as unread')
             ->pluck('unread', 'conversation_id');
 
+        $pendingIn = Friendship::where('friend_id', $user->id)
+            ->where('status', 'pending')
+            ->with('user:id,name,username,avatar_path')
+            ->get()
+            ->map(fn (Friendship $f): array => [
+                'id' => $f->id,
+                'name' => $f->user->username ?: $f->user->name,
+                'avatar' => $f->user->avatar,
+            ])
+            ->all();
+
+        $pendingOut = Friendship::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->with('friend:id,name,username,avatar_path')
+            ->get()
+            ->map(fn (Friendship $f): array => [
+                'id' => $f->id,
+                'name' => $f->friend->username ?: $f->friend->name,
+                'avatar' => $f->friend->avatar,
+            ])
+            ->all();
+
         return Inertia::render('member/messages', [
+            'pendingIn' => $pendingIn,
+            'pendingOut' => $pendingOut,
             'conversations' => $conversations
                 ->map(function (Conversation $conversation) use ($user, $memberships, $lastMessages, $dmOthers, $unread): array {
                     $membership = $memberships[$conversation->id];

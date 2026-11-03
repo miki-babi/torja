@@ -37,8 +37,6 @@ class RanksController extends Controller
             'gym' => $user->gym?->only(['id', 'name']),
             'entries' => [],
             'groups' => [],
-            'pendingIn' => [],
-            'pendingOut' => [],
             'suggestedUsers' => [],
             'joinableGroups' => [],
             'you' => null,
@@ -54,26 +52,6 @@ class RanksController extends Controller
                 $user->id,
                 $period,
             );
-            $props['pendingIn'] = Friendship::where('friend_id', $user->id)
-                ->where('status', 'pending')
-                ->with('user:id,name,username,avatar_path')
-                ->get()
-                ->map(fn (Friendship $f): array => [
-                    'id' => $f->id,
-                    'name' => $f->user->username ?: $f->user->name,
-                    'avatar' => $f->user->avatar,
-                ])
-                ->all();
-            $props['pendingOut'] = Friendship::where('user_id', $user->id)
-                ->where('status', 'pending')
-                ->with('friend:id,name,username,avatar_path')
-                ->get()
-                ->map(fn (Friendship $f): array => [
-                    'id' => $f->id,
-                    'name' => $f->friend->username ?: $f->friend->name,
-                    'avatar' => $f->friend->avatar,
-                ])
-                ->all();
 
             $connected = Friendship::where('user_id', $user->id)
                 ->orWhere('friend_id', $user->id)
