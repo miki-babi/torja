@@ -1,6 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
 import {
-    ChevronRight,
     Compass,
     Dumbbell,
     Flame,
@@ -13,7 +12,6 @@ import {
 } from '@/components/member/banner-carousel';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { TodaysWorkoutCard } from '@/components/member/todays-workout-card';
-import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n';
 import { exercise, progress, today } from '@/routes/member';
 import { index as exploreIndex } from '@/routes/explore';
@@ -108,31 +106,20 @@ export default function MemberHome({
                 </section>
             )}
 
-            {/* Weekly progress snapshot */}
+            {/* Weekly progress hero */}
             <section className="mt-5">
-                <Link href={progress()} className="block">
-                    <Card className="transition-colors hover:border-[#AFFA01]/40">
-                        <CardContent className="flex items-center gap-3 p-4">
-                            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#AFFA01]/10 text-[#AFFA01]">
-                                <TrendingUp className="size-5" />
-                            </span>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-bold text-[#F5F5F5]">
-                                    {t('member.home.week_title')}
-                                </p>
-                                <p className="text-xs text-[#8E8E93]">
-                                    {t('member.home.week_stats', {
-                                        sessions: weekStats.sessions,
-                                        volume: Math.round(
-                                            weekStats.volume,
-                                        ).toLocaleString(),
-                                    })}
-                                </p>
-                            </div>
-                            <ChevronRight className="size-4 shrink-0 text-[#8E8E93]" />
-                        </CardContent>
-                    </Card>
-                </Link>
+                <TodaysWorkoutCard
+                    todayLabel={t('member.home.chip_progress')}
+                    title={t('member.home.week_title')}
+                    subtitle={t('member.home.week_stats', {
+                        sessions: weekStats.sessions,
+                        volume: Math.round(weekStats.volume).toLocaleString(),
+                    })}
+                    ctaLabel={t('member.home.view_progress')}
+                    href={progress()}
+                    image="/images/track.png"
+                    icon={TrendingUp}
+                />
             </section>
         </MobileShell>
     );

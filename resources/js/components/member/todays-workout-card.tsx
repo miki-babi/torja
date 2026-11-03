@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Play } from 'lucide-react';
+import { Play, type LucideIcon } from 'lucide-react';
 
 export function TodaysWorkoutCard({
     title,
@@ -7,12 +7,16 @@ export function TodaysWorkoutCard({
     href,
     ctaLabel = 'Start Workout',
     todayLabel = 'TODAY',
+    image = '/images/community.png',
+    icon: Icon = Play,
 }: {
     title: string;
     subtitle: string;
     href: string | { url: string };
     ctaLabel?: string;
     todayLabel?: string;
+    image?: string;
+    icon?: LucideIcon;
 }) {
     const targetUrl = typeof href === 'string' ? href : href.url;
     return (
@@ -20,7 +24,7 @@ export function TodaysWorkoutCard({
             <div className="relative h-[280px] w-full">
                 {/* Background Image */}
                 <img
-                    src="/images/community.png"
+                    src={image}
                     alt=""
                     className="absolute inset-0 size-full object-cover object-center"
                 />
@@ -53,7 +57,7 @@ export function TodaysWorkoutCard({
                             href={targetUrl}
                             className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black transition-all hover:brightness-105 active:scale-[0.98]"
                         >
-                            <Play className="size-5 fill-current" />
+                            <Icon className="size-5" />
                             <span className="text-sm font-bold tracking-wide uppercase">
                                 {ctaLabel}
                             </span>
