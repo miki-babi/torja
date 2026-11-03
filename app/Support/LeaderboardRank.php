@@ -17,25 +17,37 @@ use Illuminate\Support\Str;
 class LeaderboardRank
 {
     /**
-     * Ranked entries for the given member ids (opted-in only).
+     * Ranked entries for the given member ids (opted-in only). 'today' and
+     * 'week' rank by session count in the period; 'all' ranks by all-time
+     * lifted volume.
      *
      * @param  array<int>  $userIds
-     * @return array<int, array{rank: int, user_id: int, name: string, volume: int, streak: int, is_you: bool}>
+     * @return array<int, array{rank: int, user_id: int, name: string, avatar: string|null, score: int, streak: int, is_you: bool}>
      */
-    public static function entriesFor(array $userIds, int $viewerId): array
+    public static function entriesFor(array $userIds, int $viewerId, string $period = 'all'): array
     {
-        $volumeSub = WorkoutSet::query()
-            ->join('workout_sessions', 'workout_sessions.id', '=', 'workout_sets.workout_session_id')
-            ->groupBy('workout_sessions.user_id')
-            ->selectRaw('workout_sessions.user_id, SUM(COALESCE(workout_sets.weight_kg, 0) * workout_sets.reps) as total');
+        $scoreSub = match ($period) {
+            'today' => WorkoutSession::query()
+                ->whereDate('date', now()->toDateString())
+                ->groupBy('user_id')
+                ->selectRaw('user_id, COUNT(*) as total'),
+            'week' => WorkoutSession::query()
+                ->where('date', '>=', now()->startOfWeek()->toDateString())
+                ->groupBy('user_id')
+                ->selectRaw('user_id, COUNT(*) as total'),
+            default => WorkoutSet::query()
+                ->join('workout_sessions', 'workout_sessions.id', '=', 'workout_sets.workout_session_id')
+                ->groupBy('workout_sessions.user_id')
+                ->selectRaw('workout_sessions.user_id, SUM(COALESCE(workout_sets.weight_kg, 0) * workout_sets.reps) as total'),
+        };
 
         $users = User::query()
             ->whereIn('id', $userIds)
             ->where('leaderboard_opted_in', true)
-            ->leftJoinSub($volumeSub, 'v', 'v.user_id', '=', 'users.id')
+            ->leftJoinSub($scoreSub, 'v', 'v.user_id', '=', 'users.id')
             ->orderByDesc(DB::raw('COALESCE(v.total, 0)'))
             ->orderBy('name')
-            ->get(['users.id', 'users.name', 'users.username', DB::raw('COALESCE(v.total, 0) as total')]);
+            ->get(['users.id', 'users.name', 'users.username', 'users.avatar_path', DB::raw('COALESCE(v.total, 0) as total')]);
 
         $streaks = WorkoutSession::query()
             ->whereIn('user_id', $userIds)
@@ -52,7 +64,8 @@ class LeaderboardRank
                 'rank' => $rank,
                 'user_id' => $user->id,
                 'name' => $user->username ?: (string) Str::before($user->name, ' '),
-                'volume' => (int) round($user->total),
+                'avatar' => $user->avatar,
+                'score' => (int) round($user->total),
                 'streak' => (int) ($streaks[$user->id] ?? 0),
                 'is_you' => $user->id === $viewerId,
             ];

@@ -31,10 +31,11 @@ class FriendController extends Controller
                     ->where('username', 'like', "%{$q}%")
                     ->orWhere('name', 'like', "%{$q}%"))
                 ->limit(15)
-                ->get(['id', 'name', 'username'])
+                ->get(['id', 'name', 'username', 'avatar_path'])
                 ->map(fn (User $u): array => [
                     'id' => $u->id,
                     'name' => $u->username ?: $u->name,
+                    'avatar' => $u->avatar,
                 ])
                 ->all(),
         ]);

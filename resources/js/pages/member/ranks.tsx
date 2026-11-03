@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -43,7 +43,8 @@ type Entry = {
     rank: number;
     user_id: number;
     name: string;
-    volume: number;
+    avatar: string | null;
+    score: number;
     streak: number;
     is_you: boolean;
 };
@@ -56,9 +57,17 @@ type MyGroup = {
     is_owner: boolean;
 };
 
-type PendingRow = { id: number; name: string };
+type PendingRow = { id: number; name: string; avatar: string | null };
 
-function PodiumMember({ entry, big = false }: { entry: Entry; big?: boolean }) {
+function PodiumMember({
+    entry,
+    unit,
+    big = false,
+}: {
+    entry: Entry;
+    unit: string;
+    big?: boolean;
+}) {
     const initials = useInitials();
     return (
         <div className="flex w-24 flex-col items-center gap-1.5">
@@ -74,6 +83,10 @@ function PodiumMember({ entry, big = false }: { entry: Entry; big?: boolean }) {
                         big ? 'size-20' : 'size-14',
                     )}
                 >
+                    <AvatarImage
+                        src={entry.avatar ?? undefined}
+                        alt={entry.name}
+                    />
                     <AvatarFallback className={big ? 'text-xl' : 'text-sm'}>
                         {initials(entry.name)}
                     </AvatarFallback>
@@ -93,13 +106,13 @@ function PodiumMember({ entry, big = false }: { entry: Entry; big?: boolean }) {
                 {entry.name}
             </p>
             <p className="text-[11px] font-semibold text-[#8E8E93]">
-                {entry.volume.toLocaleString()} kg
+                {entry.score.toLocaleString()} {unit}
             </p>
         </div>
     );
 }
 
-function ListRow({ entry }: { entry: Entry }) {
+function ListRow({ entry, unit }: { entry: Entry; unit: string }) {
     const initials = useInitials();
     return (
         <div
@@ -112,6 +125,7 @@ function ListRow({ entry }: { entry: Entry }) {
                 {entry.rank}
             </span>
             <Avatar className="size-10 border border-[#2E2E2E]">
+                <AvatarImage src={entry.avatar ?? undefined} alt={entry.name} />
                 <AvatarFallback className="text-xs">
                     {initials(entry.name)}
                 </AvatarFallback>
@@ -121,7 +135,7 @@ function ListRow({ entry }: { entry: Entry }) {
                     {entry.name}
                 </p>
                 <p className="text-xs text-[#8E8E93]">
-                    {entry.volume.toLocaleString()} kg total
+                    {entry.score.toLocaleString()} {unit}
                 </p>
             </div>
             {entry.streak > 0 && (
@@ -138,13 +152,16 @@ function RankList({
     entries,
     you,
     scopeLabel,
+    metric,
 }: {
     entries: Entry[];
     you: Entry | null;
     scopeLabel: string;
+    metric: 'sessions' | 'volume';
 }) {
     const { t } = useTranslation();
     const initials = useInitials();
+    const unit = metric === 'sessions' ? t('member.ranks.workouts') : 'kg';
     if (entries.length === 0) {
         return (
             <p className="py-6 text-center text-sm text-muted-foreground">
@@ -162,11 +179,11 @@ function RankList({
                 </p>
                 <div className="mt-4 flex items-end justify-center gap-4">
                     {podium[1] !== undefined && (
-                        <PodiumMember entry={podium[1]} />
+                        <PodiumMember entry={podium[1]} unit={unit} />
                     )}
-                    <PodiumMember entry={podium[0]} big />
+                    <PodiumMember entry={podium[0]} unit={unit} big />
                     {podium[2] !== undefined && (
-                        <PodiumMember entry={podium[2]} />
+                        <PodiumMember entry={podium[2]} unit={unit} />
                     )}
                 </div>
             </div>
@@ -174,7 +191,7 @@ function RankList({
             {rest.length > 0 && (
                 <div className="mt-2 divide-y divide-[#2E2E2E] rounded-2xl bg-[#1A1A1A] px-4">
                     {rest.map((e) => (
-                        <ListRow key={e.user_id} entry={e} />
+                        <ListRow key={e.user_id} entry={e} unit={unit} />
                     ))}
                 </div>
             )}
@@ -185,6 +202,10 @@ function RankList({
                         #{you.rank}
                     </span>
                     <Avatar className="size-7">
+                        <AvatarImage
+                            src={you.avatar ?? undefined}
+                            alt={you.name}
+                        />
                         <AvatarFallback className="text-[10px]">
                             {initials(you.name)}
                         </AvatarFallback>
@@ -193,9 +214,9 @@ function RankList({
                         You
                     </span>
                     <span className="ml-auto text-sm font-bold text-[#F5F5F5]">
-                        {you.volume.toLocaleString()}
+                        {you.score.toLocaleString()}
                         <span className="ml-1 text-[10px] font-medium text-[#8E8E93]">
-                            kg
+                            {unit}
                         </span>
                     </span>
                 </div>
@@ -214,8 +235,11 @@ function AddFriendDialog({
     onSent: () => void;
 }) {
     const { t } = useTranslation();
+    const initials = useInitials();
     const [q, setQ] = useState('');
-    const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
+    const [users, setUsers] = useState<
+        { id: number; name: string; avatar: string | null }[]
+    >([]);
 
     async function search(value: string) {
         setQ(value);
@@ -231,7 +255,7 @@ function AddFriendDialog({
             },
         );
         const data = (await response.json()) as {
-            users: { id: number; name: string }[];
+            users: { id: number; name: string; avatar: string | null }[];
         };
         setUsers(data.users);
     }
@@ -252,11 +276,22 @@ function AddFriendDialog({
                     {users.map((u) => (
                         <div
                             key={u.id}
-                            className="flex items-center justify-between px-3.5 py-2.5"
+                            className="flex items-center justify-between gap-2 px-3.5 py-2.5"
                         >
-                            <span className="truncate text-sm font-medium text-[#F5F5F5]">
-                                {u.name}
-                            </span>
+                            <div className="flex min-w-0 items-center gap-2">
+                                <Avatar className="size-8">
+                                    <AvatarImage
+                                        src={u.avatar ?? undefined}
+                                        alt={u.name}
+                                    />
+                                    <AvatarFallback className="text-[10px]">
+                                        {initials(u.name)}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <span className="truncate text-sm font-medium text-[#F5F5F5]">
+                                    {u.name}
+                                </span>
+                            </div>
                             <Button
                                 size="sm"
                                 variant="outline"
@@ -289,10 +324,14 @@ export default function MemberRanks({
     pendingIn: initialPendingIn,
     pendingOut: initialPendingOut,
     gymName: initialGym,
+    period: initialPeriod,
+    metric,
     you,
 }: {
     optedIn: boolean;
     scope: 'friends' | 'groups' | 'gym';
+    period: 'today' | 'week' | 'all';
+    metric: 'sessions' | 'volume';
     entries: Entry[];
     groups: MyGroup[];
     selectedGroup?: number;
@@ -302,6 +341,7 @@ export default function MemberRanks({
     you: Entry | null;
 }) {
     const { t } = useTranslation();
+    const initials = useInitials();
     const [optedIn, setOptedIn] = useState(initialOptedIn);
     const [scope, setScope] = useState(initialScope);
     const [entries] = useState(initialEntries);
@@ -318,14 +358,26 @@ export default function MemberRanks({
     const [groupName, setGroupName] = useState('');
     const [joinCode, setJoinCode] = useState('');
 
+    const [period, setPeriod] = useState(initialPeriod);
     const SCOPES = ['friends', 'groups', 'gym'] as const;
+    const PERIODS = ['today', 'week', 'all'] as const;
+
+    function visit(nextScope: string, nextPeriod: string, group?: number) {
+        let url = `/member/ranks?scope=${nextScope}&period=${nextPeriod}`;
+        if (group !== undefined) {
+            url += `&group=${group}`;
+        }
+        router.visit(url, { preserveState: false, preserveScroll: true });
+    }
 
     function changeScope(next: string) {
         setScope(next as typeof scope);
-        router.visit(`/member/ranks?scope=${next}`, {
-            preserveState: false,
-            preserveScroll: true,
-        });
+        visit(next, period);
+    }
+
+    function changePeriod(next: string) {
+        setPeriod(next as typeof period);
+        visit(scope, next, selectedGroup);
     }
 
     async function toggleOpt() {
@@ -435,6 +487,25 @@ export default function MemberRanks({
                         ))}
                     </div>
 
+                    {/* Period pills */}
+                    <div className="mt-2 flex gap-1.5 rounded-xl border border-[#2E2E2E] bg-[#101010] p-1">
+                        {PERIODS.map((p) => (
+                            <button
+                                key={p}
+                                type="button"
+                                onClick={() => changePeriod(p)}
+                                className={cn(
+                                    'flex-1 rounded-lg px-2 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-colors',
+                                    period === p
+                                        ? 'bg-[#AFFA01] text-black'
+                                        : 'text-[#8E8E93] hover:text-[#F5F5F5]',
+                                )}
+                            >
+                                {t(`member.ranks.period.${p}`)}
+                            </button>
+                        ))}
+                    </div>
+
                     {scope === 'friends' && (
                         <div className="mt-4 space-y-4">
                             {(pendingIn.length > 0 ||
@@ -451,6 +522,18 @@ export default function MemberRanks({
                                                 key={p.id}
                                                 className="flex items-center gap-2"
                                             >
+                                                <Avatar className="size-8">
+                                                    <AvatarImage
+                                                        src={
+                                                            p.avatar ??
+                                                            undefined
+                                                        }
+                                                        alt={p.name}
+                                                    />
+                                                    <AvatarFallback className="text-[10px]">
+                                                        {initials(p.name)}
+                                                    </AvatarFallback>
+                                                </Avatar>
                                                 <span className="flex-1 truncate text-sm">
                                                     {p.name}
                                                 </span>
@@ -501,13 +584,27 @@ export default function MemberRanks({
                                             </div>
                                         ))}
                                         {pendingOut.map((p) => (
-                                            <p
+                                            <div
                                                 key={p.id}
-                                                className="text-sm text-muted-foreground"
+                                                className="flex items-center gap-2 text-sm text-muted-foreground"
                                             >
-                                                {p.name} ·{' '}
-                                                {t('member.ranks.pending')}
-                                            </p>
+                                                <Avatar className="size-8">
+                                                    <AvatarImage
+                                                        src={
+                                                            p.avatar ??
+                                                            undefined
+                                                        }
+                                                        alt={p.name}
+                                                    />
+                                                    <AvatarFallback className="text-[10px]">
+                                                        {initials(p.name)}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <span className="truncate">
+                                                    {p.name} ·{' '}
+                                                    {t('member.ranks.pending')}
+                                                </span>
+                                            </div>
                                         ))}
                                     </CardContent>
                                 </Card>
@@ -531,6 +628,7 @@ export default function MemberRanks({
                                     <RankList
                                         entries={entries}
                                         you={you}
+                                        metric={metric}
                                         scopeLabel={t(
                                             'member.ranks.scope.friends',
                                         )}
@@ -549,10 +647,7 @@ export default function MemberRanks({
                                         type="button"
                                         onClick={() => {
                                             setSelectedGroup(g.id);
-                                            router.visit(
-                                                `/member/ranks?scope=groups&group=${g.id}`,
-                                                { preserveScroll: true },
-                                            );
+                                            visit('groups', period, g.id);
                                         }}
                                         className={cn(
                                             'shrink-0 rounded-xl border px-3 py-1.5 text-xs font-semibold',
@@ -604,6 +699,7 @@ export default function MemberRanks({
                                     <RankList
                                         entries={entries}
                                         you={you}
+                                        metric={metric}
                                         scopeLabel={
                                             groups.find(
                                                 (g) => g.id === selectedGroup,
@@ -687,6 +783,7 @@ export default function MemberRanks({
                                         <RankList
                                             entries={entries}
                                             you={you}
+                                            metric={metric}
                                             scopeLabel={gymSaved}
                                         />
                                     </CardContent>

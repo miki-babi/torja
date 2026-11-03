@@ -5,7 +5,7 @@ export type User = {
     phone: string | null;
     email: string | null;
     role?: string;
-    avatar?: string;
+    avatar?: string | null;
     email_verified_at: string | null;
     telegram_username?: string | null;
     two_factor_enabled?: boolean;

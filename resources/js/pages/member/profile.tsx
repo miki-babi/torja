@@ -9,10 +9,11 @@ import {
     Settings,
     Shield,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Select,
@@ -22,6 +23,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useInitials } from '@/hooks/use-initials';
+import { uploadAvatar } from '@/lib/avatar-upload';
 import { bmiCategory, calculateBmi } from '@/lib/body-metrics';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -86,6 +88,7 @@ export default function MemberProfile({
     };
     account: {
         name: string | null;
+        avatar: string | null;
         username: string | null;
         phone: string | null;
         email: string | null;
@@ -110,6 +113,9 @@ export default function MemberProfile({
         telegram.connected,
     );
     const [telegramBusy, setTelegramBusy] = useState(false);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(account.avatar);
+    const [avatarBusy, setAvatarBusy] = useState(false);
 
     async function connectTelegram() {
         setTelegramBusy(true);
@@ -195,11 +201,45 @@ export default function MemberProfile({
             <Head title="Profile" />
 
             <div className="flex items-center gap-4 pt-2">
-                <Avatar className="size-16 border-2 border-[#2E2E2E] shadow-md">
-                    <AvatarFallback className="bg-[#1F1F1F] text-xl font-bold text-[#AFFA01]">
-                        {getInitials(account.name ?? '?')}
-                    </AvatarFallback>
-                </Avatar>
+                <button
+                    type="button"
+                    disabled={avatarBusy}
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="shrink-0 rounded-full"
+                    aria-label="Change profile photo"
+                >
+                    <Avatar className="size-16 border-2 border-[#2E2E2E] shadow-md">
+                        <AvatarImage
+                            src={avatarUrl ?? undefined}
+                            alt={account.name ?? 'Profile photo'}
+                        />
+                        <AvatarFallback className="bg-[#1F1F1F] text-xl font-bold text-[#AFFA01]">
+                            {getInitials(account.name ?? '?')}
+                        </AvatarFallback>
+                    </Avatar>
+                </button>
+                <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = '';
+                        if (!file || avatarBusy) {
+                            return;
+                        }
+                        setAvatarBusy(true);
+                        try {
+                            setAvatarUrl(await uploadAvatar(file));
+                            router.reload({ only: ['auth'] });
+                        } catch {
+                            toast.error('Could not upload the photo.');
+                        } finally {
+                            setAvatarBusy(false);
+                        }
+                    }}
+                />
                 <div className="min-w-0 flex-1">
                     <h1 className="truncate text-xl font-bold tracking-tight text-[#F5F5F5]">
                         {account.name ?? 'Member'}

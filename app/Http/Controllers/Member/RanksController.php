@@ -24,9 +24,15 @@ class RanksController extends Controller
             ? $request->query('scope')
             : 'friends';
 
+        $period = in_array($request->query('period'), ['today', 'week', 'all'], true)
+            ? $request->query('period')
+            : 'today';
+
         $props = [
             'optedIn' => (bool) $user->leaderboard_opted_in,
             'scope' => $scope,
+            'period' => $period,
+            'metric' => $period === 'all' ? 'volume' : 'sessions',
             'gymName' => $user->gym_name,
             'entries' => [],
             'groups' => [],
@@ -43,23 +49,26 @@ class RanksController extends Controller
             $props['entries'] = LeaderboardRank::entriesFor(
                 [...$user->friendIds(), $user->id],
                 $user->id,
+                $period,
             );
             $props['pendingIn'] = Friendship::where('friend_id', $user->id)
                 ->where('status', 'pending')
-                ->with('user:id,name,username')
+                ->with('user:id,name,username,avatar_path')
                 ->get()
                 ->map(fn (Friendship $f): array => [
                     'id' => $f->id,
                     'name' => $f->user->username ?: $f->user->name,
+                    'avatar' => $f->user->avatar,
                 ])
                 ->all();
             $props['pendingOut'] = Friendship::where('user_id', $user->id)
                 ->where('status', 'pending')
-                ->with('friend:id,name,username')
+                ->with('friend:id,name,username,avatar_path')
                 ->get()
                 ->map(fn (Friendship $f): array => [
                     'id' => $f->id,
                     'name' => $f->friend->username ?: $f->friend->name,
+                    'avatar' => $f->friend->avatar,
                 ])
                 ->all();
         } elseif ($scope === 'groups') {
@@ -79,6 +88,7 @@ class RanksController extends Controller
                 $props['entries'] = LeaderboardRank::entriesFor(
                     $group->members()->pluck('users.id')->all(),
                     $user->id,
+                    $period,
                 );
             }
         } else {
@@ -87,7 +97,7 @@ class RanksController extends Controller
                     ->whereRaw('LOWER(gym_name) = ?', [mb_strtolower($user->gym_name)])
                     ->pluck('id')
                     ->all();
-                $props['entries'] = LeaderboardRank::entriesFor($mates, $user->id);
+                $props['entries'] = LeaderboardRank::entriesFor($mates, $user->id, $period);
             }
         }
 

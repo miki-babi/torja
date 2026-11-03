@@ -23,6 +23,7 @@ export type AdminDashboardAttention = {
 export type AdminUser = {
     id: number;
     name: string;
+    avatar: string | null;
     username: string | null;
     phone: string | null;
     email: string | null;
@@ -286,7 +287,10 @@ export type AdminBroadcast = {
     media?: BroadcastMediaItem[] | null;
     buttons?: BroadcastButton[][] | null;
     poll?: BroadcastPoll | null;
-    options?: { disable_notification: boolean; protect_content: boolean } | null;
+    options?: {
+        disable_notification: boolean;
+        protect_content: boolean;
+    } | null;
     audience_config?: BroadcastAudienceConfig;
     scheduled_at?: string | null;
     editable?: boolean;

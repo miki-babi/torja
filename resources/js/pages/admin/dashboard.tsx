@@ -18,7 +18,7 @@ import {
 import { AdminPageHeader } from '@/components/admin/page-header';
 import { PaymentStatusBadge } from '@/components/admin/payment-status-badge';
 import { StatCard } from '@/components/admin/stat-card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -53,7 +53,10 @@ type Props = {
     series: AdminDashboardSeries[];
     attention: AdminDashboardAttention;
     recentPayments: AdminPayment[];
-    recentUsers: Pick<AdminUser, 'id' | 'name' | 'email' | 'created_at'>[];
+    recentUsers: Pick<
+        AdminUser,
+        'id' | 'name' | 'email' | 'created_at' | 'avatar'
+    >[];
 };
 
 function pctDelta(current: number, previous: number): string | undefined {
@@ -449,6 +452,10 @@ export default function AdminDashboard({
                                     className="flex items-center gap-3"
                                 >
                                     <Avatar className="size-8">
+                                        <AvatarImage
+                                            src={user.avatar ?? undefined}
+                                            alt={user.name}
+                                        />
                                         <AvatarFallback className="text-xs">
                                             {(user.name ?? '?')
                                                 .slice(0, 2)

@@ -15,8 +15,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
@@ -25,6 +27,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 /**
  * @property int $id
  * @property string $name
+ * @property string|null $avatar_path
+ * @property-read string|null $avatar
  * @property string|null $username
  * @property string|null $phone
  * @property Carbon|null $phone_verified_at
@@ -54,6 +58,13 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var list<string>
+     */
+    protected $appends = ['avatar'];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -81,6 +92,57 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return Attribute::make(
             set: fn (?string $value) => filled($value) ? Str::lower($value) : null,
         );
+    }
+
+    /**
+     * Public URL of the user's profile photo, stored on the public disk.
+     *
+     * @return Attribute<string|null, never>
+     */
+    protected function avatar(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): ?string => $this->avatar_path === null
+                ? null
+                : Storage::disk('public')->url($this->avatar_path),
+        );
+    }
+
+    /**
+     * Store a new profile photo on the public disk, replacing the old
+     * file if one exists.
+     */
+    public function updateAvatar(UploadedFile $file): void
+    {
+        $this->deleteAvatarFile();
+
+        $this->avatar_path = $file->store("avatars/{$this->id}", 'public');
+        $this->save();
+    }
+
+    /**
+     * Remove the user's profile photo and its stored file.
+     */
+    public function deleteAvatar(): void
+    {
+        if ($this->avatar_path === null) {
+            return;
+        }
+
+        $this->deleteAvatarFile();
+
+        $this->avatar_path = null;
+        $this->save();
+    }
+
+    /**
+     * Delete the stored avatar file if the column points at one.
+     */
+    private function deleteAvatarFile(): void
+    {
+        if ($this->avatar_path !== null) {
+            Storage::disk('public')->delete($this->avatar_path);
+        }
     }
 
     /**

@@ -61,7 +61,7 @@ class AdminDashboardController extends Controller
                 ->limit(5)
                 ->get(),
             'recentUsers' => User::query()
-                ->select('id', 'name', 'email', 'created_at')
+                ->select('id', 'name', 'email', 'created_at', 'avatar_path')
                 ->latest()
                 ->limit(5)
                 ->get(),

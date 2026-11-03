@@ -3,7 +3,7 @@ import { useConfirm } from '@/components/admin/confirm-dialog';
 import { AdminPageHeader } from '@/components/admin/page-header';
 import { PaymentStatusBadge } from '@/components/admin/payment-status-badge';
 import AlertError from '@/components/alert-error';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -104,7 +104,11 @@ export default function AdminUserShow({
                 'They get full Pro access without paying. No commission is created.',
             confirmLabel: 'Grant Pro',
             onConfirm: () =>
-                router.post(grantPro.url(user.id), {}, { preserveScroll: true }),
+                router.post(
+                    grantPro.url(user.id),
+                    {},
+                    { preserveScroll: true },
+                ),
         });
     }
 
@@ -150,6 +154,10 @@ export default function AdminUserShow({
                         <Card>
                             <CardHeader className="flex-row items-center gap-3">
                                 <Avatar className="size-11">
+                                    <AvatarImage
+                                        src={user.avatar ?? undefined}
+                                        alt={user.name}
+                                    />
                                     <AvatarFallback>
                                         {(user.name ?? '?')
                                             .slice(0, 2)

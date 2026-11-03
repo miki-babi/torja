@@ -64,13 +64,46 @@ test('friends board ranks accepted friends by volume', function () {
     lift($stranger, 900);
 
     $this->actingAs($me)
-        ->get(route('member.ranks', ['scope' => 'friends']))
+        ->get(route('member.ranks', ['scope' => 'friends', 'period' => 'all']))
         ->assertInertia(fn (Assert $page) => $page
             ->has('entries', 2)
             ->where('entries.0.user_id', $friend->id)
             ->where('entries.0.rank', 1)
             ->where('entries.1.user_id', $me->id)
             ->where('entries.1.is_you', true));
+});
+
+test('today board ranks by workouts logged today', function () {
+    $me = User::factory()->create(['leaderboard_opted_in' => true]);
+    $friend = User::factory()->create(['leaderboard_opted_in' => true]);
+    Friendship::create([
+        'user_id' => $me->id,
+        'friend_id' => $friend->id,
+        'status' => 'accepted',
+    ]);
+
+    Exercise::where('slug', 'squat')->exists()
+        || Exercise::factory()->create(['slug' => 'squat']);
+    lift($friend, 100);
+    WorkoutSession::factory()->create([
+        'user_id' => $friend->id,
+        'date' => now()->toDateString(),
+    ]);
+    WorkoutSession::factory()->create([
+        'user_id' => $me->id,
+        'date' => now()->subDays(10)->toDateString(),
+    ]);
+
+    $this->actingAs($me)
+        ->get(route('member.ranks'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('period', 'today')
+            ->where('metric', 'sessions')
+            ->has('entries', 2)
+            ->where('entries.0.user_id', $friend->id)
+            ->where('entries.0.score', 2)
+            ->where('entries.1.user_id', $me->id)
+            ->where('entries.1.score', 0));
 });
 
 test('friend requests flow through search, store and accept', function () {
@@ -116,7 +149,7 @@ test('groups rank only their members and join by code', function () {
     lift($mate, 300);
 
     $this->actingAs($me)
-        ->get(route('member.ranks', ['scope' => 'groups']))
+        ->get(route('member.ranks', ['scope' => 'groups', 'period' => 'all']))
         ->assertInertia(fn (Assert $page) => $page
             ->has('groups', 1)
             ->has('entries', 2)
@@ -147,7 +180,7 @@ test('gym board scopes to the same gym name', function () {
         ->assertOk();
 
     $this->actingAs($me)
-        ->get(route('member.ranks', ['scope' => 'gym']))
+        ->get(route('member.ranks', ['scope' => 'gym', 'period' => 'all']))
         ->assertInertia(fn (Assert $page) => $page
             ->has('entries', 2)
             ->where('entries.0.user_id', $mate->id)

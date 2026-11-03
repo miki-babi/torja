@@ -34,6 +34,7 @@ class ProfileController extends Controller
             ],
             'account' => [
                 'name' => $user?->name,
+                'avatar' => $user?->avatar,
                 'username' => $user?->username,
                 'phone' => $user?->phone,
                 'email' => $user?->email,

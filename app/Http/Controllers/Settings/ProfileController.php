@@ -55,6 +55,7 @@ class ProfileController extends Controller
 
         Auth::logout();
 
+        $user->deleteAvatar();
         $user->delete();
 
         $request->session()->invalidate();

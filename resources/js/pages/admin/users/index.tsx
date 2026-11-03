@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/admin/empty-state';
 import { AdminPageHeader } from '@/components/admin/page-header';
 import { AdminPagination } from '@/components/admin/pagination';
 import AlertError from '@/components/alert-error';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -143,6 +143,13 @@ export default function AdminUsersIndex({ users, filters }: Props) {
                                             <TableCell>
                                                 <div className="flex items-center gap-3">
                                                     <Avatar className="size-8">
+                                                        <AvatarImage
+                                                            src={
+                                                                user.avatar ??
+                                                                undefined
+                                                            }
+                                                            alt={user.name}
+                                                        />
                                                         <AvatarFallback className="text-xs">
                                                             {(user.name ?? '?')
                                                                 .slice(0, 2)
