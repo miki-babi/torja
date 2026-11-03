@@ -49,7 +49,7 @@ export function BottomNav() {
                             key={label}
                             href={href()}
                             className={cn(
-                                'flex flex-1 flex-col items-center justify-center gap-1 py-1 transition-colors',
+                                'flex flex-1 items-center justify-center transition-colors',
                                 active
                                     ? 'text-[#AFFA01]'
                                     : 'text-[#666666] hover:text-[#999999]',
@@ -57,20 +57,21 @@ export function BottomNav() {
                         >
                             <span
                                 className={cn(
-                                    'flex size-9 items-center justify-center rounded-full transition-colors',
-                                    active &&
-                                        'border border-[#3a3a3a] bg-black',
+                                    'flex flex-col items-center justify-center gap-1 rounded-full border px-2.5 py-1.5 transition-colors',
+                                    active
+                                        ? 'border-[#3a3a3a] bg-black'
+                                        : 'border-transparent',
                                 )}
                             >
                                 <Icon className="size-5" />
-                            </span>
-                            <span
-                                className={cn(
-                                    'text-[10px] tracking-wide uppercase',
-                                    active ? 'font-bold' : 'font-medium',
-                                )}
-                            >
-                                {t(`nav.${label}`)}
+                                <span
+                                    className={cn(
+                                        'text-[10px] tracking-wide uppercase',
+                                        active ? 'font-bold' : 'font-medium',
+                                    )}
+                                >
+                                    {t(`nav.${label}`)}
+                                </span>
                             </span>
                         </Link>
                     );
