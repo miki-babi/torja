@@ -67,7 +67,7 @@ export function BottomNav() {
                             href={href()}
                             aria-label={label}
                             className={cn(
-                                'flex flex-1 items-center justify-center transition-colors duration-300',
+                                'relative flex flex-1 items-center justify-center transition-colors duration-300',
                                 active
                                     ? 'text-[#AFFA01]'
                                     : 'text-[#666666] hover:text-[#999999]',

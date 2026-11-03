@@ -55,7 +55,6 @@ import {
     type WeightLogEntry,
 } from '@/components/member/weight-card';
 import {
-    consistencyMap,
     exerciseHistory,
     exerciseSeries,
     prByExercise,
@@ -168,7 +167,9 @@ export default function MemberProgress({
         equipment: string;
         image_url?: string | null;
     } | null>(null);
-    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(
+        () => new URLSearchParams(url.split('?')[1] ?? '').get('log') === '1',
+    );
     const [backfillOpen, setBackfillOpen] = useState(false);
     const [metric, setMetric] = useState<'weight' | 'e1rm'>('weight');
     const photoInputRef = useRef<HTMLInputElement>(null);
@@ -236,8 +237,6 @@ export default function MemberProgress({
         6,
     );
     const muscleMax = muscleSplit[0]?.volume ?? 0;
-    const heatmap = consistencyMap(sessions, 84);
-    const heatmapMax = Math.max(...heatmap.map((d) => d.volume), 1);
 
     /**
      * Translated body-part name, falling back to the raw catalog value
@@ -430,38 +429,8 @@ export default function MemberProgress({
                         </CardContent>
                     </Card>
 
-                    {/* Consistency heatmap — 12 weeks of training days */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base">
-                                {t('member.progress.consistency')}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-flow-col grid-rows-7 gap-[3px]">
-                                {heatmap.map((day) => {
-                                    const ratio =
-                                        day.volume === 0
-                                            ? 0
-                                            : 0.35 +
-                                              0.65 * (day.volume / heatmapMax);
-                                    return (
-                                        <div
-                                            key={day.date}
-                                            title={`${day.date} — ${Math.round(day.volume).toLocaleString()} kg`}
-                                            className="aspect-square rounded-[3px]"
-                                            style={{
-                                                backgroundColor:
-                                                    day.volume === 0
-                                                        ? '#2E2E2E'
-                                                        : `rgba(175, 250, 1, ${ratio})`,
-                                            }}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Progress photos */}
+                    <PhotosCard photos={photos} onChange={setPhotos} />
 
                     {/* Volume trend */}
                     <Card>
@@ -906,7 +875,6 @@ export default function MemberProgress({
                         ])
                     }
                 />
-                <PhotosCard photos={photos} onChange={setPhotos} />
                 <BmiCard />
                 <BodyFatCard />
             </div>
