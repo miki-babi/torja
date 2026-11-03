@@ -1,6 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Compass, Dumbbell, House, TrendingUp, User } from 'lucide-react';
-import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { exercise, home, profile, progress } from '@/routes/member';
 import { index as exploreIndex } from '@/routes/explore';
@@ -31,7 +30,6 @@ const TABS = [
 export function BottomNav() {
     const { url } = usePage();
     const { auth } = usePage().props;
-    const { t } = useTranslation();
 
     if (!auth.user) {
         return null;
@@ -48,6 +46,7 @@ export function BottomNav() {
                         <Link
                             key={label}
                             href={href()}
+                            aria-label={label}
                             className={cn(
                                 'flex flex-1 items-center justify-center transition-colors',
                                 active
@@ -57,21 +56,13 @@ export function BottomNav() {
                         >
                             <span
                                 className={cn(
-                                    'flex flex-col items-center justify-center gap-0.5 rounded-full border px-2.5 py-1.5 transition-colors',
+                                    'flex size-10 items-center justify-center rounded-full border transition-colors',
                                     active
                                         ? 'border-[#3a3a3a] bg-black'
                                         : 'border-transparent',
                                 )}
                             >
                                 <Icon className="size-6" />
-                                <span
-                                    className={cn(
-                                        'text-[8px] tracking-wide uppercase',
-                                        active ? 'font-bold' : 'font-medium',
-                                    )}
-                                >
-                                    {t(`nav.${label}`)}
-                                </span>
                             </span>
                         </Link>
                     );
