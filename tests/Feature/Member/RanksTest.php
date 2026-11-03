@@ -247,3 +247,35 @@ test('gym board scopes to the same gym', function () {
             ->where('entries.0.streak', 1)
             ->where('you.user_id', $me->id));
 });
+
+test('group search matches unjoined groups by name', function () {
+    $me = User::factory()->create(['leaderboard_opted_in' => true]);
+    $match = Group::create(['name' => 'Morning Warriors', 'owner_id' => User::factory()->create()->id]);
+    $match->members()->attach(User::factory()->create()->id);
+    Group::create(['name' => 'Evening Runners', 'owner_id' => User::factory()->create()->id]);
+
+    $this->actingAs($me)
+        ->getJson(route('member.ranks.groups.search', ['q' => 'warrior']))
+        ->assertOk()
+        ->assertJsonCount(1, 'groups')
+        ->assertJsonPath('groups.0.id', $match->id)
+        ->assertJsonPath('groups.0.members', 1);
+});
+
+test('group search excludes groups the member already belongs to', function () {
+    $me = User::factory()->create(['leaderboard_opted_in' => true]);
+    $mine = Group::create(['name' => 'My Squad', 'owner_id' => $me->id]);
+    $mine->members()->attach($me->id);
+    Group::create(['name' => 'My Other Squad', 'owner_id' => User::factory()->create()->id]);
+
+    $this->actingAs($me)
+        ->getJson(route('member.ranks.groups.search', ['q' => 'squad']))
+        ->assertOk()
+        ->assertJsonCount(1, 'groups');
+});
+
+test('group search requires a query', function () {
+    $this->actingAs(User::factory()->create(['leaderboard_opted_in' => true]))
+        ->getJson(route('member.ranks.groups.search'))
+        ->assertUnprocessable();
+});

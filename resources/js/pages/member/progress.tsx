@@ -1,6 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
-    CalendarClock,
     Camera,
     ChevronRight,
     Flame,
@@ -29,7 +28,7 @@ import {
     type ExerciseSummaries,
 } from '@/components/member/exercise-data';
 import { ExerciseSearchDialog } from '@/components/member/exercise-search-dialog';
-import { LogPastWorkoutDialog } from '@/components/member/log-past-workout-dialog';
+
 import {
     MeasurementsCard,
     type MeasurementEntry,
@@ -73,7 +72,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { exercise, records, today } from '@/routes/member';
+import { exercise, history, records, today } from '@/routes/member';
 
 type ActivityDay = { date: string; label: string; active: boolean };
 
@@ -170,7 +169,6 @@ export default function MemberProgress({
     const [searchOpen, setSearchOpen] = useState(
         () => new URLSearchParams(url.split('?')[1] ?? '').get('log') === '1',
     );
-    const [backfillOpen, setBackfillOpen] = useState(false);
     const [metric, setMetric] = useState<'weight' | 'e1rm'>('weight');
     const photoInputRef = useRef<HTMLInputElement>(null);
     const [photoBusy, setPhotoBusy] = useState(false);
@@ -778,24 +776,27 @@ export default function MemberProgress({
                         </CardContent>
                     </Card>
 
-                    {/* Workout history */}
+                    {/* Workout history — recent sessions, full list on /progress/history */}
                     <Card>
                         <CardHeader className="flex-row items-center justify-between">
                             <CardTitle className="text-base">
                                 {t('member.progress.history')}
                             </CardTitle>
-                            <button
-                                type="button"
-                                onClick={() => setBackfillOpen(true)}
-                                className="flex items-center gap-1.5 text-xs font-semibold text-[#AFFA01] transition-colors hover:brightness-110"
-                            >
-                                <CalendarClock className="size-3.5" />
-                                {t('member.progress.log_past')}
-                            </button>
+                            {loggedSessions.length > 0 && (
+                                <Link
+                                    href={history().url}
+                                    className="flex items-center gap-1 text-xs font-semibold text-[#AFFA01] transition-colors hover:brightness-110"
+                                >
+                                    {t('member.records.view_all', {
+                                        count: loggedSessions.length,
+                                    })}
+                                    <ChevronRight className="size-3.5" />
+                                </Link>
+                            )}
                         </CardHeader>
                         <CardContent>
                             <div className="divide-y divide-[#2E2E2E]">
-                                {loggedSessions.map((session) => {
+                                {loggedSessions.slice(0, 3).map((session) => {
                                     const playlist = playlists.find(
                                         (p) =>
                                             p.id ===
@@ -923,37 +924,6 @@ export default function MemberProgress({
                         name: picked.name,
                         equipment: picked.equipment,
                         image_url: picked.image_url,
-                    });
-                }}
-            />
-
-            <LogPastWorkoutDialog
-                open={backfillOpen}
-                onOpenChange={setBackfillOpen}
-                exerciseSummaries={exerciseSummaries}
-                sessions={sessions}
-                bodyParts={bodyParts}
-                equipment={equipment}
-                onLogged={(session, added) => {
-                    setSessions((list) =>
-                        list.some((s) => s.id === session.id)
-                            ? list.map((s) =>
-                                  s.id === session.id ? session : s,
-                              )
-                            : [session, ...list],
-                    );
-                    setExerciseSummaries((map) => {
-                        const next = { ...map };
-                        for (const ex of added) {
-                            next[ex.slug] ??= {
-                                name: ex.name,
-                                detail: ex.detail,
-                                equipment: ex.equipment,
-                                body_part: ex.body_part,
-                                image_url: ex.image_url,
-                            };
-                        }
-                        return next;
                     });
                 }}
             />

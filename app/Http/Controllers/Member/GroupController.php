@@ -11,6 +11,30 @@ use Illuminate\Http\Request;
 class GroupController extends Controller
 {
     /**
+     * Search joinable squads by name for the discovery section — excludes
+     * groups the member already belongs to.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+        abort_if($q === '', 422);
+
+        return response()->json([
+            'groups' => Group::where('name', 'like', "%{$q}%")
+                ->whereNotIn('id', $request->user()->groups()->select('groups.id'))
+                ->withCount('members')
+                ->limit(15)
+                ->get()
+                ->map(fn (Group $g): array => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'members' => $g->members_count,
+                ])
+                ->all(),
+        ]);
+    }
+
+    /**
      * Create a named squad; the creator becomes its first member and the
      * squad's chat room is provisioned alongside.
      */

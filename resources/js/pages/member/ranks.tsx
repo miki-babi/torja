@@ -6,11 +6,12 @@ import {
     Flame,
     MessageCircle,
     Plus,
+    Search,
     Trophy,
     UserPlus,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { GymPicker, type GymPick } from '@/components/member/gym-picker';
 import { memberApi } from '@/components/member/member-api';
@@ -37,6 +38,7 @@ import {
 import { optIn } from '@/routes/member/ranks';
 import {
     join as groupJoin,
+    search as groupSearch,
     store as groupStore,
 } from '@/routes/member/ranks/groups';
 import { messages as chatsIndex } from '@/routes/member';
@@ -416,6 +418,14 @@ export default function MemberRanks({
     const [pendingOut] = useState(initialPendingOut);
     const [suggested, setSuggested] = useState(initialSuggested);
     const [joinable, setJoinable] = useState(initialJoinable);
+    const [friendQuery, setFriendQuery] = useState('');
+    const [friendResults, setFriendResults] = useState<SuggestedUser[] | null>(
+        null,
+    );
+    const [groupQuery, setGroupQuery] = useState('');
+    const [groupResults, setGroupResults] = useState<JoinableGroup[] | null>(
+        null,
+    );
     const [gym, setGym] = useState<GymPick | null>(initialGym);
     const [gymChatId, setGymChatId] = useState<number | undefined>(
         initialGymChatId,
@@ -458,9 +468,56 @@ export default function MemberRanks({
         }
     }
 
+    // Debounced live search: results replace the suggestion lists while a
+    // query is typed; empty query restores the server-provided defaults.
+    useEffect(() => {
+        if (friendQuery.trim() === '') {
+            setFriendResults(null);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            const response = await fetch(
+                friendSearch({ query: { q: friendQuery } }).url,
+                {
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json' },
+                },
+            );
+            const data = (await response.json()) as {
+                users: SuggestedUser[];
+            };
+            setFriendResults(data.users);
+        }, 250);
+        return () => clearTimeout(timer);
+    }, [friendQuery]);
+
+    useEffect(() => {
+        if (groupQuery.trim() === '') {
+            setGroupResults(null);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            const response = await fetch(
+                groupSearch({ query: { q: groupQuery } }).url,
+                {
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json' },
+                },
+            );
+            const data = (await response.json()) as {
+                groups: JoinableGroup[];
+            };
+            setGroupResults(data.groups);
+        }, 250);
+        return () => clearTimeout(timer);
+    }, [groupQuery]);
+
     async function sendRequest(user: SuggestedUser) {
         await memberApi(friendStore().url, 'POST', { user_id: user.id });
         setSuggested((list) => list.filter((x) => x.id !== user.id));
+        setFriendResults(
+            (list) => list?.filter((x) => x.id !== user.id) ?? null,
+        );
         changeScope('friends');
     }
 
@@ -468,6 +525,9 @@ export default function MemberRanks({
         try {
             await memberApi(groupJoin().url, 'POST', { group_id: group.id });
             setJoinable((list) => list.filter((x) => x.id !== group.id));
+            setGroupResults(
+                (list) => list?.filter((x) => x.id !== group.id) ?? null,
+            );
             visit('groups', period, group.id);
         } catch {
             toast.error(t('member.ranks.bad_code'));
@@ -754,48 +814,87 @@ export default function MemberRanks({
                                 </CardContent>
                             </Card>
 
-                            {suggested.length > 0 && (
+                            {(suggested.length > 0 ||
+                                friendResults !== null) && (
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-base">
                                             {t('member.ranks.find_friends')}
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="divide-y divide-[#2E2E2E] p-0">
-                                        {suggested.map((u) => (
-                                            <div
-                                                key={u.id}
-                                                className="flex items-center justify-between gap-2 px-6 py-2.5"
-                                            >
-                                                <div className="flex min-w-0 items-center gap-2">
-                                                    <Avatar className="size-8">
-                                                        <AvatarImage
-                                                            src={
-                                                                u.avatar ??
-                                                                undefined
-                                                            }
-                                                            alt={u.name}
-                                                        />
-                                                        <AvatarFallback className="text-[10px]">
-                                                            {initials(u.name)}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="truncate text-sm font-medium text-[#F5F5F5]">
-                                                        {u.name}
-                                                    </span>
+                                    <CardContent>
+                                        <div className="relative">
+                                            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8E8E93]" />
+                                            <Input
+                                                value={friendQuery}
+                                                onChange={(e) =>
+                                                    setFriendQuery(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                placeholder={t(
+                                                    'member.ranks.search_users',
+                                                )}
+                                                className="pl-9"
+                                            />
+                                        </div>
+                                        {(() => {
+                                            const visible =
+                                                friendResults ?? suggested;
+                                            return visible.length === 0 &&
+                                                friendQuery.trim() !== '' ? (
+                                                <p className="mt-3 text-xs text-[#8E8E93]">
+                                                    {t(
+                                                        'member.ranks.search_no_results',
+                                                    )}
+                                                </p>
+                                            ) : (
+                                                <div className="-mx-6 mt-2 divide-y divide-[#2E2E2E] px-6">
+                                                    {visible.map((u) => (
+                                                        <div
+                                                            key={u.id}
+                                                            className="flex items-center justify-between gap-2 py-2.5"
+                                                        >
+                                                            <div className="flex min-w-0 items-center gap-2">
+                                                                <Avatar className="size-8">
+                                                                    <AvatarImage
+                                                                        src={
+                                                                            u.avatar ??
+                                                                            undefined
+                                                                        }
+                                                                        alt={
+                                                                            u.name
+                                                                        }
+                                                                    />
+                                                                    <AvatarFallback className="text-[10px]">
+                                                                        {initials(
+                                                                            u.name,
+                                                                        )}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <span className="truncate text-sm font-medium text-[#F5F5F5]">
+                                                                    {u.name}
+                                                                </span>
+                                                            </div>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                aria-label={
+                                                                    u.name
+                                                                }
+                                                                onClick={() =>
+                                                                    void sendRequest(
+                                                                        u,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <UserPlus className="size-4" />
+                                                            </Button>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    aria-label={u.name}
-                                                    onClick={() =>
-                                                        void sendRequest(u)
-                                                    }
-                                                >
-                                                    <UserPlus className="size-4" />
-                                                </Button>
-                                            </div>
-                                        ))}
+                                            );
+                                        })()}
                                     </CardContent>
                                 </Card>
                             )}
@@ -934,39 +1033,70 @@ export default function MemberRanks({
                                 </div>
                             </div>
 
-                            {joinable.length > 0 && (
+                            {(joinable.length > 0 ||
+                                groupResults !== null) && (
                                 <div>
                                     <p className="text-[10px] font-extrabold tracking-widest text-[#8E8E93] uppercase">
                                         {t('member.ranks.discover_groups')}
                                     </p>
-                                    <div className="mt-2 grid grid-cols-2 gap-2.5">
-                                        {joinable.map((g) => (
-                                            <div
-                                                key={g.id}
-                                                className="rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A] p-3.5"
-                                            >
-                                                <p className="truncate text-sm font-bold text-[#F5F5F5]">
-                                                    {g.name}
-                                                </p>
-                                                <p className="mt-0.5 text-xs text-[#8E8E93]">
-                                                    {g.members}{' '}
-                                                    {t('member.ranks.members')}
-                                                </p>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="mt-2.5 w-full"
-                                                    onClick={() =>
-                                                        void joinGroupCard(g)
-                                                    }
-                                                >
-                                                    {t(
-                                                        'member.ranks.join_group',
-                                                    )}
-                                                </Button>
-                                            </div>
-                                        ))}
+                                    <div className="relative mt-2">
+                                        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8E8E93]" />
+                                        <Input
+                                            value={groupQuery}
+                                            onChange={(e) =>
+                                                setGroupQuery(e.target.value)
+                                            }
+                                            placeholder={t(
+                                                'member.ranks.search_groups',
+                                            )}
+                                            className="pl-9"
+                                        />
                                     </div>
+                                    {(() => {
+                                        const visible =
+                                            groupResults ?? joinable;
+                                        return visible.length === 0 &&
+                                            groupQuery.trim() !== '' ? (
+                                            <p className="mt-3 text-xs text-[#8E8E93]">
+                                                {t(
+                                                    'member.ranks.search_no_results',
+                                                )}
+                                            </p>
+                                        ) : (
+                                            <div className="mt-2 grid grid-cols-2 gap-2.5">
+                                                {visible.map((g) => (
+                                                    <div
+                                                        key={g.id}
+                                                        className="rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A] p-3.5"
+                                                    >
+                                                        <p className="truncate text-sm font-bold text-[#F5F5F5]">
+                                                            {g.name}
+                                                        </p>
+                                                        <p className="mt-0.5 text-xs text-[#8E8E93]">
+                                                            {g.members}{' '}
+                                                            {t(
+                                                                'member.ranks.members',
+                                                            )}
+                                                        </p>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="mt-2.5 w-full"
+                                                            onClick={() =>
+                                                                void joinGroupCard(
+                                                                    g,
+                                                                )
+                                                            }
+                                                        >
+                                                            {t(
+                                                                'member.ranks.join_group',
+                                                            )}
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             )}
                         </div>

@@ -125,6 +125,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('exercise', Member\ExerciseController::class)->name('member.exercise');
     Route::get('progress', Member\ProgressController::class)->name('member.progress');
     Route::get('progress/records', Member\PersonalRecordsController::class)->name('member.records');
+    Route::get('progress/history', Member\WorkoutHistoryController::class)->name('member.history');
     Route::get('member/exercises/search', Member\ExerciseSearchController::class)
         ->name('member.exercises.search');
     Route::get('exercise/{exercise}', Member\ExerciseShowController::class)
@@ -244,6 +245,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.ranks.friends.accept');
     Route::delete('member/ranks/friends/{friendship}', [Member\FriendController::class, 'destroy'])
         ->name('member.ranks.friends.destroy');
+    Route::get('member/ranks/groups/search', [Member\GroupController::class, 'search'])
+        ->name('member.ranks.groups.search');
     Route::post('member/ranks/groups', [Member\GroupController::class, 'store'])
         ->name('member.ranks.groups.store');
     Route::post('member/ranks/groups/join', [Member\GroupController::class, 'join'])
