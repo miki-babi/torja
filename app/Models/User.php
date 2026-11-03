@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -45,7 +46,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id'])]
+#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id', 'gym_name', 'leaderboard_opted_in'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'telegram_link_token', 'attribution'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -66,6 +67,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'attribution' => 'array',
             'telegram_id' => 'integer',
+            'leaderboard_opted_in' => 'boolean',
         ];
     }
 
@@ -288,6 +290,45 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function progressPhotos(): HasMany
     {
         return $this->hasMany(ProgressPhoto::class)->orderByDesc('taken_on');
+    }
+
+    /**
+     * Friendships this user initiated or received.
+     *
+     * @return HasMany<Friendship, $this>
+     */
+    public function friendships(): HasMany
+    {
+        return $this->hasMany(Friendship::class);
+    }
+
+    /**
+     * Accepted friend ids in both directions.
+     *
+     * @return array<int>
+     */
+    public function friendIds(): array
+    {
+        return Friendship::where('status', 'accepted')
+            ->where(fn ($q) => $q
+                ->where('user_id', $this->id)
+                ->orWhere('friend_id', $this->id))
+            ->get(['user_id', 'friend_id'])
+            ->map(fn (Friendship $f): int => $f->user_id === $this->id
+                ? $f->friend_id
+                : $f->user_id)
+            ->all();
+    }
+
+    /**
+     * Squads the user belongs to on the Ranks page.
+     *
+     * @return BelongsToMany<Group, $this>
+     */
+    public function groups(): BelongsToMany
+    {
+        return $this->belongsToMany(Group::class, 'group_user')
+            ->withTimestamps();
     }
 
     /**

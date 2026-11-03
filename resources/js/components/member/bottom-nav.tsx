@@ -1,8 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Compass, Dumbbell, House, TrendingUp, User } from 'lucide-react';
+import { Dumbbell, House, TrendingUp, Trophy, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { exercise, home, profile, progress } from '@/routes/member';
-import { index as exploreIndex } from '@/routes/explore';
+import { exercise, home, profile, progress, ranks } from '@/routes/member';
 
 const TABS = [
     { label: 'home', href: home, paths: ['/'], icon: House },
@@ -19,10 +18,10 @@ const TABS = [
         icon: TrendingUp,
     },
     {
-        label: 'explore',
-        href: exploreIndex,
-        paths: ['/explore'],
-        icon: Compass,
+        label: 'ranks',
+        href: ranks,
+        paths: ['/member/ranks'],
+        icon: Trophy,
     },
     { label: 'profile', href: profile, paths: ['/profile'], icon: User },
 ] as const;

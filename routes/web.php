@@ -210,6 +210,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.progress-photos.store');
     Route::delete('member/progress-photos/{progressPhoto}', [Member\ProgressPhotoController::class, 'destroy'])
         ->name('member.progress-photos.destroy');
+
+    Route::get('member/ranks', [Member\RanksController::class, 'index'])->name('member.ranks');
+    Route::post('member/ranks/opt-in', [Member\RanksController::class, 'optIn'])
+        ->name('member.ranks.opt-in');
+    Route::post('member/ranks/opt-out', [Member\RanksController::class, 'optOut'])
+        ->name('member.ranks.opt-out');
+    Route::get('member/ranks/friends/search', [Member\FriendController::class, 'search'])
+        ->name('member.ranks.friends.search');
+    Route::post('member/ranks/friends', [Member\FriendController::class, 'store'])
+        ->name('member.ranks.friends.store');
+    Route::post('member/ranks/friends/{friendship}/accept', [Member\FriendController::class, 'accept'])
+        ->name('member.ranks.friends.accept');
+    Route::delete('member/ranks/friends/{friendship}', [Member\FriendController::class, 'destroy'])
+        ->name('member.ranks.friends.destroy');
+    Route::post('member/ranks/groups', [Member\GroupController::class, 'store'])
+        ->name('member.ranks.groups.store');
+    Route::post('member/ranks/groups/join', [Member\GroupController::class, 'join'])
+        ->name('member.ranks.groups.join');
+    Route::delete('member/ranks/groups/{group}', [Member\GroupController::class, 'destroy'])
+        ->name('member.ranks.groups.destroy');
+    Route::post('member/ranks/gym', [Member\GymController::class, 'store'])
+        ->name('member.ranks.gym.store');
     Route::get('member/orders', [Member\ShopOrderController::class, 'index'])
         ->name('member.orders.index');
     Route::post('member/orders', [Member\ShopOrderController::class, 'store'])
