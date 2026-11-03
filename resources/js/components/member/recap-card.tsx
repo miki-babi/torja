@@ -50,8 +50,6 @@ function initials(name: string | null): string {
         .toUpperCase();
 }
 
-const COMMENTS_PAGE = 10;
-
 /**
  * One recap post on the home feed: photo, caption, exercise summary, bravo
  * toggle and an expandable comment thread. Card-local state mirrors the
@@ -172,7 +170,10 @@ export function RecapCard({
             const result = await memberApi<{ recap: Recap }>(
                 updateRecap(recap.id).url,
                 'PATCH',
-                { caption: editCaption.trim() === '' ? null : editCaption.trim() },
+                {
+                    caption:
+                        editCaption.trim() === '' ? null : editCaption.trim(),
+                },
             );
             setCaption(result.recap.caption);
             setEditing(false);
@@ -280,7 +281,7 @@ export function RecapCard({
 
             {/* Exercise summary */}
             <div className="px-4 pt-3">
-                <RecapSummaryBlock summary={recap.summary} t={t} />
+                <RecapSummaryBlock summary={recap.summary} t={t} collapsible />
             </div>
 
             {/* Actions */}

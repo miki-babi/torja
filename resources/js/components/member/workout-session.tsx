@@ -180,213 +180,217 @@ export function WorkoutSessionCard({
     return (
         <>
             <Card>
-            <CardHeader className="flex-row items-center gap-2">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    onClick={onBack}
-                    aria-label="Back to sessions"
-                >
-                    <ChevronLeft className="size-4" />
-                </Button>
-                <div className="min-w-0 flex-1">
-                    <CardTitle className="truncate text-base">
-                        {playlist?.name ?? 'Free session'}
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                        {session.sets.length} set
-                        {session.sets.length === 1 ? '' : 's'} logged
-                    </p>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-5">
-                {exerciseIds.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                        No exercises yet — add one below.
-                    </p>
-                )}
+                <CardHeader className="flex-row items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0"
+                        onClick={onBack}
+                        aria-label="Back to sessions"
+                    >
+                        <ChevronLeft className="size-4" />
+                    </Button>
+                    <div className="min-w-0 flex-1">
+                        <CardTitle className="truncate text-base">
+                            {playlist?.name ?? 'Free session'}
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground">
+                            {session.sets.length} set
+                            {session.sets.length === 1 ? '' : 's'} logged
+                        </p>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                    {exerciseIds.length === 0 && (
+                        <p className="text-sm text-muted-foreground">
+                            No exercises yet — add one below.
+                        </p>
+                    )}
 
-                {exerciseIds.map((exerciseId) => {
-                    const exerciseNameFor = exerciseName(
-                        exerciseSummaries,
-                        exerciseId,
-                    );
-                    const sets = setsForExercise(session, exerciseId);
-                    const last = lastSessionWithExercise(
-                        sessions,
-                        exerciseId,
-                        session.id,
-                    );
-                    const lastSummary = last
-                        ? setSummary(setsForExercise(last, exerciseId))
-                        : '';
-                    const history = exerciseHistory(
-                        sessions,
-                        exerciseId,
-                        session.id,
-                    );
-                    const showHistory = historyFor === exerciseId;
-                    const weighted = tracksWeight(
-                        exerciseSummaries[exerciseId]?.equipment,
-                    );
+                    {exerciseIds.map((exerciseId) => {
+                        const exerciseNameFor = exerciseName(
+                            exerciseSummaries,
+                            exerciseId,
+                        );
+                        const sets = setsForExercise(session, exerciseId);
+                        const last = lastSessionWithExercise(
+                            sessions,
+                            exerciseId,
+                            session.id,
+                        );
+                        const lastSummary = last
+                            ? setSummary(setsForExercise(last, exerciseId))
+                            : '';
+                        const history = exerciseHistory(
+                            sessions,
+                            exerciseId,
+                            session.id,
+                        );
+                        const showHistory = historyFor === exerciseId;
+                        const weighted = tracksWeight(
+                            exerciseSummaries[exerciseId]?.equipment,
+                        );
 
-                    return (
-                        <div key={exerciseId}>
-                            <div className="flex items-center gap-2">
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium">
-                                        {exerciseNameFor}
-                                    </p>
-                                    {lastSummary !== '' && (
-                                        <p className="text-xs text-muted-foreground">
-                                            Last: {lastSummary}
+                        return (
+                            <div key={exerciseId}>
+                                <div className="flex items-center gap-2">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium">
+                                            {exerciseNameFor}
                                         </p>
-                                    )}
-                                </div>
-                                {history.length > 0 && (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className={cn(
-                                            'size-7 shrink-0',
-                                            showHistory &&
-                                                'bg-[#AFFA01]/20 text-[#AFFA01]',
+                                        {lastSummary !== '' && (
+                                            <p className="text-xs text-muted-foreground">
+                                                Last: {lastSummary}
+                                            </p>
                                         )}
-                                        onClick={() =>
-                                            setHistoryFor(
-                                                showHistory ? null : exerciseId,
-                                            )
-                                        }
-                                        aria-label={`History for ${exerciseNameFor}`}
-                                    >
-                                        <History className="size-4" />
-                                    </Button>
-                                )}
-                            </div>
-
-                            <div className="mt-2 space-y-2 pl-1">
-                                {sets.map((set, i) =>
-                                    editable ? (
-                                        <SetRow
-                                            key={set.id}
-                                            set={set}
-                                            index={i}
-                                            weighted={weighted}
-                                            onSave={(weight, reps) =>
-                                                upsertSet(
-                                                    exerciseId,
-                                                    set.set_index,
-                                                    weight,
-                                                    reps,
+                                    </div>
+                                    {history.length > 0 && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className={cn(
+                                                'size-7 shrink-0',
+                                                showHistory &&
+                                                    'bg-[#AFFA01]/20 text-[#AFFA01]',
+                                            )}
+                                            onClick={() =>
+                                                setHistoryFor(
+                                                    showHistory
+                                                        ? null
+                                                        : exerciseId,
                                                 )
                                             }
-                                            onRemove={() => removeSet(set.id)}
-                                        />
-                                    ) : (
-                                        <div
-                                            key={set.id}
-                                            className="flex items-center gap-2 text-sm"
+                                            aria-label={`History for ${exerciseNameFor}`}
                                         >
-                                            <span className="w-6 text-center text-xs text-muted-foreground">
-                                                {i + 1}
-                                            </span>
-                                            <span>
-                                                {set.weight_kg
-                                                    ? `${set.weight_kg} kg × ${set.reps ?? 0} reps`
-                                                    : `${set.reps ?? 0} reps`}
-                                            </span>
-                                        </div>
-                                    ),
-                                )}
-                                {editable && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-7 text-xs"
-                                        onClick={() =>
-                                            upsertSet(
-                                                exerciseId,
-                                                sets.length,
-                                                null,
-                                                null,
-                                            )
-                                        }
-                                    >
-                                        <Plus className="size-3.5" />
-                                        Add set
-                                    </Button>
+                                            <History className="size-4" />
+                                        </Button>
+                                    )}
+                                </div>
+
+                                <div className="mt-2 space-y-2 pl-1">
+                                    {sets.map((set, i) =>
+                                        editable ? (
+                                            <SetRow
+                                                key={set.id}
+                                                set={set}
+                                                index={i}
+                                                weighted={weighted}
+                                                onSave={(weight, reps) =>
+                                                    upsertSet(
+                                                        exerciseId,
+                                                        set.set_index,
+                                                        weight,
+                                                        reps,
+                                                    )
+                                                }
+                                                onRemove={() =>
+                                                    removeSet(set.id)
+                                                }
+                                            />
+                                        ) : (
+                                            <div
+                                                key={set.id}
+                                                className="flex items-center gap-2 text-sm"
+                                            >
+                                                <span className="w-6 text-center text-xs text-muted-foreground">
+                                                    {i + 1}
+                                                </span>
+                                                <span>
+                                                    {set.weight_kg
+                                                        ? `${set.weight_kg} kg × ${set.reps ?? 0} reps`
+                                                        : `${set.reps ?? 0} reps`}
+                                                </span>
+                                            </div>
+                                        ),
+                                    )}
+                                    {editable && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-xs"
+                                            onClick={() =>
+                                                upsertSet(
+                                                    exerciseId,
+                                                    sets.length,
+                                                    null,
+                                                    null,
+                                                )
+                                            }
+                                        >
+                                            <Plus className="size-3.5" />
+                                            Add set
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {showHistory && (
+                                    <div className="mt-2 rounded-md bg-muted/50 p-2.5 pl-3">
+                                        {history.map((h) => (
+                                            <div
+                                                key={h.id}
+                                                className="flex justify-between py-0.5 text-xs"
+                                            >
+                                                <span className="text-muted-foreground">
+                                                    {new Date(
+                                                        `${h.date}T12:00:00`,
+                                                    ).toLocaleDateString(
+                                                        undefined,
+                                                        {
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                        },
+                                                    )}
+                                                </span>
+                                                <span>
+                                                    {setSummary(
+                                                        setsForExercise(
+                                                            h,
+                                                            exerciseId,
+                                                        ),
+                                                    )}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
+                        );
+                    })}
 
-                            {showHistory && (
-                                <div className="mt-2 rounded-md bg-muted/50 p-2.5 pl-3">
-                                    {history.map((h) => (
-                                        <div
-                                            key={h.id}
-                                            className="flex justify-between py-0.5 text-xs"
-                                        >
-                                            <span className="text-muted-foreground">
-                                                {new Date(
-                                                    `${h.date}T12:00:00`,
-                                                ).toLocaleDateString(
-                                                    undefined,
-                                                    {
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                    },
-                                                )}
-                                            </span>
-                                            <span>
-                                                {setSummary(
-                                                    setsForExercise(
-                                                        h,
-                                                        exerciseId,
-                                                    ),
-                                                )}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-
-                <div className="flex gap-2 pt-1">
-                    <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={openAddExercise}
-                    >
-                        <Plus className="size-4" />
-                        Add exercise
-                    </Button>
-                    <Button
-                        className="flex-1 bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black shadow-md hover:brightness-105"
-                        onClick={onBack}
-                    >
-                        Done
-                    </Button>
-                </div>
-
-                {session.sets.length > 0 &&
-                    (session.has_recap ? (
-                        <p className="pt-1 text-center text-xs text-muted-foreground">
-                            {t('member.recap.already_shared')}
-                        </p>
-                    ) : (
+                    <div className="flex gap-2 pt-1">
                         <Button
                             variant="outline"
-                            className="w-full border-[#AFFA01]/30 text-[#AFFA01] hover:bg-[#AFFA01]/10"
-                            onClick={() => setShowRecapComposer(true)}
+                            className="flex-1"
+                            onClick={openAddExercise}
                         >
-                            <Share2 className="size-4" />
-                            {t('member.recap.share_cta')}
+                            <Plus className="size-4" />
+                            Add exercise
                         </Button>
-                    ))}
-            </CardContent>
-        </Card>
+                        <Button
+                            className="flex-1 bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black shadow-md hover:brightness-105"
+                            onClick={onBack}
+                        >
+                            Done
+                        </Button>
+                    </div>
+
+                    {session.sets.length > 0 &&
+                        (session.has_recap ? (
+                            <p className="pt-1 text-center text-xs text-muted-foreground">
+                                {t('member.recap.already_shared')}
+                            </p>
+                        ) : (
+                            <Button
+                                variant="outline"
+                                className="w-full border-[#AFFA01]/30 text-[#AFFA01] hover:bg-[#AFFA01]/10"
+                                onClick={() => setShowRecapComposer(true)}
+                            >
+                                <Share2 className="size-4" />
+                                {t('member.recap.share_cta')}
+                            </Button>
+                        ))}
+                </CardContent>
+            </Card>
 
             <RecapComposer
                 open={showRecapComposer}

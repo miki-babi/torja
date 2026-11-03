@@ -152,8 +152,8 @@ export function RecapComposer({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
+            <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
+                <DialogHeader className="shrink-0 px-6 pt-6">
                     <DialogTitle>
                         {t('member.recap.composer_title')}
                     </DialogTitle>
@@ -173,72 +173,76 @@ export function RecapComposer({
                     }}
                 />
 
-                {preview !== null ? (
-                    <div className="relative overflow-hidden rounded-2xl border border-[#2E2E2E]">
-                        <img
-                            src={preview}
-                            alt=""
-                            className="max-h-56 w-full object-cover"
-                        />
-                        <div className="absolute top-2 right-2 flex gap-1.5">
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                className="h-7 bg-black/60 text-xs text-white backdrop-blur-md hover:bg-black/80"
-                                onClick={() => inputRef.current?.click()}
-                            >
-                                {t('member.recap.photo_change')}
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="icon"
-                                className="size-7 bg-black/60 text-white backdrop-blur-md hover:bg-black/80"
-                                onClick={() => pickFile(null)}
-                                aria-label="Remove photo"
-                            >
-                                <X className="size-3.5" />
-                            </Button>
+                <div className="mt-4 flex-1 space-y-4 overflow-y-auto px-6">
+                    {preview !== null ? (
+                        <div className="relative overflow-hidden rounded-2xl border border-[#2E2E2E]">
+                            <img
+                                src={preview}
+                                alt=""
+                                className="max-h-56 w-full object-cover"
+                            />
+                            <div className="absolute top-2 right-2 flex gap-1.5">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    className="h-7 bg-black/60 text-xs text-white backdrop-blur-md hover:bg-black/80"
+                                    onClick={() => inputRef.current?.click()}
+                                >
+                                    {t('member.recap.photo_change')}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="icon"
+                                    className="size-7 bg-black/60 text-white backdrop-blur-md hover:bg-black/80"
+                                    onClick={() => pickFile(null)}
+                                    aria-label="Remove photo"
+                                >
+                                    <X className="size-3.5" />
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <button
-                        type="button"
-                        onClick={() => inputRef.current?.click()}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[#3a3a3a] bg-[#1F1F1F] py-6 text-xs font-semibold text-[#A1A1AA] transition-colors hover:border-[#AFFA01]/40 hover:text-[#AFFA01]"
-                    >
-                        <ImagePlus className="size-4" />
-                        {t('member.recap.photo_add')}
-                    </button>
-                )}
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => inputRef.current?.click()}
+                            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[#3a3a3a] bg-[#1F1F1F] py-6 text-xs font-semibold text-[#A1A1AA] transition-colors hover:border-[#AFFA01]/40 hover:text-[#AFFA01]"
+                        >
+                            <ImagePlus className="size-4" />
+                            {t('member.recap.photo_add')}
+                        </button>
+                    )}
 
-                <div>
-                    <textarea
-                        value={caption}
-                        onChange={(e) =>
-                            setCaption(e.target.value.slice(0, MAX_CAPTION))
-                        }
-                        placeholder={t('member.recap.caption_placeholder')}
-                        rows={2}
-                        className="w-full resize-none rounded-xl border border-[#2E2E2E] bg-[#1F1F1F] px-3 py-2.5 text-sm text-[#F5F5F5] placeholder:text-[#666666] focus:border-[#AFFA01]/50 focus:outline-none"
-                    />
-                    <p className="mt-0.5 text-right text-[10px] text-[#666666]">
-                        {caption.length}/{MAX_CAPTION}
-                    </p>
+                    <div>
+                        <textarea
+                            value={caption}
+                            onChange={(e) =>
+                                setCaption(e.target.value.slice(0, MAX_CAPTION))
+                            }
+                            placeholder={t('member.recap.caption_placeholder')}
+                            rows={2}
+                            className="w-full resize-none rounded-xl border border-[#2E2E2E] bg-[#1F1F1F] px-3 py-2.5 text-sm text-[#F5F5F5] placeholder:text-[#666666] focus:border-[#AFFA01]/50 focus:outline-none"
+                        />
+                        <p className="mt-0.5 text-right text-[10px] text-[#666666]">
+                            {caption.length}/{MAX_CAPTION}
+                        </p>
+                    </div>
+
+                    <RecapSummaryBlock summary={summary} t={t} />
                 </div>
 
-                <RecapSummaryBlock summary={summary} t={t} />
-
-                <Button
-                    type="button"
-                    disabled={busy || session.sets.length === 0}
-                    onClick={submit}
-                    className="w-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black shadow-md hover:brightness-105"
-                >
-                    {busy && <Loader2 className="size-4 animate-spin" />}
-                    {t('member.recap.publish')}
-                </Button>
+                <div className="shrink-0 border-t border-[#2E2E2E] px-6 py-4">
+                    <Button
+                        type="button"
+                        disabled={busy || session.sets.length === 0}
+                        onClick={submit}
+                        className="w-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black shadow-md hover:brightness-105"
+                    >
+                        {busy && <Loader2 className="size-4 animate-spin" />}
+                        {t('member.recap.publish')}
+                    </Button>
+                </div>
             </DialogContent>
         </Dialog>
     );

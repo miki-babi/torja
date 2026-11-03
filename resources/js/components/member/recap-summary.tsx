@@ -1,5 +1,7 @@
-import { Dumbbell, Layers, Timer, TrendingUp } from 'lucide-react';
+import { ChevronDown, Dumbbell, Layers, Timer, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
 import type { RecapSummary } from '@/components/member/types';
+import { cn } from '@/lib/utils';
 
 type Translate = (
     key: string,
@@ -9,17 +11,22 @@ type Translate = (
 /**
  * Stat chips + per-exercise rows for a workout recap. Used both inside the
  * feed card and as the preview in the share composer (where duration is
- * unknown until the session is finished).
+ * unknown until the session is finished). `collapsible` hides the exercise
+ * rows behind an expand toggle — used on the feed card so long sessions
+ * don't flood the timeline.
  */
 export function RecapSummaryBlock({
     summary,
     t,
     maxExercises = 4,
+    collapsible = false,
 }: {
     summary: RecapSummary;
     t: Translate;
     maxExercises?: number;
+    collapsible?: boolean;
 }) {
+    const [expanded, setExpanded] = useState(!collapsible);
     const stats = [
         ...(summary.duration_minutes !== null
             ? [
@@ -78,7 +85,28 @@ export function RecapSummaryBlock({
                 ))}
             </div>
 
-            {visible.length > 0 && (
+            {collapsible && summary.exercise_count > 0 && (
+                <button
+                    type="button"
+                    onClick={() => setExpanded((open) => !open)}
+                    aria-expanded={expanded}
+                    className="mt-3 flex w-full items-center justify-between border-t border-[#2E2E2E] pt-3 text-xs font-semibold text-[#A1A1AA] transition-colors hover:text-[#AFFA01]"
+                >
+                    <span>
+                        {t('shared_program.exercises_count', {
+                            count: summary.exercise_count,
+                        })}
+                    </span>
+                    <ChevronDown
+                        className={cn(
+                            'size-3.5 transition-transform duration-200',
+                            expanded && 'rotate-180',
+                        )}
+                    />
+                </button>
+            )}
+
+            {visible.length > 0 && expanded && (
                 <div className="mt-3 space-y-1.5 border-t border-[#2E2E2E] pt-3">
                     {visible.map((exercise, i) => (
                         <div
@@ -101,7 +129,8 @@ export function RecapSummaryBlock({
                     ))}
                     {hidden > 0 && (
                         <p className="text-[11px] font-medium text-[#8E8E93]">
-                            +{hidden} {t('workout_share.exercises').toLowerCase()}
+                            +{hidden}{' '}
+                            {t('workout_share.exercises').toLowerCase()}
                         </p>
                     )}
                 </div>
