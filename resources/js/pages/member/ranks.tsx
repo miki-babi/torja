@@ -298,28 +298,29 @@ export default function MemberRanks({
             </div>
 
             {!optedIn ? (
-                <Card className="mt-5 overflow-hidden">
+                <div className="relative mt-5 overflow-hidden rounded-2xl border border-[#2E2E2E]">
                     <img
-                        src="/images/community.png"
+                        src="/images/rank.png"
                         alt=""
-                        className="h-36 w-full object-cover"
+                        className="h-72 w-full object-cover"
                     />
-                    <CardContent className="p-4 text-center">
-                        <Trophy className="mx-auto size-8 text-[#AFFA01]" />
-                        <p className="mt-2 text-sm font-bold">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-4">
+                        <p className="text-lg font-bold text-white">
                             {t('member.ranks.join_title')}
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
+                        <p className="mt-0.5 text-xs text-white/70">
                             {t('member.ranks.join_hint')}
                         </p>
                         <Button
                             onClick={toggleOpt}
-                            className="mt-4 w-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black"
+                            className="mt-3 w-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black hover:brightness-105"
                         >
+                            <Trophy className="size-4" />
                             {t('member.ranks.join')}
                         </Button>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             ) : (
                 <>
                     <div className="mt-4 flex gap-2">
