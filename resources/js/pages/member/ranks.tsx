@@ -1,5 +1,14 @@
 import { Head, router } from '@inertiajs/react';
-import { Check, Copy, Crown, Plus, Trophy, UserPlus, X } from 'lucide-react';
+import {
+    Check,
+    Copy,
+    Crown,
+    Flame,
+    Plus,
+    Trophy,
+    UserPlus,
+    X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { memberApi } from '@/components/member/member-api';
@@ -35,6 +44,7 @@ type Entry = {
     user_id: number;
     name: string;
     volume: number;
+    streak: number;
     is_you: boolean;
 };
 
@@ -48,7 +58,48 @@ type MyGroup = {
 
 type PendingRow = { id: number; name: string };
 
-function RankRow({ entry }: { entry: Entry }) {
+function PodiumMember({ entry, big = false }: { entry: Entry; big?: boolean }) {
+    const initials = useInitials();
+    return (
+        <div className="flex w-24 flex-col items-center gap-1.5">
+            {big ? (
+                <Crown className="size-5 text-[#FFD700]" />
+            ) : (
+                <span className="size-5" />
+            )}
+            <div className="relative">
+                <Avatar
+                    className={cn(
+                        'border-2 border-[#2E2E2E]',
+                        big ? 'size-20' : 'size-14',
+                    )}
+                >
+                    <AvatarFallback className={big ? 'text-xl' : 'text-sm'}>
+                        {initials(entry.name)}
+                    </AvatarFallback>
+                </Avatar>
+                <span
+                    className={cn(
+                        'absolute -right-1 -bottom-1 flex size-6 items-center justify-center rounded-full border-2 border-[#141414] text-[11px] font-extrabold',
+                        entry.rank === 1
+                            ? 'bg-[#FFD700] text-black'
+                            : 'bg-[#3A3A3A] text-white',
+                    )}
+                >
+                    {entry.rank}
+                </span>
+            </div>
+            <p className="w-full truncate text-center text-xs font-bold text-[#F5F5F5]">
+                {entry.name}
+            </p>
+            <p className="text-[11px] font-semibold text-[#8E8E93]">
+                {entry.volume.toLocaleString()} kg
+            </p>
+        </div>
+    );
+}
+
+function ListRow({ entry }: { entry: Entry }) {
     const initials = useInitials();
     return (
         <div
@@ -57,45 +108,43 @@ function RankRow({ entry }: { entry: Entry }) {
                 entry.is_you && '-mx-2 rounded-xl bg-[#AFFA01]/5 px-2',
             )}
         >
-            <span
-                className={cn(
-                    'w-7 text-center text-sm font-bold',
-                    entry.rank === 1
-                        ? 'text-[#FFD700]'
-                        : entry.rank === 2
-                          ? 'text-[#C0C0C0]'
-                          : entry.rank === 3
-                            ? 'text-[#CD7F32]'
-                            : 'text-[#8E8E93]',
-                )}
-            >
+            <span className="w-6 text-center text-sm font-bold text-[#8E8E93]">
                 {entry.rank}
             </span>
-            <Avatar className="size-9">
+            <Avatar className="size-10 border border-[#2E2E2E]">
                 <AvatarFallback className="text-xs">
                     {initials(entry.name)}
                 </AvatarFallback>
             </Avatar>
-            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-[#F5F5F5]">
-                {entry.name}
-                {entry.is_you && (
-                    <span className="ml-2 text-[10px] font-bold tracking-wider text-[#AFFA01] uppercase">
-                        You
-                    </span>
-                )}
-            </p>
-            <p className="text-sm font-bold text-[#F5F5F5]">
-                {entry.volume.toLocaleString()}
-                <span className="ml-1 text-[10px] font-medium text-[#8E8E93]">
-                    kg
+            <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-[#F5F5F5]">
+                    {entry.name}
+                </p>
+                <p className="text-xs text-[#8E8E93]">
+                    {entry.volume.toLocaleString()} kg total
+                </p>
+            </div>
+            {entry.streak > 0 && (
+                <span className="flex items-center gap-1 text-xs font-bold text-[#FFB800]">
+                    <Flame className="size-4" />
+                    {entry.streak}d
                 </span>
-            </p>
+            )}
         </div>
     );
 }
 
-function RankList({ entries }: { entries: Entry[] }) {
+function RankList({
+    entries,
+    you,
+    scopeLabel,
+}: {
+    entries: Entry[];
+    you: Entry | null;
+    scopeLabel: string;
+}) {
     const { t } = useTranslation();
+    const initials = useInitials();
     if (entries.length === 0) {
         return (
             <p className="py-6 text-center text-sm text-muted-foreground">
@@ -103,11 +152,54 @@ function RankList({ entries }: { entries: Entry[] }) {
             </p>
         );
     }
+    const podium = entries.slice(0, 3);
+    const rest = entries.slice(3);
     return (
-        <div className="divide-y divide-[#2E2E2E]">
-            {entries.map((e) => (
-                <RankRow key={e.user_id} entry={e} />
-            ))}
+        <div>
+            <div className="rounded-2xl bg-[#1F1F1F] p-4 pb-5">
+                <p className="text-center text-[10px] font-extrabold tracking-widest text-[#8E8E93] uppercase">
+                    {t('member.ranks.top_performers')} · {scopeLabel}
+                </p>
+                <div className="mt-4 flex items-end justify-center gap-4">
+                    {podium[1] !== undefined && (
+                        <PodiumMember entry={podium[1]} />
+                    )}
+                    <PodiumMember entry={podium[0]} big />
+                    {podium[2] !== undefined && (
+                        <PodiumMember entry={podium[2]} />
+                    )}
+                </div>
+            </div>
+
+            {rest.length > 0 && (
+                <div className="mt-2 divide-y divide-[#2E2E2E] rounded-2xl bg-[#1A1A1A] px-4">
+                    {rest.map((e) => (
+                        <ListRow key={e.user_id} entry={e} />
+                    ))}
+                </div>
+            )}
+
+            {you !== null && (
+                <div className="mt-3 flex items-center gap-2.5 rounded-full border border-[#2E2E2E] bg-[#101010] px-3 py-2">
+                    <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-[#AFFA01] px-1.5 text-xs font-extrabold text-black">
+                        #{you.rank}
+                    </span>
+                    <Avatar className="size-7">
+                        <AvatarFallback className="text-[10px]">
+                            {initials(you.name)}
+                        </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-bold text-[#F5F5F5]">
+                        You
+                    </span>
+                    <span className="ml-auto text-sm font-bold text-[#F5F5F5]">
+                        {you.volume.toLocaleString()}
+                        <span className="ml-1 text-[10px] font-medium text-[#8E8E93]">
+                            kg
+                        </span>
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
@@ -197,6 +289,7 @@ export default function MemberRanks({
     pendingIn: initialPendingIn,
     pendingOut: initialPendingOut,
     gymName: initialGym,
+    you,
 }: {
     optedIn: boolean;
     scope: 'friends' | 'groups' | 'gym';
@@ -206,6 +299,7 @@ export default function MemberRanks({
     pendingIn: PendingRow[];
     pendingOut: PendingRow[];
     gymName: string | null;
+    you: Entry | null;
 }) {
     const { t } = useTranslation();
     const [optedIn, setOptedIn] = useState(initialOptedIn);
@@ -434,7 +528,13 @@ export default function MemberRanks({
                                     </Button>
                                 </CardHeader>
                                 <CardContent>
-                                    <RankList entries={entries} />
+                                    <RankList
+                                        entries={entries}
+                                        you={you}
+                                        scopeLabel={t(
+                                            'member.ranks.scope.friends',
+                                        )}
+                                    />
                                 </CardContent>
                             </Card>
                         </div>
@@ -501,7 +601,16 @@ export default function MemberRanks({
                                     )}
                                 </CardHeader>
                                 <CardContent>
-                                    <RankList entries={entries} />
+                                    <RankList
+                                        entries={entries}
+                                        you={you}
+                                        scopeLabel={
+                                            groups.find(
+                                                (g) => g.id === selectedGroup,
+                                            )?.name ??
+                                            t('member.ranks.scope.groups')
+                                        }
+                                    />
                                 </CardContent>
                             </Card>
 
@@ -575,7 +684,11 @@ export default function MemberRanks({
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <RankList entries={entries} />
+                                        <RankList
+                                            entries={entries}
+                                            you={you}
+                                            scopeLabel={gymSaved}
+                                        />
                                     </CardContent>
                                 </Card>
                             )}

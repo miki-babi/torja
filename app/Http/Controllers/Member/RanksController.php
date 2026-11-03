@@ -32,6 +32,7 @@ class RanksController extends Controller
             'groups' => [],
             'pendingIn' => [],
             'pendingOut' => [],
+            'you' => null,
         ];
 
         if (! $user->leaderboard_opted_in) {
@@ -89,6 +90,8 @@ class RanksController extends Controller
                 $props['entries'] = LeaderboardRank::entriesFor($mates, $user->id);
             }
         }
+
+        $props['you'] = collect($props['entries'])->firstWhere('is_you', true);
 
         return Inertia::render('member/ranks', $props);
     }

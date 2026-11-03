@@ -12,7 +12,10 @@ function lift(User $user, int $volume): void
 {
     Exercise::where('slug', 'squat')->exists()
         || Exercise::factory()->create(['slug' => 'squat']);
-    $session = WorkoutSession::factory()->create(['user_id' => $user->id]);
+    $session = WorkoutSession::factory()->create([
+        'user_id' => $user->id,
+        'date' => now()->toDateString(),
+    ]);
     WorkoutSet::factory()->create([
         'workout_session_id' => $session->id,
         'exercise_id' => 'squat',
@@ -116,8 +119,10 @@ test('groups rank only their members and join by code', function () {
         ->get(route('member.ranks', ['scope' => 'groups']))
         ->assertInertia(fn (Assert $page) => $page
             ->has('groups', 1)
-            ->has('entries', 1)
-            ->where('entries.0.user_id', $mate->id));
+            ->has('entries', 2)
+            ->where('entries.0.user_id', $mate->id)
+            ->where('you.user_id', $me->id)
+            ->where('you.rank', 2));
 });
 
 test('gym board scopes to the same gym name', function () {
@@ -144,6 +149,8 @@ test('gym board scopes to the same gym name', function () {
     $this->actingAs($me)
         ->get(route('member.ranks', ['scope' => 'gym']))
         ->assertInertia(fn (Assert $page) => $page
-            ->has('entries', 1)
-            ->where('entries.0.user_id', $mate->id));
+            ->has('entries', 2)
+            ->where('entries.0.user_id', $mate->id)
+            ->where('entries.0.streak', 1)
+            ->where('you.user_id', $me->id));
 });
