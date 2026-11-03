@@ -70,7 +70,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { exercise, today } from '@/routes/member';
+import { exercise, records, today } from '@/routes/member';
 
 type ActivityDay = { date: string; label: string; active: boolean };
 
@@ -753,12 +753,23 @@ export default function MemberProgress({
                         </Card>
                     )}
 
-                    {/* PR board */}
+                    {/* PR board — top records preview, full board on /progress/records */}
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex-row items-center justify-between">
                             <CardTitle className="text-base">
                                 {t('member.progress.personal_records')}
                             </CardTitle>
+                            {prEntries.length > 0 && (
+                                <Link
+                                    href={records().url}
+                                    className="flex items-center gap-1 text-xs font-semibold text-[#AFFA01] transition-colors hover:brightness-110"
+                                >
+                                    {t('member.records.view_all', {
+                                        count: prEntries.length,
+                                    })}
+                                    <ChevronRight className="size-3.5" />
+                                </Link>
+                            )}
                         </CardHeader>
                         <CardContent>
                             {prEntries.length === 0 ? (
@@ -767,24 +778,26 @@ export default function MemberProgress({
                                 </p>
                             ) : (
                                 <div className="divide-y divide-[#2E2E2E]">
-                                    {prEntries.map(([exerciseId, pr]) => (
-                                        <div
-                                            key={exerciseId}
-                                            className="flex items-center justify-between gap-3 py-2 text-sm"
-                                        >
-                                            <span className="truncate font-medium text-[#F5F5F5]">
-                                                {exerciseName(
-                                                    exerciseSummaries,
-                                                    exerciseId,
-                                                )}
-                                            </span>
-                                            <span className="shrink-0 font-semibold text-[#AFFA01]">
-                                                {pr.weight_kg > 0
-                                                    ? `${pr.weight_kg}kg × ${pr.reps}`
-                                                    : `${pr.reps} reps`}
-                                            </span>
-                                        </div>
-                                    ))}
+                                    {prEntries
+                                        .slice(0, 3)
+                                        .map(([exerciseId, pr]) => (
+                                            <div
+                                                key={exerciseId}
+                                                className="flex items-center justify-between gap-3 py-2 text-sm"
+                                            >
+                                                <span className="truncate font-medium text-[#F5F5F5]">
+                                                    {exerciseName(
+                                                        exerciseSummaries,
+                                                        exerciseId,
+                                                    )}
+                                                </span>
+                                                <span className="shrink-0 font-semibold text-[#AFFA01]">
+                                                    {pr.weight_kg > 0
+                                                        ? `${pr.weight_kg}kg × ${pr.reps}`
+                                                        : `${pr.reps} reps`}
+                                                </span>
+                                            </div>
+                                        ))}
                                 </div>
                             )}
                         </CardContent>

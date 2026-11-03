@@ -34,14 +34,20 @@ export function sessionsThisWeek(
 /**
  * Personal record per exercise: highest weight (ties broken by reps).
  * Exercises logged without weight get a reps-only PR (weight_kg 0).
+ * `date` is the earliest day the current record was achieved.
  */
 export function prByExercise(
     sessions: WorkoutSession[],
-): Record<string, { weight_kg: number; reps: number }> {
-    const prs: Record<string, { weight_kg: number; reps: number }> = {};
-    const repPrs: Record<string, number> = {};
+): Record<string, { weight_kg: number; reps: number; date: string }> {
+    const prs: Record<
+        string,
+        { weight_kg: number; reps: number; date: string }
+    > = {};
+    const repPrs: Record<string, { reps: number; date: string }> = {};
 
-    for (const session of sessions) {
+    for (const session of [...sessions].sort((a, b) =>
+        a.date.localeCompare(b.date),
+    )) {
         for (const set of session.sets) {
             const weight = set.weight_kg ?? 0;
             const reps = set.reps ?? 0;
@@ -53,16 +59,20 @@ export function prByExercise(
                     weight > current.weight_kg ||
                     (weight === current.weight_kg && reps > current.reps)
                 ) {
-                    prs[set.exercise_id] = { weight_kg: weight, reps };
+                    prs[set.exercise_id] = {
+                        weight_kg: weight,
+                        reps,
+                        date: session.date,
+                    };
                 }
-            } else if (reps > (repPrs[set.exercise_id] ?? 0)) {
-                repPrs[set.exercise_id] = reps;
+            } else if (reps > (repPrs[set.exercise_id]?.reps ?? 0)) {
+                repPrs[set.exercise_id] = { reps, date: session.date };
             }
         }
     }
 
-    for (const [exerciseId, reps] of Object.entries(repPrs)) {
-        prs[exerciseId] ??= { weight_kg: 0, reps };
+    for (const [exerciseId, pr] of Object.entries(repPrs)) {
+        prs[exerciseId] ??= { weight_kg: 0, reps: pr.reps, date: pr.date };
     }
 
     return prs;

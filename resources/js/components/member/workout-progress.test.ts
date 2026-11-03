@@ -85,8 +85,16 @@ describe('sessionsThisWeek', () => {
 describe('prByExercise', () => {
     it('picks the heaviest weight per exercise', () => {
         const prs = prByExercise(SESSIONS);
-        expect(prs['bench-press']).toEqual({ weight_kg: 70, reps: 8 });
-        expect(prs['squat']).toEqual({ weight_kg: 80, reps: 5 });
+        expect(prs['bench-press']).toEqual({
+            weight_kg: 70,
+            reps: 8,
+            date: '2026-10-20',
+        });
+        expect(prs['squat']).toEqual({
+            weight_kg: 80,
+            reps: 5,
+            date: '2026-10-15',
+        });
     });
 
     it('prefers more reps on equal weight', () => {
@@ -94,7 +102,23 @@ describe('prByExercise', () => {
             session(1, '2026-10-01', [set(1, 'a', 0, 50, 5)]),
             session(2, '2026-10-02', [set(2, 'a', 0, 50, 9)]),
         ]);
-        expect(prs['a']).toEqual({ weight_kg: 50, reps: 9 });
+        expect(prs['a']).toEqual({
+            weight_kg: 50,
+            reps: 9,
+            date: '2026-10-02',
+        });
+    });
+
+    it('reports the earliest date the record was achieved', () => {
+        const prs = prByExercise([
+            session(1, '2026-10-01', [set(1, 'a', 0, 50, 9)]),
+            session(2, '2026-10-05', [set(2, 'a', 0, 50, 9)]),
+        ]);
+        expect(prs['a']).toEqual({
+            weight_kg: 50,
+            reps: 9,
+            date: '2026-10-01',
+        });
     });
 
     it('tracks a reps-only PR for unweighted sets', () => {
@@ -102,7 +126,11 @@ describe('prByExercise', () => {
             session(1, '2026-10-01', [set(1, 'push-up', 0, null, 15)]),
             session(2, '2026-10-02', [set(2, 'push-up', 0, null, 20)]),
         ]);
-        expect(prs['push-up']).toEqual({ weight_kg: 0, reps: 20 });
+        expect(prs['push-up']).toEqual({
+            weight_kg: 0,
+            reps: 20,
+            date: '2026-10-02',
+        });
     });
 
     it('prefers a weighted PR over a reps-only PR', () => {
@@ -110,7 +138,11 @@ describe('prByExercise', () => {
             session(1, '2026-10-01', [set(1, 'push-up', 0, null, 30)]),
             session(2, '2026-10-02', [set(2, 'push-up', 0, 10, 8)]),
         ]);
-        expect(prs['push-up']).toEqual({ weight_kg: 10, reps: 8 });
+        expect(prs['push-up']).toEqual({
+            weight_kg: 10,
+            reps: 8,
+            date: '2026-10-02',
+        });
     });
 });
 
