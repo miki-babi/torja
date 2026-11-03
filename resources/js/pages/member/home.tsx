@@ -84,7 +84,7 @@ export default function MemberHome({
             </section>
 
             {/* Quick Action Chips */}
-            <div className="mt-4 flex scrollbar-none items-center gap-2 overflow-x-auto pb-1">
+            <div className="mt-4 flex scrollbar-none items-center justify-center gap-2 overflow-x-auto pb-1">
                 <Link
                     href={exercise()}
                     className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-[#2E2E2E] bg-[#1F1F1F] px-3.5 py-2 text-xs font-semibold text-[#F5F5F5] transition-colors hover:border-[#AFFA01]/30"
