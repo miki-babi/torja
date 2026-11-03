@@ -10,8 +10,9 @@ import {
     Shield,
     Trophy,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { AvatarDialog } from '@/components/avatar-dialog';
 import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -24,7 +25,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useInitials } from '@/hooks/use-initials';
-import { uploadAvatar } from '@/lib/avatar-upload';
 import { bmiCategory, calculateBmi } from '@/lib/body-metrics';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -120,9 +120,8 @@ export default function MemberProfile({
         telegram.connected,
     );
     const [telegramBusy, setTelegramBusy] = useState(false);
-    const avatarInputRef = useRef<HTMLInputElement>(null);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(account.avatar);
-    const [avatarBusy, setAvatarBusy] = useState(false);
+    const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
     const [ranksJoined, setRanksJoined] = useState(ranksOptedIn);
     const [ranksBusy, setRanksBusy] = useState(false);
 
@@ -230,10 +229,9 @@ export default function MemberProfile({
             <div className="flex items-center gap-4 pt-2">
                 <button
                     type="button"
-                    disabled={avatarBusy}
-                    onClick={() => avatarInputRef.current?.click()}
-                    className="shrink-0 rounded-full"
-                    aria-label="Change profile photo"
+                    onClick={() => setAvatarDialogOpen(true)}
+                    className="shrink-0 rounded-full transition-transform active:scale-95"
+                    aria-label={t('member.profile.photo_title')}
                 >
                     <Avatar className="size-16 border-2 border-[#2E2E2E] shadow-md">
                         <AvatarImage
@@ -245,28 +243,6 @@ export default function MemberProfile({
                         </AvatarFallback>
                     </Avatar>
                 </button>
-                <input
-                    ref={avatarInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        e.target.value = '';
-                        if (!file || avatarBusy) {
-                            return;
-                        }
-                        setAvatarBusy(true);
-                        try {
-                            setAvatarUrl(await uploadAvatar(file));
-                            router.reload({ only: ['auth'] });
-                        } catch {
-                            toast.error('Could not upload the photo.');
-                        } finally {
-                            setAvatarBusy(false);
-                        }
-                    }}
-                />
                 <div className="min-w-0 flex-1">
                     <h1 className="truncate text-xl font-bold tracking-tight text-[#F5F5F5]">
                         {account.name ?? 'Member'}
@@ -501,6 +477,17 @@ export default function MemberProfile({
                     </CardContent>
                 </Card>
             </div>
+
+            <AvatarDialog
+                open={avatarDialogOpen}
+                onOpenChange={setAvatarDialogOpen}
+                name={account.name ?? 'Member'}
+                avatarUrl={avatarUrl}
+                onChange={(url) => {
+                    setAvatarUrl(url);
+                    router.reload({ only: ['auth'] });
+                }}
+            />
         </MobileShell>
     );
 }

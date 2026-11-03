@@ -1,8 +1,8 @@
 import { Form, Head, router, usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
-import { useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import { AvatarDialog } from '@/components/avatar-dialog';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
@@ -20,7 +20,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useInitials } from '@/hooks/use-initials';
-import { removeAvatar, uploadAvatar } from '@/lib/avatar-upload';
 import { useTranslation } from '@/lib/i18n';
 import { update as localeUpdate } from '@/routes/locale';
 import { edit } from '@/routes/profile';
@@ -194,42 +193,10 @@ export default function Profile({
 function ProfilePhoto() {
     const { auth } = usePage<PageProps>().props;
     const getInitials = useInitials();
-    const inputRef = useRef<HTMLInputElement>(null);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(
         auth.user.avatar ?? null,
     );
-    const [busy, setBusy] = useState(false);
-
-    async function upload(file: File) {
-        if (busy) {
-            return;
-        }
-        setBusy(true);
-        try {
-            setAvatarUrl(await uploadAvatar(file));
-            router.reload({ only: ['auth'] });
-        } catch {
-            toast.error('Could not upload the photo. Try a smaller image.');
-        } finally {
-            setBusy(false);
-        }
-    }
-
-    async function remove() {
-        if (busy) {
-            return;
-        }
-        setBusy(true);
-        try {
-            await removeAvatar();
-            setAvatarUrl(null);
-            router.reload({ only: ['auth'] });
-        } catch {
-            toast.error('Could not remove the photo.');
-        } finally {
-            setBusy(false);
-        }
-    }
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     return (
         <div className="space-y-4">
@@ -239,47 +206,31 @@ function ProfilePhoto() {
                 description="Shown next to your name and on the leaderboard"
             />
             <div className="flex items-center gap-4">
-                <Avatar className="size-16">
-                    <AvatarImage
-                        src={avatarUrl ?? undefined}
-                        alt={auth.user.name}
-                    />
-                    <AvatarFallback className="text-lg">
-                        {getInitials(auth.user.name)}
-                    </AvatarFallback>
-                </Avatar>
-                <div className="flex items-center gap-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() => inputRef.current?.click()}
-                    >
-                        Change photo
-                    </Button>
-                    {avatarUrl !== null && (
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            disabled={busy}
-                            onClick={remove}
-                        >
-                            Remove
-                        </Button>
-                    )}
-                </div>
+                <button
+                    type="button"
+                    onClick={() => setDialogOpen(true)}
+                    className="rounded-full"
+                    aria-label="View profile photo"
+                >
+                    <Avatar className="size-16">
+                        <AvatarImage
+                            src={avatarUrl ?? undefined}
+                            alt={auth.user.name}
+                        />
+                        <AvatarFallback className="text-lg">
+                            {getInitials(auth.user.name)}
+                        </AvatarFallback>
+                    </Avatar>
+                </button>
             </div>
-            <input
-                ref={inputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    e.target.value = '';
-                    if (file) {
-                        void upload(file);
-                    }
+            <AvatarDialog
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                name={auth.user.name}
+                avatarUrl={avatarUrl}
+                onChange={(url) => {
+                    setAvatarUrl(url);
+                    router.reload({ only: ['auth'] });
                 }}
             />
         </div>
