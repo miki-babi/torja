@@ -1,7 +1,21 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Dumbbell, House, TrendingUp, Trophy, User } from 'lucide-react';
+import {
+    Dumbbell,
+    House,
+    MessageCircle,
+    TrendingUp,
+    Trophy,
+    User,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { exercise, home, profile, progress, ranks } from '@/routes/member';
+import {
+    exercise,
+    home,
+    messages,
+    profile,
+    progress,
+    ranks,
+} from '@/routes/member';
 
 const TABS = [
     { label: 'home', href: home, paths: ['/'], icon: House },
@@ -23,12 +37,18 @@ const TABS = [
         paths: ['/member/ranks'],
         icon: Trophy,
     },
+    {
+        label: 'chat',
+        href: messages,
+        paths: ['/member/messages'],
+        icon: MessageCircle,
+    },
     { label: 'profile', href: profile, paths: ['/profile'], icon: User },
 ] as const;
 
 export function BottomNav() {
     const { url } = usePage();
-    const { auth } = usePage().props;
+    const { auth, unreadChats } = usePage().props;
 
     if (!auth.user) {
         return null;
@@ -73,7 +93,14 @@ export function BottomNav() {
                                     : 'text-[#666666] hover:text-[#999999]',
                             )}
                         >
-                            <Icon className="size-6" />
+                            <span className="relative">
+                                <Icon className="size-6" />
+                                {label === 'chat' && unreadChats > 0 && (
+                                    <span className="absolute -top-1.5 -right-2.5 min-w-4 rounded-full bg-[#AFFA01] px-1 py-0.5 text-center text-[9px] leading-none font-bold text-black">
+                                        {unreadChats > 99 ? '99+' : unreadChats}
+                                    </span>
+                                )}
+                            </span>
                         </Link>
                     );
                 })}

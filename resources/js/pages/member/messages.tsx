@@ -1,5 +1,5 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Check, MessageCircle, X } from 'lucide-react';
+import { Head, usePage } from '@inertiajs/react';
+import { Check, MessageCircle, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ConversationItem } from '@/components/member/chat/conversation-item';
 import type { InboxConversation } from '@/components/member/chat/types';
@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { echo } from '@/lib/echo';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
-import { ranks } from '@/routes/member';
 import {
     accept as friendAccept,
     destroy as friendDestroy,
@@ -98,13 +97,6 @@ export default function MemberMessages({
             <Head title={t('member.chats.title')} />
 
             <div className="flex items-center gap-3 pt-2">
-                <Link
-                    href={ranks().url}
-                    aria-label={t('member.chats.back')}
-                    className="flex size-9 items-center justify-center rounded-full border border-[#2E2E2E] text-[#8E8E93] hover:text-[#F5F5F5]"
-                >
-                    <ArrowLeft className="size-4" />
-                </Link>
                 <h1 className="text-xl font-semibold tracking-tight">
                     {t('member.chats.title')}
                 </h1>
