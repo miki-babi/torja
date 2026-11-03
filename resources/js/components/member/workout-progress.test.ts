@@ -22,7 +22,7 @@ function session(
     date: string,
     sets: WorkoutSession['sets'],
 ): WorkoutSession {
-    return { id, exercise_playlist_id: null, date, sets };
+    return { id, exercise_playlist_id: null, date, has_recap: false, sets };
 }
 
 function set(

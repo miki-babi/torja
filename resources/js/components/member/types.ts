@@ -55,7 +55,58 @@ export type WorkoutSession = {
     id: number;
     exercise_playlist_id: number | null;
     date: string;
+    has_recap: boolean;
     sets: WorkoutSetEntry[];
+};
+
+export type RecapUser = {
+    id: number;
+    name: string | null;
+    avatar: string | null;
+};
+
+export type RecapComment = {
+    id: number;
+    body: string;
+    created_at: string | null;
+    user: RecapUser;
+    can_delete: boolean;
+};
+
+export type RecapExerciseRow = {
+    name: string;
+    sets: number;
+    weight_kg: number | null;
+    reps: number | null;
+};
+
+export type RecapSummary = {
+    title: string | null;
+    duration_minutes: number | null;
+    exercise_count: number;
+    set_count: number;
+    volume_kg: number;
+    exercises: RecapExerciseRow[];
+};
+
+export type Recap = {
+    id: number;
+    caption: string | null;
+    image_url: string | null;
+    created_at: string | null;
+    user: RecapUser;
+    summary: RecapSummary;
+    bravos_count: number;
+    bravoed: boolean;
+    comments_count: number;
+    comments: RecapComment[];
+    can_edit: boolean;
+    can_delete: boolean;
+};
+
+export type RecapFeedPage = {
+    recaps: Recap[];
+    next_cursor: number | null;
 };
 
 export type Habit = {

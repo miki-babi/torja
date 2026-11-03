@@ -245,6 +245,16 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Recap posts this member shared to the home feed.
+     *
+     * @return HasMany<Recap, $this>
+     */
+    public function recaps(): HasMany
+    {
+        return $this->hasMany(Recap::class);
+    }
+
+    /**
      * Exercise programs authored by this user (admins).
      *
      * @return HasMany<ExerciseProgram, $this>

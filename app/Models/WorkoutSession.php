@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -85,9 +86,19 @@ class WorkoutSession extends Model
     }
 
     /**
+     * The shared recap post for this session, when the member published one.
+     *
+     * @return HasOne<Recap, $this>
+     */
+    public function recap(): HasOne
+    {
+        return $this->hasOne(Recap::class);
+    }
+
+    /**
      * Frontend payload for the member exercise page.
      *
-     * @return array{id: int, exercise_playlist_id: int|null, date: string, sets: array<int, array{id: int, workout_session_id: int, exercise_id: string, set_index: int, weight_kg: float|null, reps: int|null}>}
+     * @return array{id: int, exercise_playlist_id: int|null, date: string, has_recap: bool, sets: array<int, array{id: int, workout_session_id: int, exercise_id: string, set_index: int, weight_kg: float|null, reps: int|null}>}
      */
     public function toFrontend(): array
     {
@@ -95,6 +106,9 @@ class WorkoutSession extends Model
             'id' => $this->id,
             'exercise_playlist_id' => $this->exercise_playlist_id,
             'date' => $this->date->toDateString(),
+            // Reads the eager `recap_exists` aggregate when the query asked
+            // for it, so session lists don't N+1 on this flag.
+            'has_recap' => (bool) ($this->recap_exists ?? $this->recap()->exists()),
             'sets' => $this->sets
                 ->map(fn (WorkoutSet $set): array => [
                     'id' => $set->id,

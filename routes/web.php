@@ -188,6 +188,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.sessions.sets.upsert');
     Route::delete('member/sessions/{session}/sets/{set}', [Member\SessionController::class, 'destroySet'])
         ->name('member.sessions.sets.destroy');
+
+    Route::get('member/recaps', [Member\RecapController::class, 'index'])
+        ->name('member.recaps.index');
+    Route::post('member/recaps', [Member\RecapController::class, 'store'])
+        ->name('member.recaps.store');
+    Route::patch('member/recaps/{recap}', [Member\RecapController::class, 'update'])
+        ->name('member.recaps.update');
+    Route::delete('member/recaps/{recap}', [Member\RecapController::class, 'destroy'])
+        ->name('member.recaps.destroy');
+    Route::post('member/recaps/{recap}/bravo', [Member\RecapController::class, 'bravo'])
+        ->middleware('throttle:60,1')
+        ->name('member.recaps.bravo');
+    Route::get('member/recaps/{recap}/comments', [Member\RecapController::class, 'comments'])
+        ->name('member.recaps.comments.index');
+    Route::post('member/recaps/{recap}/comments', [Member\RecapController::class, 'storeComment'])
+        ->middleware('throttle:30,1')
+        ->name('member.recaps.comments.store');
+    Route::delete('member/recaps/{recap}/comments/{comment}', [Member\RecapController::class, 'destroyComment'])
+        ->name('member.recaps.comments.destroy');
     Route::get('habits', [Member\HabitController::class, 'index'])
         ->name('member.habits');
     Route::post('member/habits', [Member\HabitController::class, 'store'])

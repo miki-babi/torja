@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { ChevronLeft, History, Plus, X } from 'lucide-react';
+import { ChevronLeft, History, Plus, Share2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -8,6 +8,7 @@ import {
     type ExerciseSummaries,
 } from '@/components/member/exercise-data';
 import { memberApi } from '@/components/member/member-api';
+import { RecapComposer } from '@/components/member/recap-composer';
 import type {
     ExercisePlaylist,
     WorkoutSession,
@@ -22,6 +23,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { exercises as sessionExercises } from '@/routes/member/sessions';
 import { destroy, upsert } from '@/routes/member/sessions/sets';
@@ -121,6 +123,8 @@ export function WorkoutSessionCard({
 }) {
     const [historyFor, setHistoryFor] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
+    const [showRecapComposer, setShowRecapComposer] = useState(false);
+    const { t } = useTranslation();
     const { url } = usePage();
 
     const playlistIds = playlist?.exercise_ids ?? [];
@@ -174,7 +178,8 @@ export function WorkoutSessionCard({
     }
 
     return (
-        <Card>
+        <>
+            <Card>
             <CardHeader className="flex-row items-center gap-2">
                 <Button
                     variant="ghost"
@@ -364,7 +369,35 @@ export function WorkoutSessionCard({
                         Done
                     </Button>
                 </div>
+
+                {session.sets.length > 0 &&
+                    (session.has_recap ? (
+                        <p className="pt-1 text-center text-xs text-muted-foreground">
+                            {t('member.recap.already_shared')}
+                        </p>
+                    ) : (
+                        <Button
+                            variant="outline"
+                            className="w-full border-[#AFFA01]/30 text-[#AFFA01] hover:bg-[#AFFA01]/10"
+                            onClick={() => setShowRecapComposer(true)}
+                        >
+                            <Share2 className="size-4" />
+                            {t('member.recap.share_cta')}
+                        </Button>
+                    ))}
             </CardContent>
         </Card>
+
+            <RecapComposer
+                open={showRecapComposer}
+                onOpenChange={setShowRecapComposer}
+                session={session}
+                title={playlist?.name ?? null}
+                exerciseSummaries={exerciseSummaries}
+                onPosted={() =>
+                    onSessionChange({ ...session, has_recap: true })
+                }
+            />
+        </>
     );
 }

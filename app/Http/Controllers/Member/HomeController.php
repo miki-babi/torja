@@ -24,10 +24,21 @@ class HomeController extends Controller
             ->whereDate('date', '>=', now()->startOfWeek())
             ->get();
 
+        $recaps = RecapController::feedQuery($user)
+            ->latest('id')
+            ->limit(11)
+            ->get();
+
+        $hasMore = $recaps->count() > 10;
+        $recaps = $recaps->take(10);
+        RecapController::hydrateComments($recaps);
+
         return Inertia::render('member/home', [
             'userName' => Str::before(trim((string) $user?->name), ' ') ?: 'there',
             'streak' => $user->activityStreak(),
             'banners' => HomeBanners::forMember(),
+            'recaps' => $recaps->map(fn ($recap) => $recap->toFeed($user))->all(),
+            'recapsNextCursor' => $hasMore ? $recaps->last()->id : null,
             'weekStats' => [
                 'sessions' => $weekSessions->filter(
                     fn ($session) => $session->sets->isNotEmpty(),

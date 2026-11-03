@@ -3,6 +3,7 @@ import {
     Compass,
     Dumbbell,
     Flame,
+    NotebookPen,
     Sparkles,
     TrendingUp,
 } from 'lucide-react';
@@ -11,7 +12,9 @@ import {
     type HomeBanner,
 } from '@/components/member/banner-carousel';
 import { MobileShell } from '@/components/member/mobile-shell';
+import { RecapFeed } from '@/components/member/recap-feed';
 import { TodaysWorkoutCard } from '@/components/member/todays-workout-card';
+import type { Recap } from '@/components/member/types';
 import { useTranslation } from '@/lib/i18n';
 import { exercise, progress, today } from '@/routes/member';
 import { index as exploreIndex } from '@/routes/explore';
@@ -28,11 +31,15 @@ export default function MemberHome({
     weekStats,
     banners,
     streak,
+    recaps,
+    recapsNextCursor,
 }: {
     userName: string;
     weekStats: { sessions: number; volume: number };
     banners: HomeBanner[];
     streak: number;
+    recaps: Recap[];
+    recapsNextCursor: number | null;
 }) {
     const { t } = useTranslation();
     const greeting = t(`member.home.${greetingKey()}`);
@@ -65,10 +72,10 @@ export default function MemberHome({
                         sessions: weekStats.sessions,
                         volume: Math.round(weekStats.volume).toLocaleString(),
                     })}
-                    ctaLabel={t('member.home.view_progress')}
-                    href={progress()}
+                    ctaLabel={t('member.home.log_workout')}
+                    href={progress({ query: { log: '1' } })}
                     image="/images/track.png"
-                    icon={TrendingUp}
+                    icon={NotebookPen}
                 />
             </section>
 
@@ -122,6 +129,13 @@ export default function MemberHome({
                 </section>
             )}
 
+            {/* Community recap feed */}
+            <section className="mt-6">
+                <RecapFeed
+                    initialRecaps={recaps}
+                    initialNextCursor={recapsNextCursor}
+                />
+            </section>
         </MobileShell>
     );
 }
