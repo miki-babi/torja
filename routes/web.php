@@ -231,8 +231,39 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.ranks.groups.join');
     Route::delete('member/ranks/groups/{group}', [Member\GroupController::class, 'destroy'])
         ->name('member.ranks.groups.destroy');
+    Route::get('member/ranks/gyms', [Member\GymController::class, 'index'])
+        ->name('member.ranks.gyms.index');
     Route::post('member/ranks/gym', [Member\GymController::class, 'store'])
         ->name('member.ranks.gym.store');
+    Route::delete('member/ranks/gym', [Member\GymController::class, 'destroy'])
+        ->name('member.ranks.gym.destroy');
+
+    Route::get('member/messages', [Member\ConversationController::class, 'index'])
+        ->name('member.messages');
+    Route::post('member/messages/dm', [Member\ConversationController::class, 'dm'])
+        ->name('member.messages.dm');
+
+    Route::scopeBindings()->group(function () {
+        Route::get('member/messages/{conversation}', [Member\ConversationController::class, 'show'])
+            ->name('member.messages.show');
+        Route::get('member/messages/{conversation}/older', [Member\ConversationController::class, 'older'])
+            ->name('member.messages.older');
+        Route::post('member/messages/{conversation}/read', [Member\ConversationController::class, 'read'])
+            ->name('member.messages.read');
+        Route::post('member/messages/{conversation}/mute', [Member\ConversationController::class, 'mute'])
+            ->name('member.messages.mute');
+        Route::post('member/messages/{conversation}/unmute', [Member\ConversationController::class, 'unmute'])
+            ->name('member.messages.unmute');
+        Route::post('member/messages/{conversation}/messages', [Member\MessageController::class, 'store'])
+            ->middleware('throttle:60,1')
+            ->name('member.messages.store');
+        Route::patch('member/messages/{conversation}/messages/{message}', [Member\MessageController::class, 'update'])
+            ->name('member.messages.update');
+        Route::delete('member/messages/{conversation}/messages/{message}', [Member\MessageController::class, 'destroy'])
+            ->name('member.messages.destroy');
+        Route::post('member/messages/{conversation}/messages/{message}/reactions', [Member\MessageController::class, 'react'])
+            ->name('member.messages.react');
+    });
     Route::get('member/orders', [Member\ShopOrderController::class, 'index'])
         ->name('member.orders.index');
     Route::post('member/orders', [Member\ShopOrderController::class, 'store'])

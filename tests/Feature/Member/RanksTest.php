@@ -3,6 +3,7 @@
 use App\Models\Exercise;
 use App\Models\Friendship;
 use App\Models\Group;
+use App\Models\Gym;
 use App\Models\User;
 use App\Models\WorkoutSession;
 use App\Models\WorkoutSet;
@@ -158,25 +159,26 @@ test('groups rank only their members and join by code', function () {
             ->where('you.rank', 2));
 });
 
-test('gym board scopes to the same gym name', function () {
+test('gym board scopes to the same gym', function () {
+    $gym = Gym::create(['name' => 'Iron Den']);
     $me = User::factory()->create([
         'leaderboard_opted_in' => true,
-        'gym_name' => 'Iron Den',
+        'gym_id' => $gym->id,
     ]);
     $mate = User::factory()->create([
         'leaderboard_opted_in' => true,
-        'gym_name' => 'Iron Den',
+        'gym_id' => $gym->id,
     ]);
     $elsewhere = User::factory()->create([
         'leaderboard_opted_in' => true,
-        'gym_name' => 'Power House',
+        'gym_id' => Gym::create(['name' => 'Power House'])->id,
     ]);
 
     lift($mate, 200);
     lift($elsewhere, 999);
 
     $this->actingAs($me)
-        ->postJson(route('member.ranks.gym.store'), ['gym_name' => 'Iron Den'])
+        ->postJson(route('member.ranks.gym.store'), ['gym_id' => $gym->id])
         ->assertOk();
 
     $this->actingAs($me)

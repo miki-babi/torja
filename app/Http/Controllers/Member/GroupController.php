@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\Conversation;
 use App\Models\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,7 +11,8 @@ use Illuminate\Http\Request;
 class GroupController extends Controller
 {
     /**
-     * Create a named squad; the creator becomes its first member.
+     * Create a named squad; the creator becomes its first member and the
+     * squad's chat room is provisioned alongside.
      */
     public function store(Request $request): JsonResponse
     {
@@ -22,11 +24,14 @@ class GroupController extends Controller
         ]);
         $group->members()->attach($request->user()->id);
 
-        return response()->json(['group' => $group], 201);
+        $conversation = Conversation::forGroup($group);
+        $conversation->addParticipant($request->user());
+
+        return response()->json(['group' => $group, 'chat_id' => $conversation->id], 201);
     }
 
     /**
-     * Join a squad by invite code.
+     * Join a squad by invite code — seat in the chat room included.
      */
     public function join(Request $request): JsonResponse
     {
@@ -35,11 +40,15 @@ class GroupController extends Controller
         $group = Group::where('invite_code', strtoupper($data['code']))->firstOrFail();
         $group->members()->syncWithoutDetaching([$request->user()->id]);
 
-        return response()->json(['group' => $group], 201);
+        $conversation = Conversation::forGroup($group);
+        $conversation->addParticipant($request->user());
+
+        return response()->json(['group' => $group, 'chat_id' => $conversation->id], 201);
     }
 
     /**
-     * Leave a squad; the owner can delete it for everyone.
+     * Leave a squad; the owner can delete it for everyone. The chat room
+     * follows: members lose their seat, deletion cascades the whole room.
      */
     public function destroy(Request $request, Group $group): JsonResponse
     {
@@ -49,6 +58,7 @@ class GroupController extends Controller
             $group->delete();
         } else {
             $group->members()->detach($request->user()->id);
+            Conversation::where('group_id', $group->id)->first()?->removeParticipant($request->user());
         }
 
         return response()->json(['ok' => true]);

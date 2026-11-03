@@ -18,6 +18,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -50,7 +51,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id', 'gym_name', 'leaderboard_opted_in'])]
+#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id', 'gym_id', 'leaderboard_opted_in'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'telegram_link_token', 'attribution'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -391,6 +392,67 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     {
         return $this->belongsToMany(Group::class, 'group_user')
             ->withTimestamps();
+    }
+
+    /**
+     * The gym this member picked from the shared list.
+     *
+     * @return BelongsTo<Gym, $this>
+     */
+    public function gym(): BelongsTo
+    {
+        return $this->belongsTo(Gym::class);
+    }
+
+    /**
+     * Set the member's gym and move their gym-chat seat along with it —
+     * joining the new room and leaving the old one.
+     */
+    public function setGym(?Gym $gym): void
+    {
+        $previous = $this->gym_id;
+
+        if ($previous === $gym?->id) {
+            return;
+        }
+
+        $this->gym()->associate($gym);
+        $this->save();
+
+        Conversation::where('gym_id', $previous)->first()?->removeParticipant($this);
+
+        if ($gym !== null) {
+            Conversation::forGym($gym)->addParticipant($this);
+        }
+    }
+
+    /**
+     * Chat rooms the user sits in.
+     *
+     * @return BelongsToMany<Conversation, $this>
+     */
+    public function conversations(): BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_user')
+            ->withPivot(['last_read_message_id', 'muted_at', 'joined_at', 'last_notified_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Total unread chat messages across every room the user sits in —
+     * drives the badge on the Ranks chats entry.
+     */
+    public function unreadChatCount(): int
+    {
+        return (int) DB::table('messages')
+            ->join('conversation_user', function ($join): void {
+                $join->on('conversation_user.conversation_id', '=', 'messages.conversation_id')
+                    ->where('conversation_user.user_id', '=', $this->id);
+            })
+            ->whereNull('messages.deleted_at')
+            ->where('messages.user_id', '!=', $this->id)
+            ->whereRaw('messages.id > COALESCE(conversation_user.last_read_message_id, 0)')
+            ->count();
     }
 
     /**

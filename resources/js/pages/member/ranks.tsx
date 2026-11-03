@@ -1,9 +1,10 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Check,
     Copy,
     Crown,
     Flame,
+    MessageCircle,
     Plus,
     Trophy,
     UserPlus,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { GymPicker, type GymPick } from '@/components/member/gym-picker';
 import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,11 +35,12 @@ import {
     store as friendStore,
 } from '@/routes/member/ranks/friends';
 import { optIn, optOut } from '@/routes/member/ranks';
-import { store as gymStore } from '@/routes/member/ranks/gym';
 import {
     join as groupJoin,
     store as groupStore,
 } from '@/routes/member/ranks/groups';
+import { messages as chatsIndex } from '@/routes/member';
+import { dm as dmStore, show as chatShow } from '@/routes/member/messages';
 
 type Entry = {
     rank: number;
@@ -55,6 +58,7 @@ type MyGroup = {
     invite_code: string;
     members: number;
     is_owner: boolean;
+    chat_id: number | null;
 };
 
 type PendingRow = { id: number; name: string; avatar: string | null };
@@ -63,12 +67,15 @@ function PodiumMember({
     entry,
     unit,
     big = false,
+    onChat,
 }: {
     entry: Entry;
     unit: string;
     big?: boolean;
+    onChat?: (entry: Entry) => void;
 }) {
     const initials = useInitials();
+    const chatButton = onChat !== undefined && !entry.is_you;
     return (
         <div className="flex w-24 flex-col items-center gap-1.5">
             {big ? (
@@ -77,20 +84,27 @@ function PodiumMember({
                 <span className="size-5" />
             )}
             <div className="relative">
-                <Avatar
-                    className={cn(
-                        'border-2 border-[#2E2E2E]',
-                        big ? 'size-20' : 'size-14',
-                    )}
+                <button
+                    type="button"
+                    disabled={!chatButton}
+                    onClick={() => onChat?.(entry)}
+                    className={chatButton ? 'cursor-pointer' : 'cursor-default'}
                 >
-                    <AvatarImage
-                        src={entry.avatar ?? undefined}
-                        alt={entry.name}
-                    />
-                    <AvatarFallback className={big ? 'text-xl' : 'text-sm'}>
-                        {initials(entry.name)}
-                    </AvatarFallback>
-                </Avatar>
+                    <Avatar
+                        className={cn(
+                            'border-2 border-[#2E2E2E]',
+                            big ? 'size-20' : 'size-14',
+                        )}
+                    >
+                        <AvatarImage
+                            src={entry.avatar ?? undefined}
+                            alt={entry.name}
+                        />
+                        <AvatarFallback className={big ? 'text-xl' : 'text-sm'}>
+                            {initials(entry.name)}
+                        </AvatarFallback>
+                    </Avatar>
+                </button>
                 <span
                     className={cn(
                         'absolute -right-1 -bottom-1 flex size-6 items-center justify-center rounded-full border-2 border-[#141414] text-[11px] font-extrabold',
@@ -112,7 +126,15 @@ function PodiumMember({
     );
 }
 
-function ListRow({ entry, unit }: { entry: Entry; unit: string }) {
+function ListRow({
+    entry,
+    unit,
+    onChat,
+}: {
+    entry: Entry;
+    unit: string;
+    onChat?: (entry: Entry) => void;
+}) {
     const initials = useInitials();
     return (
         <div
@@ -144,6 +166,16 @@ function ListRow({ entry, unit }: { entry: Entry; unit: string }) {
                     {entry.streak}d
                 </span>
             )}
+            {onChat !== undefined && !entry.is_you && (
+                <button
+                    type="button"
+                    onClick={() => onChat(entry)}
+                    aria-label={entry.name}
+                    className="rounded-full border border-[#2E2E2E] p-1.5 text-[#8E8E93] transition-colors hover:border-[#AFFA01]/50 hover:text-[#AFFA01]"
+                >
+                    <MessageCircle className="size-4" />
+                </button>
+            )}
         </div>
     );
 }
@@ -153,11 +185,13 @@ function RankList({
     you,
     scopeLabel,
     metric,
+    onChat,
 }: {
     entries: Entry[];
     you: Entry | null;
     scopeLabel: string;
     metric: 'sessions' | 'volume';
+    onChat?: (entry: Entry) => void;
 }) {
     const { t } = useTranslation();
     const initials = useInitials();
@@ -179,11 +213,24 @@ function RankList({
                 </p>
                 <div className="mt-4 flex items-end justify-center gap-4">
                     {podium[1] !== undefined && (
-                        <PodiumMember entry={podium[1]} unit={unit} />
+                        <PodiumMember
+                            entry={podium[1]}
+                            unit={unit}
+                            onChat={onChat}
+                        />
                     )}
-                    <PodiumMember entry={podium[0]} unit={unit} big />
+                    <PodiumMember
+                        entry={podium[0]}
+                        unit={unit}
+                        big
+                        onChat={onChat}
+                    />
                     {podium[2] !== undefined && (
-                        <PodiumMember entry={podium[2]} unit={unit} />
+                        <PodiumMember
+                            entry={podium[2]}
+                            unit={unit}
+                            onChat={onChat}
+                        />
                     )}
                 </div>
             </div>
@@ -191,7 +238,12 @@ function RankList({
             {rest.length > 0 && (
                 <div className="mt-2 divide-y divide-[#2E2E2E] rounded-2xl bg-[#1A1A1A] px-4">
                     {rest.map((e) => (
-                        <ListRow key={e.user_id} entry={e} unit={unit} />
+                        <ListRow
+                            key={e.user_id}
+                            entry={e}
+                            unit={unit}
+                            onChat={onChat}
+                        />
                     ))}
                 </div>
             )}
@@ -323,7 +375,8 @@ export default function MemberRanks({
     selectedGroup: initialSelected,
     pendingIn: initialPendingIn,
     pendingOut: initialPendingOut,
-    gymName: initialGym,
+    gym: initialGym,
+    gymChatId: initialGymChatId,
     period: initialPeriod,
     metric,
     you,
@@ -337,11 +390,13 @@ export default function MemberRanks({
     selectedGroup?: number;
     pendingIn: PendingRow[];
     pendingOut: PendingRow[];
-    gymName: string | null;
+    gym: GymPick | null;
+    gymChatId?: number;
     you: Entry | null;
 }) {
     const { t } = useTranslation();
     const initials = useInitials();
+    const { unreadChats } = usePage().props;
     const [optedIn, setOptedIn] = useState(initialOptedIn);
     const [scope, setScope] = useState(initialScope);
     const [entries] = useState(initialEntries);
@@ -351,8 +406,10 @@ export default function MemberRanks({
     );
     const [pendingIn, setPendingIn] = useState(initialPendingIn);
     const [pendingOut] = useState(initialPendingOut);
-    const [gymName, setGymName] = useState(initialGym ?? '');
-    const [gymSaved, setGymSaved] = useState(initialGym ?? '');
+    const [gym, setGym] = useState<GymPick | null>(initialGym);
+    const [gymChatId, setGymChatId] = useState<number | undefined>(
+        initialGymChatId,
+    );
     const [friendOpen, setFriendOpen] = useState(false);
     const [groupOpen, setGroupOpen] = useState(false);
     const [groupName, setGroupName] = useState('');
@@ -396,12 +453,13 @@ export default function MemberRanks({
         if (groupName.trim() === '') {
             return;
         }
-        const { group } = await memberApi<{
+        const { group, chat_id } = await memberApi<{
             group: MyGroup & { members?: number };
+            chat_id: number;
         }>(groupStore().url, 'POST', { name: groupName.trim() });
         setGroups((list) => [
             ...list,
-            { ...group, members: 1, is_owner: true },
+            { ...group, members: 1, is_owner: true, chat_id },
         ]);
         setSelectedGroup(group.id);
         setGroupName('');
@@ -424,6 +482,17 @@ export default function MemberRanks({
         }
     }
 
+    async function openDm(entry: Entry) {
+        try {
+            const { conversation_id } = await memberApi<{
+                conversation_id: number;
+            }>(dmStore().url, 'POST', { user_id: entry.user_id });
+            router.visit(chatShow(conversation_id).url);
+        } catch {
+            toast.error(t('member.chats.dm_failed'));
+        }
+    }
+
     return (
         <MobileShell>
             <Head title={t('member.ranks.title')} />
@@ -432,39 +501,71 @@ export default function MemberRanks({
                 <h1 className="text-xl font-semibold tracking-tight">
                     {t('member.ranks.title')}
                 </h1>
-                {optedIn && (
-                    <button
-                        type="button"
-                        onClick={toggleOpt}
-                        className="text-xs font-medium text-[#8E8E93] hover:text-[#FF6B6B]"
+                <div className="flex items-center gap-3">
+                    <Link
+                        href={chatsIndex().url}
+                        aria-label={t('member.chats.title')}
+                        className="relative flex size-9 items-center justify-center rounded-full border border-[#2E2E2E] text-[#8E8E93] transition-colors hover:text-[#F5F5F5]"
                     >
-                        {t('member.ranks.leave')}
-                    </button>
-                )}
+                        <MessageCircle className="size-4" />
+                        {unreadChats > 0 && (
+                            <span className="absolute -top-1 -right-1 flex min-w-4.5 items-center justify-center rounded-full bg-[#AFFA01] px-1 text-[9px] font-extrabold text-black">
+                                {unreadChats > 99 ? '99+' : unreadChats}
+                            </span>
+                        )}
+                    </Link>
+                    {optedIn && (
+                        <button
+                            type="button"
+                            onClick={toggleOpt}
+                            className="text-xs font-medium text-[#8E8E93] hover:text-[#FF6B6B]"
+                        >
+                            {t('member.ranks.leave')}
+                        </button>
+                    )}
+                </div>
             </div>
 
             {!optedIn ? (
-                <div className="relative mt-5 overflow-hidden rounded-2xl border border-[#2E2E2E]">
-                    <img
-                        src="/images/rank.png"
-                        alt=""
-                        className="h-72 w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-4">
-                        <p className="text-lg font-bold text-white">
-                            {t('member.ranks.join_title')}
-                        </p>
-                        <p className="mt-0.5 text-xs text-white/70">
-                            {t('member.ranks.join_hint')}
-                        </p>
-                        <Button
-                            onClick={toggleOpt}
-                            className="mt-3 w-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black hover:brightness-105"
-                        >
-                            <Trophy className="size-4" />
-                            {t('member.ranks.join')}
-                        </Button>
+                <div className="mt-5 space-y-4">
+                    <Link
+                        href={chatsIndex().url}
+                        className="flex items-center gap-3 rounded-2xl border border-[#2E2E2E] bg-[#101010] px-4 py-3.5"
+                    >
+                        <span className="flex size-10 items-center justify-center rounded-full bg-[#AFFA01]/10 text-[#AFFA01]">
+                            <MessageCircle className="size-5" />
+                        </span>
+                        <span className="flex-1 text-sm font-bold text-[#F5F5F5]">
+                            {t('member.chats.title')}
+                        </span>
+                        {unreadChats > 0 && (
+                            <span className="flex min-w-6 items-center justify-center rounded-full bg-[#AFFA01] px-1.5 text-[11px] font-extrabold text-black">
+                                {unreadChats > 99 ? '99+' : unreadChats}
+                            </span>
+                        )}
+                    </Link>
+                    <div className="relative overflow-hidden rounded-2xl border border-[#2E2E2E]">
+                        <img
+                            src="/images/rank.png"
+                            alt=""
+                            className="h-72 w-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 p-4">
+                            <p className="text-lg font-bold text-white">
+                                {t('member.ranks.join_title')}
+                            </p>
+                            <p className="mt-0.5 text-xs text-white/70">
+                                {t('member.ranks.join_hint')}
+                            </p>
+                            <Button
+                                onClick={toggleOpt}
+                                className="mt-3 w-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] font-bold text-black hover:brightness-105"
+                            >
+                                <Trophy className="size-4" />
+                                {t('member.ranks.join')}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             ) : (
@@ -632,6 +733,7 @@ export default function MemberRanks({
                                         scopeLabel={t(
                                             'member.ranks.scope.friends',
                                         )}
+                                        onChat={openDm}
                                     />
                                 </CardContent>
                             </Card>
@@ -671,28 +773,59 @@ export default function MemberRanks({
                                             : t('member.ranks.groups')}
                                     </CardTitle>
                                     {selectedGroup !== undefined && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                void navigator.clipboard.writeText(
-                                                    groups.find(
-                                                        (g) =>
-                                                            g.id ===
-                                                            selectedGroup,
-                                                    )?.invite_code ?? '',
-                                                );
-                                                toast.success(
-                                                    t('member.ranks.copied'),
-                                                );
-                                            }}
-                                            className="flex items-center gap-1.5 text-xs font-semibold text-[#AFFA01]"
-                                        >
-                                            <Copy className="size-3.5" />
+                                        <div className="flex items-center gap-3">
                                             {groups.find(
                                                 (g) => g.id === selectedGroup,
-                                            )?.invite_code ??
-                                                t('member.ranks.code')}
-                                        </button>
+                                            )?.chat_id !== null &&
+                                                groups.find(
+                                                    (g) =>
+                                                        g.id === selectedGroup,
+                                                )?.chat_id !== undefined && (
+                                                    <Link
+                                                        href={
+                                                            chatShow(
+                                                                groups.find(
+                                                                    (g) =>
+                                                                        g.id ===
+                                                                        selectedGroup,
+                                                                )!.chat_id!,
+                                                            ).url
+                                                        }
+                                                        aria-label={t(
+                                                            'member.chats.title',
+                                                        )}
+                                                        className="flex items-center gap-1.5 text-xs font-semibold text-[#AFFA01]"
+                                                    >
+                                                        <MessageCircle className="size-3.5" />
+                                                        {t('member.chats.open')}
+                                                    </Link>
+                                                )}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    void navigator.clipboard.writeText(
+                                                        groups.find(
+                                                            (g) =>
+                                                                g.id ===
+                                                                selectedGroup,
+                                                        )?.invite_code ?? '',
+                                                    );
+                                                    toast.success(
+                                                        t(
+                                                            'member.ranks.copied',
+                                                        ),
+                                                    );
+                                                }}
+                                                className="flex items-center gap-1.5 text-xs font-semibold text-[#AFFA01]"
+                                            >
+                                                <Copy className="size-3.5" />
+                                                {groups.find(
+                                                    (g) =>
+                                                        g.id === selectedGroup,
+                                                )?.invite_code ??
+                                                    t('member.ranks.code')}
+                                            </button>
+                                        </div>
                                     )}
                                 </CardHeader>
                                 <CardContent>
@@ -744,47 +877,45 @@ export default function MemberRanks({
                     {scope === 'gym' && (
                         <div className="mt-4 space-y-4">
                             <Card>
-                                <CardContent className="flex gap-2 p-4">
-                                    <Input
-                                        value={gymName}
-                                        onChange={(e) =>
-                                            setGymName(e.target.value)
-                                        }
-                                        placeholder={t(
-                                            'member.ranks.gym_placeholder',
-                                        )}
-                                    />
-                                    <Button
-                                        disabled={gymName === gymSaved}
-                                        onClick={async () => {
-                                            const { gymName: saved } =
-                                                await memberApi<{
-                                                    gymName: string | null;
-                                                }>(gymStore().url, 'POST', {
-                                                    gym_name: gymName,
-                                                });
-                                            setGymSaved(saved ?? '');
-                                            changeScope('gym');
+                                <CardContent className="p-4">
+                                    <GymPicker
+                                        gym={gym}
+                                        onPicked={(picked, chatId) => {
+                                            setGym(picked);
+                                            setGymChatId(chatId);
+                                            visit('gym', period);
                                         }}
-                                    >
-                                        {t('common.save')}
-                                    </Button>
+                                        onLeft={() => {
+                                            setGym(null);
+                                            setGymChatId(undefined);
+                                            visit('gym', period);
+                                        }}
+                                    />
                                 </CardContent>
                             </Card>
-                            {gymSaved !== '' && (
+                            {gym !== null && (
                                 <Card>
-                                    <CardHeader>
+                                    <CardHeader className="flex-row items-center justify-between">
                                         <CardTitle className="flex items-center gap-2 text-base">
                                             <Crown className="size-4 text-[#AFFA01]" />
-                                            {gymSaved}
+                                            {gym.name}
                                         </CardTitle>
+                                        {gymChatId !== undefined && (
+                                            <Link
+                                                href={chatShow(gymChatId).url}
+                                                className="flex items-center gap-1.5 text-xs font-semibold text-[#AFFA01]"
+                                            >
+                                                <MessageCircle className="size-3.5" />
+                                                {t('member.chats.open')}
+                                            </Link>
+                                        )}
                                     </CardHeader>
                                     <CardContent>
                                         <RankList
                                             entries={entries}
                                             you={you}
                                             metric={metric}
-                                            scopeLabel={gymSaved}
+                                            scopeLabel={gym.name}
                                         />
                                     </CardContent>
                                 </Card>

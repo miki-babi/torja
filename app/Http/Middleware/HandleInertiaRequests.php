@@ -47,6 +47,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'pro' => $request->user()?->isPro() ?? false,
+            'unreadChats' => $request->user()?->unreadChatCount() ?? 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'locale' => app()->getLocale(),
             'languages' => Locales::active()

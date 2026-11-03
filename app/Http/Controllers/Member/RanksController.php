@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\Conversation;
 use App\Models\Friendship;
 use App\Models\Group;
 use App\Models\User;
@@ -33,7 +34,7 @@ class RanksController extends Controller
             'scope' => $scope,
             'period' => $period,
             'metric' => $period === 'all' ? 'volume' : 'sessions',
-            'gymName' => $user->gym_name,
+            'gym' => $user->gym?->only(['id', 'name']),
             'entries' => [],
             'groups' => [],
             'pendingIn' => [],
@@ -73,15 +74,18 @@ class RanksController extends Controller
                 ->all();
         } elseif ($scope === 'groups') {
             $groups = $user->groups()->withCount('members')->get();
+            $chatIds = Conversation::whereIn('group_id', $groups->modelKeys())
+                ->pluck('id', 'group_id');
             $props['groups'] = $groups->map(fn (Group $g): array => [
                 'id' => $g->id,
                 'name' => $g->name,
                 'invite_code' => $g->invite_code,
                 'members' => $g->members_count,
                 'is_owner' => $g->owner_id === $user->id,
+                'chat_id' => $chatIds->get($g->id),
             ])->all();
 
-            $selected = (int) $request->query('group', $groups->first()?->id ?? 0);
+            $selected = (int) $request->query('group', $groups->value('id') ?? 0);
             $group = $groups->firstWhere('id', $selected);
             if ($group !== null) {
                 $props['selectedGroup'] = $group->id;
@@ -92,12 +96,13 @@ class RanksController extends Controller
                 );
             }
         } else {
-            if ($user->gym_name !== null && $user->gym_name !== '') {
+            if ($user->gym_id !== null) {
                 $mates = User::where('leaderboard_opted_in', true)
-                    ->whereRaw('LOWER(gym_name) = ?', [mb_strtolower($user->gym_name)])
+                    ->where('gym_id', $user->gym_id)
                     ->pluck('id')
                     ->all();
                 $props['entries'] = LeaderboardRank::entriesFor($mates, $user->id, $period);
+                $props['gymChatId'] = Conversation::where('gym_id', $user->gym_id)->value('id');
             }
         }
 

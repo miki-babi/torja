@@ -12,6 +12,7 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             pro: boolean;
+            unreadChats: number;
             sidebarOpen: boolean;
             nudge: import('@/components/nudge-banner').NudgePayload | null;
             [key: string]: unknown;
