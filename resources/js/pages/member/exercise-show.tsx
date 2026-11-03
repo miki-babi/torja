@@ -306,6 +306,7 @@ export default function MemberExerciseShow({
                 slug={ex.slug}
                 name={ex.name}
                 equipment={ex.equipment}
+                imageUrl={ex.image_url}
                 sessions={sessions}
                 open={logOpen}
                 onOpenChange={setLogOpen}

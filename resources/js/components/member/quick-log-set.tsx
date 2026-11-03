@@ -42,6 +42,7 @@ export function QuickLogSet({
     slug,
     name,
     equipment,
+    imageUrl,
     sessions,
     open,
     onOpenChange,
@@ -50,6 +51,7 @@ export function QuickLogSet({
     slug: string;
     name: string;
     equipment: string;
+    imageUrl?: string | null;
     sessions: WorkoutSession[];
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -148,6 +150,16 @@ export function QuickLogSet({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
+                {imageUrl != null && imageUrl !== '' && (
+                    <div className="flex items-center justify-center overflow-hidden rounded-xl border border-[#2E2E2E] bg-white">
+                        <img
+                            src={imageUrl}
+                            alt=""
+                            className="h-40 object-contain"
+                        />
+                    </div>
+                )}
+
                 <DialogHeader>
                     <DialogTitle className="capitalize">
                         Log a set — {name}

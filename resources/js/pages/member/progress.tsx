@@ -160,6 +160,7 @@ export default function MemberProgress({
         slug: string;
         name: string;
         equipment: string;
+        image_url?: string | null;
     } | null>(null);
     const [searchOpen, setSearchOpen] = useState(false);
     const [backfillOpen, setBackfillOpen] = useState(false);
@@ -739,6 +740,9 @@ export default function MemberProgress({
                                             equipment:
                                                 exerciseSummaries[selected]
                                                     ?.equipment ?? '',
+                                            image_url:
+                                                exerciseSummaries[selected]
+                                                    ?.image_url ?? null,
                                         })
                                     }
                                 >
@@ -930,6 +934,7 @@ export default function MemberProgress({
                         slug: picked.slug,
                         name: picked.name,
                         equipment: picked.equipment,
+                        image_url: picked.image_url,
                     });
                 }}
             />
@@ -969,6 +974,7 @@ export default function MemberProgress({
                 slug={logTarget?.slug ?? ''}
                 name={logTarget?.name ?? ''}
                 equipment={logTarget?.equipment ?? ''}
+                imageUrl={logTarget?.image_url ?? null}
                 sessions={sessions}
                 open={logTarget !== null}
                 onOpenChange={(open) => {

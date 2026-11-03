@@ -401,6 +401,7 @@ export default function MemberExercise({
                 slug={logTarget?.slug ?? ''}
                 name={logTarget?.name ?? ''}
                 equipment={logTarget?.equipment ?? ''}
+                imageUrl={logTarget?.image_url ?? null}
                 sessions={sessions}
                 open={logTarget !== null}
                 onOpenChange={(open) => {
