@@ -56,6 +56,22 @@ export default function MemberHome({
                 </div>
             </div>
 
+            {/* Weekly progress hero */}
+            <section className="mt-5">
+                <TodaysWorkoutCard
+                    todayLabel={t('member.home.chip_progress')}
+                    title={t('member.home.week_title')}
+                    subtitle={t('member.home.week_stats', {
+                        sessions: weekStats.sessions,
+                        volume: Math.round(weekStats.volume).toLocaleString(),
+                    })}
+                    ctaLabel={t('member.home.view_progress')}
+                    href={progress()}
+                    image="/images/track.png"
+                    icon={TrendingUp}
+                />
+            </section>
+
             {/* PrimeGym Hero Workout Builder Card */}
             <section className="mt-5">
                 <TodaysWorkoutCard
@@ -106,21 +122,6 @@ export default function MemberHome({
                 </section>
             )}
 
-            {/* Weekly progress hero */}
-            <section className="mt-5">
-                <TodaysWorkoutCard
-                    todayLabel={t('member.home.chip_progress')}
-                    title={t('member.home.week_title')}
-                    subtitle={t('member.home.week_stats', {
-                        sessions: weekStats.sessions,
-                        volume: Math.round(weekStats.volume).toLocaleString(),
-                    })}
-                    ctaLabel={t('member.home.view_progress')}
-                    href={progress()}
-                    image="/images/track.png"
-                    icon={TrendingUp}
-                />
-            </section>
         </MobileShell>
     );
 }
