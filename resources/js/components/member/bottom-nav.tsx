@@ -57,16 +57,16 @@ export function BottomNav() {
                         >
                             <span
                                 className={cn(
-                                    'flex flex-col items-center justify-center gap-1 rounded-full border px-2.5 py-1.5 transition-colors',
+                                    'flex flex-col items-center justify-center gap-0.5 rounded-full border px-2.5 py-1.5 transition-colors',
                                     active
                                         ? 'border-[#3a3a3a] bg-black'
                                         : 'border-transparent',
                                 )}
                             >
-                                <Icon className="size-5" />
+                                <Icon className="size-6" />
                                 <span
                                     className={cn(
-                                        'text-[10px] tracking-wide uppercase',
+                                        'text-[8px] tracking-wide uppercase',
                                         active ? 'font-bold' : 'font-medium',
                                     )}
                                 >
