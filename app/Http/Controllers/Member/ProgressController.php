@@ -38,6 +38,25 @@ class ProgressController extends Controller
 
         app(Tracker::class)->record('progress.viewed');
 
+        // Radar axes: training volume (weight_kg × reps) per body part
+        // over the last 7 days, zero-filled so the polygon closes evenly.
+        $axes = ['chest', 'back', 'shoulders', 'upper arms', 'lower arms', 'waist', 'upper legs', 'lower legs'];
+
+        $volumes = $user->workoutSessions()
+            ->join('workout_sets', 'workout_sets.workout_session_id', '=', 'workout_sessions.id')
+            ->where('workout_sessions.date', '>=', today()->subDays(6))
+            ->groupBy('workout_sets.exercise_id')
+            ->selectRaw('workout_sets.exercise_id, SUM(workout_sets.weight_kg * workout_sets.reps) as volume')
+            ->pluck('volume', 'exercise_id');
+
+        $buckets = array_fill_keys($axes, 0.0);
+        foreach ($volumes as $slug => $volume) {
+            $part = ExerciseCatalog::muscleFor((string) $slug);
+            if ($part !== null && array_key_exists($part, $buckets)) {
+                $buckets[$part] += (float) $volume;
+            }
+        }
+
         return Inertia::render('member/progress', [
             'playlists' => $playlists->map->toFrontend()->all(),
             'sessions' => $sessions->map->toFrontend()->all(),
@@ -55,6 +74,13 @@ class ProgressController extends Controller
                 ->all(),
             'streak' => $user->activityStreak(),
             'activityWeek' => $user->activityWeek(),
+            'muscleVolumes' => collect($buckets)
+                ->map(fn (float $volume, string $part): array => [
+                    'key' => $part,
+                    'volume' => round($volume),
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 }

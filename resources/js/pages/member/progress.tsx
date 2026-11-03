@@ -36,6 +36,10 @@ import {
 } from '@/components/member/measurements-card';
 import { MobileShell } from '@/components/member/mobile-shell';
 import {
+    MuscleRadarCard,
+    type MuscleVolume,
+} from '@/components/member/muscle-radar-card';
+import {
     PhotosCard,
     uploadProgressPhoto,
     type ProgressPhotoEntry,
@@ -123,6 +127,7 @@ export default function MemberProgress({
     equipment,
     streak,
     activityWeek,
+    muscleVolumes,
 }: {
     playlists: ExercisePlaylist[];
     sessions: WorkoutSession[];
@@ -134,6 +139,7 @@ export default function MemberProgress({
     equipment: string[];
     streak: number;
     activityWeek: ActivityDay[];
+    muscleVolumes: MuscleVolume[];
 }) {
     const { url } = usePage();
     const { t } = useTranslation();
@@ -877,6 +883,7 @@ export default function MemberProgress({
                 <h2 className="text-xs font-bold tracking-wider text-[#AFFA01] uppercase">
                     {t('member.progress.body_metrics')}
                 </h2>
+                <MuscleRadarCard volumes={muscleVolumes} />
                 <WeightCard
                     logs={weightLogs}
                     onLogged={(log) =>

@@ -208,9 +208,19 @@ class ExerciseCatalog
      */
     public static function flush(): void
     {
+        self::$slugToPartCache = null;
+        self::$partToSlugsCache = null;
+        Cache::memo()->forget(self::CACHE_KEY_SLUG_PART);
+        Cache::memo()->forget(self::CACHE_KEY_PART_SLUGS);
         Cache::forget(self::CACHE_KEY_SLUG_PART);
         Cache::forget(self::CACHE_KEY_PART_SLUGS);
     }
+
+    /** @var array<string, string>|null */
+    private static ?array $slugToPartCache = null;
+
+    /** @var array<string, array<int, string>>|null */
+    private static ?array $partToSlugsCache = null;
 
     /**
      * slug → body part map for every exercise.
@@ -219,7 +229,7 @@ class ExerciseCatalog
      */
     private static function slugToPart(): array
     {
-        return Cache::memo()->rememberForever(
+        return self::$slugToPartCache ??= Cache::memo()->rememberForever(
             self::CACHE_KEY_SLUG_PART,
             fn (): array => Exercise::query()->pluck('body_part', 'slug')->all(),
         );
@@ -232,7 +242,7 @@ class ExerciseCatalog
      */
     private static function partToSlugs(): array
     {
-        return Cache::memo()->rememberForever(
+        return self::$partToSlugsCache ??= Cache::memo()->rememberForever(
             self::CACHE_KEY_PART_SLUGS,
             function (): array {
                 $parts = [];
