@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\Exercise;
 use App\Support\ExerciseCatalog;
 use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
@@ -41,6 +42,8 @@ class ProgressController extends Controller
             'playlists' => $playlists->map->toFrontend()->all(),
             'sessions' => $sessions->map->toFrontend()->all(),
             'exerciseSummaries' => ExerciseCatalog::namesFor($exerciseIds),
+            'bodyParts' => ExerciseCatalog::bodyPartFilters(),
+            'equipment' => Exercise::query()->distinct()->orderBy('equipment')->pluck('equipment')->all(),
             'weightLogs' => $user->weightLogs()->limit(90)->get(),
             'measurements' => $user->measurements()->limit(30)->get(),
             'photos' => $user->progressPhotos()->limit(30)->get()

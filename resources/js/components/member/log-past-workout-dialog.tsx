@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import {
     exerciseName,
+    type BodyPart,
     type ExerciseSummaries,
     type ExerciseSummary,
 } from '@/components/member/exercise-data';
@@ -41,11 +42,17 @@ export function LogPastWorkoutDialog({
     open,
     onOpenChange,
     exerciseSummaries,
+    sessions = [],
+    bodyParts = [],
+    equipment = [],
     onLogged,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     exerciseSummaries: ExerciseSummaries;
+    sessions?: WorkoutSession[];
+    bodyParts?: BodyPart[];
+    equipment?: string[];
     onLogged: (session: WorkoutSession, added: ExerciseSummary[]) => void;
 }) {
     const { t } = useTranslation();
@@ -336,6 +343,10 @@ export function LogPastWorkoutDialog({
             <ExerciseSearchDialog
                 open={pickerOpen}
                 onOpenChange={setPickerOpen}
+                sessions={sessions}
+                exerciseSummaries={exerciseSummaries}
+                bodyParts={bodyParts}
+                equipment={equipment}
                 onPick={(exercise) =>
                     setRows((list) =>
                         list.some((r) => r.exercise.slug === exercise.slug)

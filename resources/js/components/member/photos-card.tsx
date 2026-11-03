@@ -14,6 +14,30 @@ export type ProgressPhotoEntry = {
 };
 
 /**
+ * Upload one progress photo via the member endpoint. Throws on failure.
+ */
+export async function uploadProgressPhoto(
+    file: File,
+): Promise<ProgressPhotoEntry> {
+    const body = new FormData();
+    body.append('photo', file);
+    const response = await fetch(store().url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-XSRF-TOKEN': xsrfToken(),
+        },
+        body,
+    });
+    if (!response.ok) {
+        throw new Error('upload failed');
+    }
+    return ((await response.json()) as { photo: ProgressPhotoEntry }).photo;
+}
+
+/**
  * Progress-photo gallery: upload to the public disk, grid with date
  * captions, per-photo delete.
  */
@@ -35,25 +59,8 @@ export function PhotosCard({
         }
         setBusy(true);
         try {
-            const body = new FormData();
-            body.append('photo', file);
-            const response = await fetch(store().url, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN': xsrfToken(),
-                },
-                body,
-            });
-            if (!response.ok) {
-                throw new Error('upload failed');
-            }
-            const data = (await response.json()) as {
-                photo: ProgressPhotoEntry;
-            };
-            onChange([data.photo, ...photos]);
+            const photo = await uploadProgressPhoto(file);
+            onChange([photo, ...photos]);
         } catch {
             toast.error(t('member.progress.photo_failed'));
         } finally {

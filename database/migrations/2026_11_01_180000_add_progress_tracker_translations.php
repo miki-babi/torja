@@ -28,6 +28,8 @@ return new class extends Migration
             'save_workout' => ['en' => 'Save workout', 'am' => 'ልምምድ አስቀምጥ'],
             'pick_exercise' => ['en' => 'Pick an exercise', 'am' => 'ልምምድ ይምረጡ'],
             'pick_exercise_hint' => ['en' => 'Search the catalog and tap to select.', 'am' => 'ይፈልጉ እና ለመምረጥ ይንኩ።'],
+            'recent' => ['en' => 'Recent', 'am' => 'የቅርብ ጊዜ'],
+            'popular' => ['en' => 'Popular', 'am' => 'ታዋቂ'],
             'vs_last_week' => ['en' => 'Last week: :sessions workouts · :volume kg', 'am' => 'ባለፈው ሳምንት: :sessions ልምምዶች · :volume ኪግ'],
             'consistency' => ['en' => 'Consistency', 'am' => 'ቀጣይነት'],
             'muscle_split' => ['en' => 'Volume by muscle', 'am' => 'በጭንቅላት ክብደት'],

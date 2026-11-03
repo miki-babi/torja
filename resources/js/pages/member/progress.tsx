@@ -1,12 +1,14 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     CalendarClock,
+    Camera,
     ChevronRight,
     Flame,
     NotebookPen,
     TrendingUp,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import {
     Bar,
     BarChart,
@@ -23,6 +25,7 @@ import { BodyFatCard } from '@/components/member/body-fat-card';
 import {
     exerciseName,
     tracksWeight,
+    type BodyPart,
     type ExerciseSummaries,
 } from '@/components/member/exercise-data';
 import { ExerciseSearchDialog } from '@/components/member/exercise-search-dialog';
@@ -34,6 +37,7 @@ import {
 import { MobileShell } from '@/components/member/mobile-shell';
 import {
     PhotosCard,
+    uploadProgressPhoto,
     type ProgressPhotoEntry,
 } from '@/components/member/photos-card';
 import { QuickLogSet } from '@/components/member/quick-log-set';
@@ -115,6 +119,8 @@ export default function MemberProgress({
     weightLogs: initialWeightLogs,
     measurements: initialMeasurements,
     photos: initialPhotos,
+    bodyParts,
+    equipment,
     streak,
     activityWeek,
 }: {
@@ -124,6 +130,8 @@ export default function MemberProgress({
     weightLogs: WeightLogEntry[];
     measurements: MeasurementEntry[];
     photos: ProgressPhotoEntry[];
+    bodyParts: BodyPart[];
+    equipment: string[];
     streak: number;
     activityWeek: ActivityDay[];
 }) {
@@ -156,6 +164,8 @@ export default function MemberProgress({
     const [searchOpen, setSearchOpen] = useState(false);
     const [backfillOpen, setBackfillOpen] = useState(false);
     const [metric, setMetric] = useState<'weight' | 'e1rm'>('weight');
+    const photoInputRef = useRef<HTMLInputElement>(null);
+    const [photoBusy, setPhotoBusy] = useState(false);
 
     const todayKey = new Date().toISOString().slice(0, 10);
     const todaysSessions = sessions.filter((s) => s.date === todayKey);
@@ -272,12 +282,36 @@ export default function MemberProgress({
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setBackfillOpen(true)}
+                    disabled={photoBusy}
+                    onClick={() => photoInputRef.current?.click()}
                 >
-                    <CalendarClock className="size-4" />
-                    {t('member.progress.log_past')}
+                    <Camera className="size-4" />
+                    {t('member.progress.add_photo')}
                 </Button>
             </div>
+
+            <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = '';
+                    if (!file || photoBusy) {
+                        return;
+                    }
+                    setPhotoBusy(true);
+                    try {
+                        const photo = await uploadProgressPhoto(file);
+                        setPhotos((list) => [photo, ...list]);
+                    } catch {
+                        toast.error(t('member.progress.photo_failed'));
+                    } finally {
+                        setPhotoBusy(false);
+                    }
+                }}
+            />
 
             {loggedSessions.length === 0 ? (
                 <Card className="mt-5">
@@ -357,25 +391,6 @@ export default function MemberProgress({
                             ).toLocaleString(),
                         })}
                     </p>
-
-                    {/* Today's log / active session */}
-                    {activeSession === null ? (
-                        <TodaysLog
-                            sessions={todaysSessions}
-                            playlists={playlists}
-                            exerciseSummaries={exerciseSummaries}
-                            onOpen={(s) => setActiveSessionId(s.id)}
-                        />
-                    ) : (
-                        <WorkoutSessionCard
-                            session={activeSession}
-                            playlist={activePlaylist}
-                            sessions={sessions}
-                            exerciseSummaries={exerciseSummaries}
-                            onSessionChange={upsertSession}
-                            onBack={() => setActiveSessionId(null)}
-                        />
-                    )}
 
                     {/* Weekly activity strip */}
                     <Card>
@@ -773,10 +788,18 @@ export default function MemberProgress({
 
                     {/* Workout history */}
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex-row items-center justify-between">
                             <CardTitle className="text-base">
                                 {t('member.progress.history')}
                             </CardTitle>
+                            <button
+                                type="button"
+                                onClick={() => setBackfillOpen(true)}
+                                className="flex items-center gap-1.5 text-xs font-semibold text-[#AFFA01] transition-colors hover:brightness-110"
+                            >
+                                <CalendarClock className="size-3.5" />
+                                {t('member.progress.log_past')}
+                            </button>
                         </CardHeader>
                         <CardContent>
                             <div className="divide-y divide-[#2E2E2E]">
@@ -864,9 +887,34 @@ export default function MemberProgress({
                 <BodyFatCard />
             </div>
 
+            {/* Today's log / active session */}
+            <div className="mt-4">
+                {activeSession === null ? (
+                    <TodaysLog
+                        sessions={todaysSessions}
+                        playlists={playlists}
+                        exerciseSummaries={exerciseSummaries}
+                        onOpen={(s) => setActiveSessionId(s.id)}
+                    />
+                ) : (
+                    <WorkoutSessionCard
+                        session={activeSession}
+                        playlist={activePlaylist}
+                        sessions={sessions}
+                        exerciseSummaries={exerciseSummaries}
+                        onSessionChange={upsertSession}
+                        onBack={() => setActiveSessionId(null)}
+                    />
+                )}
+            </div>
+
             <ExerciseSearchDialog
                 open={searchOpen}
                 onOpenChange={setSearchOpen}
+                sessions={sessions}
+                exerciseSummaries={exerciseSummaries}
+                bodyParts={bodyParts}
+                equipment={equipment}
                 onPick={(picked) => {
                     setExerciseSummaries((map) => ({
                         ...map,
@@ -890,6 +938,9 @@ export default function MemberProgress({
                 open={backfillOpen}
                 onOpenChange={setBackfillOpen}
                 exerciseSummaries={exerciseSummaries}
+                sessions={sessions}
+                bodyParts={bodyParts}
+                equipment={equipment}
                 onLogged={(session, added) => {
                     setSessions((list) =>
                         list.some((s) => s.id === session.id)
