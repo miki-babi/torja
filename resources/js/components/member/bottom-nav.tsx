@@ -38,8 +38,8 @@ export function BottomNav() {
     }
 
     return (
-        <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#2E2E2E] bg-[#000000]/95 backdrop-blur-md">
-            <div className="mx-auto flex h-16 max-w-md items-center justify-around px-2">
+        <nav className="fixed inset-x-3 bottom-4 z-50 mx-auto max-w-md rounded-full border border-[#2E2E2E] bg-[#101010]/95 shadow-lg backdrop-blur-md">
+            <div className="flex h-16 items-center justify-around px-2">
                 {TABS.map(({ label, href, paths, icon: Icon }) => {
                     const active = paths.some(
                         (path) => url === path || url.startsWith(`${path}/`),
@@ -55,12 +55,15 @@ export function BottomNav() {
                                     : 'text-[#666666] hover:text-[#999999]',
                             )}
                         >
-                            <Icon
+                            <span
                                 className={cn(
-                                    'size-5 transition-transform',
-                                    active && 'scale-105',
+                                    'flex size-9 items-center justify-center rounded-full transition-colors',
+                                    active &&
+                                        'border border-[#3a3a3a] bg-black',
                                 )}
-                            />
+                            >
+                                <Icon className="size-5" />
+                            </span>
                             <span
                                 className={cn(
                                     'text-[10px] tracking-wide uppercase',
