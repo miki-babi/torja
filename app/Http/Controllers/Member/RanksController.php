@@ -39,6 +39,8 @@ class RanksController extends Controller
             'groups' => [],
             'pendingIn' => [],
             'pendingOut' => [],
+            'suggestedUsers' => [],
+            'joinableGroups' => [],
             'you' => null,
         ];
 
@@ -72,6 +74,24 @@ class RanksController extends Controller
                     'avatar' => $f->friend->avatar,
                 ])
                 ->all();
+
+            $connected = Friendship::where('user_id', $user->id)
+                ->orWhere('friend_id', $user->id)
+                ->get(['user_id', 'friend_id'])
+                ->flatMap(fn (Friendship $f): array => [$f->user_id, $f->friend_id])
+                ->unique();
+
+            $props['suggestedUsers'] = User::where('id', '!=', $user->id)
+                ->whereNotIn('id', $connected->all())
+                ->latest('id')
+                ->limit(10)
+                ->get(['id', 'name', 'username', 'avatar_path'])
+                ->map(fn (User $u): array => [
+                    'id' => $u->id,
+                    'name' => $u->username ?: $u->name,
+                    'avatar' => $u->avatar,
+                ])
+                ->all();
         } elseif ($scope === 'groups') {
             $groups = $user->groups()->withCount('members')->get();
             $chatIds = Conversation::whereIn('group_id', $groups->modelKeys())
@@ -84,6 +104,18 @@ class RanksController extends Controller
                 'is_owner' => $g->owner_id === $user->id,
                 'chat_id' => $chatIds->get($g->id),
             ])->all();
+
+            $props['joinableGroups'] = Group::whereNotIn('id', $groups->modelKeys())
+                ->withCount('members')
+                ->latest('id')
+                ->limit(20)
+                ->get()
+                ->map(fn (Group $g): array => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'members' => $g->members_count,
+                ])
+                ->all();
 
             $selected = (int) $request->query('group', $groups->value('id') ?? 0);
             $group = $groups->firstWhere('id', $selected);

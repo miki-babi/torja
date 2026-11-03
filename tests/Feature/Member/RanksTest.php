@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Conversation;
 use App\Models\Exercise;
 use App\Models\Friendship;
 use App\Models\Group;
@@ -132,6 +133,63 @@ test('friend requests flow through search, store and accept', function () {
 
     expect($friendship->refresh()->status)->toBe('accepted');
     expect($me->friendIds())->toBe([$other->id]);
+});
+
+test('friends board suggests unconnected members', function () {
+    $me = User::factory()->create(['leaderboard_opted_in' => true]);
+    $friend = User::factory()->create(['leaderboard_opted_in' => true]);
+    $pending = User::factory()->create(['leaderboard_opted_in' => true]);
+    $stranger = User::factory()->create();
+
+    Friendship::create([
+        'user_id' => $me->id,
+        'friend_id' => $friend->id,
+        'status' => 'accepted',
+    ]);
+    Friendship::create([
+        'user_id' => $me->id,
+        'friend_id' => $pending->id,
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($me)
+        ->get(route('member.ranks', ['scope' => 'friends']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('suggestedUsers', 1)
+            ->where('suggestedUsers.0.id', $stranger->id));
+});
+
+test('groups scope lists groups the member can join', function () {
+    $me = User::factory()->create(['leaderboard_opted_in' => true]);
+    $other = User::factory()->create(['leaderboard_opted_in' => true]);
+
+    $mine = Group::create(['name' => 'My Crew', 'owner_id' => $me->id]);
+    $mine->members()->attach($me->id);
+    $theirs = Group::create(['name' => 'Their Crew', 'owner_id' => $other->id]);
+    $theirs->members()->attach($other->id);
+
+    $this->actingAs($me)
+        ->get(route('member.ranks', ['scope' => 'groups']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('joinableGroups', 1)
+            ->where('joinableGroups.0.id', $theirs->id)
+            ->where('joinableGroups.0.members', 1));
+});
+
+test('groups can be joined by id from the discovery cards', function () {
+    $me = User::factory()->create(['leaderboard_opted_in' => true]);
+    $other = User::factory()->create(['leaderboard_opted_in' => true]);
+    $group = Group::create(['name' => 'Open Crew', 'owner_id' => $other->id]);
+    $group->members()->attach($other->id);
+
+    $this->actingAs($me)
+        ->postJson(route('member.ranks.groups.join'), ['group_id' => $group->id])
+        ->assertCreated();
+
+    expect($group->members()->where('users.id', $me->id)->exists())->toBeTrue();
+
+    $conversation = Conversation::where('group_id', $group->id)->sole();
+    expect($conversation->memberships()->where('user_id', $me->id)->exists())->toBeTrue();
 });
 
 test('groups rank only their members and join by code', function () {

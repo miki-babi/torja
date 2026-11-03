@@ -8,6 +8,7 @@ import {
     Send,
     Settings,
     Shield,
+    Trophy,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -30,6 +31,10 @@ import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as appearanceEdit } from '@/routes/appearance';
 import { update as localeUpdate } from '@/routes/locale';
+import {
+    optIn as ranksOptIn,
+    optOut as ranksOptOut,
+} from '@/routes/member/ranks';
 import {
     disconnect as telegramDisconnect,
     link as telegramLink,
@@ -78,6 +83,7 @@ export default function MemberProfile({
     ambassador,
     streak,
     activityWeek,
+    ranksOptedIn,
 }: {
     ordersUrl: string;
     ambassador: {
@@ -106,6 +112,7 @@ export default function MemberProfile({
     weightLogs: { id: number; logged_on: string; weight_kg: number }[];
     streak: number;
     activityWeek: { date: string; label: string; active: boolean }[];
+    ranksOptedIn: boolean;
 }) {
     const getInitials = useInitials();
     const { t, locale, languages } = useTranslation();
@@ -116,6 +123,8 @@ export default function MemberProfile({
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(account.avatar);
     const [avatarBusy, setAvatarBusy] = useState(false);
+    const [ranksJoined, setRanksJoined] = useState(ranksOptedIn);
+    const [ranksBusy, setRanksBusy] = useState(false);
 
     async function connectTelegram() {
         setTelegramBusy(true);
@@ -129,6 +138,24 @@ export default function MemberProfile({
             // bot not configured — leave the row as-is
         } finally {
             setTelegramBusy(false);
+        }
+    }
+
+    async function toggleRanks() {
+        setRanksBusy(true);
+        try {
+            const { optedIn } = await memberApi<{ optedIn: boolean }>(
+                ranksJoined ? ranksOptOut().url : ranksOptIn().url,
+                'POST',
+            );
+            setRanksJoined(optedIn);
+            if (optedIn) {
+                router.visit('/member/ranks', { preserveState: false });
+            }
+        } catch {
+            toast.error('Could not update leaderboards.');
+        } finally {
+            setRanksBusy(false);
         }
     }
 
@@ -396,6 +423,25 @@ export default function MemberProfile({
                             <Palette className="size-4 text-muted-foreground" />
                             Appearance
                         </Link>
+                        <button
+                            type="button"
+                            onClick={toggleRanks}
+                            disabled={ranksBusy}
+                            className={cn(
+                                'flex w-full items-center gap-3 px-6 py-3 text-left text-sm hover:bg-accent disabled:opacity-50',
+                                ranksJoined && 'text-destructive',
+                            )}
+                        >
+                            <Trophy
+                                className={cn(
+                                    'size-4',
+                                    !ranksJoined && 'text-muted-foreground',
+                                )}
+                            />
+                            {ranksJoined
+                                ? t('member.ranks.leave')
+                                : t('member.ranks.join')}
+                        </button>
                         <div className="flex items-center gap-3 px-6 py-3">
                             <Languages className="size-4 text-muted-foreground" />
                             <span className="flex-1 text-sm">

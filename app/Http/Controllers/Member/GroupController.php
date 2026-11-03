@@ -31,13 +31,19 @@ class GroupController extends Controller
     }
 
     /**
-     * Join a squad by invite code — seat in the chat room included.
+     * Join a squad by invite code or straight off the discovery cards —
+     * seat in the chat room included.
      */
     public function join(Request $request): JsonResponse
     {
-        $data = $request->validate(['code' => ['required', 'string', 'max:10']]);
+        $data = $request->validate([
+            'code' => ['required_without:group_id', 'nullable', 'string', 'max:10'],
+            'group_id' => ['required_without:code', 'integer', 'exists:groups,id'],
+        ]);
 
-        $group = Group::where('invite_code', strtoupper($data['code']))->firstOrFail();
+        $group = isset($data['group_id'])
+            ? Group::findOrFail($data['group_id'])
+            : Group::where('invite_code', strtoupper($data['code']))->firstOrFail();
         $group->members()->syncWithoutDetaching([$request->user()->id]);
 
         $conversation = Conversation::forGroup($group);
