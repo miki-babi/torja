@@ -79,9 +79,20 @@ class WebhookController extends Controller
         }
 
         $chatId = $message['chat']['id'] ?? null;
+
+        if ($chatId === null) {
+            return response()->json(['ok' => true]);
+        }
+
+        if (is_array($message['location'] ?? null)) {
+            $this->handleLocation($message, $chatId);
+
+            return response()->json(['ok' => true]);
+        }
+
         $text = $message['text'] ?? '';
 
-        if (! is_string($text) || $chatId === null) {
+        if (! is_string($text)) {
             return response()->json(['ok' => true]);
         }
 
@@ -195,6 +206,51 @@ class WebhookController extends Controller
         } else {
             $this->reply($chatId, 'This link has expired. Open your '.config('app.name').' profile and tap "Connect Telegram" again.');
         }
+    }
+
+    /**
+     * A shared location (from the "📍 Share location" reply-keyboard
+     * button or the attachment menu): pins the member's coordinates for
+     * the nearby-people and nearby-gyms features. Only private chats are
+     * honored, and only accounts the Telegram user is already linked to
+     * — a location share never creates an account.
+     *
+     * @param  array<string, mixed>  $message
+     */
+    private function handleLocation(array $message, mixed $chatId): void
+    {
+        if (($message['chat']['type'] ?? null) !== 'private') {
+            return;
+        }
+
+        $location = $message['location'] ?? [];
+        $latitude = is_array($location) ? ($location['latitude'] ?? null) : null;
+        $longitude = is_array($location) ? ($location['longitude'] ?? null) : null;
+
+        if (! is_numeric($latitude) || ! is_numeric($longitude)) {
+            return;
+        }
+
+        $from = is_array($message['from'] ?? null) ? $message['from'] : [];
+        $telegramId = app(UserResolver::class)->telegramId($from);
+
+        $user = $telegramId === null
+            ? null
+            : User::query()->where('telegram_id', $telegramId)->first();
+
+        if ($user === null) {
+            $this->reply($chatId, 'Connect your '.config('app.name').' account first, then share your location again.');
+
+            return;
+        }
+
+        $user->forceFill([
+            'latitude' => (float) $latitude,
+            'longitude' => (float) $longitude,
+            'location_shared_at' => now(),
+        ])->save();
+
+        $this->reply($chatId, 'Location saved — members and gyms near you will now show up in '.config('app.name').'.');
     }
 
     /**

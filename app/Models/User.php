@@ -48,10 +48,13 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $telegram_username
  * @property string|null $referral_code
  * @property int|null $referred_by_id
+ * @property float|null $latitude
+ * @property float|null $longitude
+ * @property Carbon|null $location_shared_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id', 'gym_id', 'leaderboard_opted_in'])]
+#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id', 'gym_id', 'latitude', 'longitude', 'location_shared_at', 'leaderboard_opted_in'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'telegram_link_token', 'attribution'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -79,6 +82,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'attribution' => 'array',
             'telegram_id' => 'integer',
+            'latitude' => 'float',
+            'longitude' => 'float',
+            'location_shared_at' => 'datetime',
             'leaderboard_opted_in' => 'boolean',
         ];
     }

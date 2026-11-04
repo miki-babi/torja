@@ -135,30 +135,6 @@ test('friend requests flow through search, store and accept', function () {
     expect($me->friendIds())->toBe([$other->id]);
 });
 
-test('friends board suggests unconnected members', function () {
-    $me = User::factory()->create(['leaderboard_opted_in' => true]);
-    $friend = User::factory()->create(['leaderboard_opted_in' => true]);
-    $pending = User::factory()->create(['leaderboard_opted_in' => true]);
-    $stranger = User::factory()->create();
-
-    Friendship::create([
-        'user_id' => $me->id,
-        'friend_id' => $friend->id,
-        'status' => 'accepted',
-    ]);
-    Friendship::create([
-        'user_id' => $me->id,
-        'friend_id' => $pending->id,
-        'status' => 'pending',
-    ]);
-
-    $this->actingAs($me)
-        ->get(route('member.ranks', ['scope' => 'friends']))
-        ->assertInertia(fn (Assert $page) => $page
-            ->has('suggestedUsers', 1)
-            ->where('suggestedUsers.0.id', $stranger->id));
-});
-
 test('groups scope lists groups the member can join', function () {
     $me = User::factory()->create(['leaderboard_opted_in' => true]);
     $other = User::factory()->create(['leaderboard_opted_in' => true]);

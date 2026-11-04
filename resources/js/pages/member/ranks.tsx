@@ -59,8 +59,6 @@ type MyGroup = {
     chat_id: number | null;
 };
 
-type SuggestedUser = { id: number; name: string; avatar: string | null };
-
 type JoinableGroup = { id: number; name: string; members: number };
 
 function PodiumMember({
@@ -374,13 +372,13 @@ export default function MemberRanks({
     groups: initialGroups,
     selectedGroup: initialSelected,
 
-    suggestedUsers: initialSuggested,
     joinableGroups: initialJoinable,
     gym: initialGym,
     gymChatId: initialGymChatId,
     period: initialPeriod,
     metric,
     you,
+    hasLocation,
 }: {
     optedIn: boolean;
     scope: 'friends' | 'groups' | 'gym';
@@ -390,14 +388,13 @@ export default function MemberRanks({
     groups: MyGroup[];
     selectedGroup?: number;
 
-    suggestedUsers: SuggestedUser[];
     joinableGroups: JoinableGroup[];
     gym: GymPick | null;
     gymChatId?: number;
     you: Entry | null;
+    hasLocation: boolean;
 }) {
     const { t } = useTranslation();
-    const initials = useInitials();
     const { unreadChats } = usePage().props;
     const [optedIn, setOptedIn] = useState(initialOptedIn);
     const [scope, setScope] = useState(initialScope);
@@ -407,12 +404,7 @@ export default function MemberRanks({
         initialSelected,
     );
 
-    const [suggested, setSuggested] = useState(initialSuggested);
     const [joinable, setJoinable] = useState(initialJoinable);
-    const [friendQuery, setFriendQuery] = useState('');
-    const [friendResults, setFriendResults] = useState<SuggestedUser[] | null>(
-        null,
-    );
     const [groupQuery, setGroupQuery] = useState('');
     const [groupResults, setGroupResults] = useState<JoinableGroup[] | null>(
         null,
@@ -462,27 +454,6 @@ export default function MemberRanks({
     // Debounced live search: results replace the suggestion lists while a
     // query is typed; empty query restores the server-provided defaults.
     useEffect(() => {
-        if (friendQuery.trim() === '') {
-            setFriendResults(null);
-            return;
-        }
-        const timer = setTimeout(async () => {
-            const response = await fetch(
-                friendSearch({ query: { q: friendQuery } }).url,
-                {
-                    credentials: 'same-origin',
-                    headers: { Accept: 'application/json' },
-                },
-            );
-            const data = (await response.json()) as {
-                users: SuggestedUser[];
-            };
-            setFriendResults(data.users);
-        }, 250);
-        return () => clearTimeout(timer);
-    }, [friendQuery]);
-
-    useEffect(() => {
         if (groupQuery.trim() === '') {
             setGroupResults(null);
             return;
@@ -502,15 +473,6 @@ export default function MemberRanks({
         }, 250);
         return () => clearTimeout(timer);
     }, [groupQuery]);
-
-    async function sendRequest(user: SuggestedUser) {
-        await memberApi(friendStore().url, 'POST', { user_id: user.id });
-        setSuggested((list) => list.filter((x) => x.id !== user.id));
-        setFriendResults(
-            (list) => list?.filter((x) => x.id !== user.id) ?? null,
-        );
-        changeScope('friends');
-    }
 
     async function joinGroupCard(group: JoinableGroup) {
         try {
@@ -702,91 +664,6 @@ export default function MemberRanks({
                                     />
                                 </CardContent>
                             </Card>
-
-                            {(suggested.length > 0 ||
-                                friendResults !== null) && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-base">
-                                            {t('member.ranks.find_friends')}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="relative">
-                                            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8E8E93]" />
-                                            <Input
-                                                value={friendQuery}
-                                                onChange={(e) =>
-                                                    setFriendQuery(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                placeholder={t(
-                                                    'member.ranks.search_users',
-                                                )}
-                                                className="pl-9"
-                                            />
-                                        </div>
-                                        {(() => {
-                                            const visible =
-                                                friendResults ?? suggested;
-                                            return visible.length === 0 &&
-                                                friendQuery.trim() !== '' ? (
-                                                <p className="mt-3 text-xs text-[#8E8E93]">
-                                                    {t(
-                                                        'member.ranks.search_no_results',
-                                                    )}
-                                                </p>
-                                            ) : (
-                                                <div className="-mx-6 mt-2 divide-y divide-[#2E2E2E] px-6">
-                                                    {visible.map((u) => (
-                                                        <div
-                                                            key={u.id}
-                                                            className="flex items-center justify-between gap-2 py-2.5"
-                                                        >
-                                                            <div className="flex min-w-0 items-center gap-2">
-                                                                <Avatar className="size-8">
-                                                                    <AvatarImage
-                                                                        src={
-                                                                            u.avatar ??
-                                                                            undefined
-                                                                        }
-                                                                        alt={
-                                                                            u.name
-                                                                        }
-                                                                    />
-                                                                    <AvatarFallback className="text-[10px]">
-                                                                        {initials(
-                                                                            u.name,
-                                                                        )}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                                <span className="truncate text-sm font-medium text-[#F5F5F5]">
-                                                                    {u.name}
-                                                                </span>
-                                                            </div>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                aria-label={
-                                                                    u.name
-                                                                }
-                                                                onClick={() =>
-                                                                    void sendRequest(
-                                                                        u,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <UserPlus className="size-4" />
-                                                            </Button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            );
-                                        })()}
-                                    </CardContent>
-                                </Card>
-                            )}
                         </div>
                     )}
 
@@ -996,6 +873,7 @@ export default function MemberRanks({
                                 <CardContent className="p-4">
                                     <GymPicker
                                         gym={gym}
+                                        hasLocation={hasLocation}
                                         onPicked={(picked, chatId) => {
                                             setGym(picked);
                                             setGymChatId(chatId);

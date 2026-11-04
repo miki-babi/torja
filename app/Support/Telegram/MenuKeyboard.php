@@ -16,8 +16,10 @@ class MenuKeyboard
      * Ordered keyboard rows. Each entry is the button label users tap, the
      * app path the inline button opens, the reply copy, and the inline
      * button label. `{app}` in `message` is replaced with the app name.
+     * Entries flagged `request_location` ask Telegram for a location
+     * share instead of sending text — no path/message/button needed.
      *
-     * @var array<int, array<int, array{label: string, path: string, message: string, button: string}>>
+     * @var array<int, array<int, array{label: string, path?: string, message?: string, button?: string, request_location?: true}>>
      */
     private const ROWS = [
         [
@@ -42,13 +44,19 @@ class MenuKeyboard
                 'button' => 'Get invite link',
             ],
         ],
+        [
+            [
+                'label' => '📍 Share location',
+                'request_location' => true,
+            ],
+        ],
     ];
 
     /**
      * The ReplyKeyboardMarkup attached to ordinary bot replies so the menu
      * stays visible (and self-heals when removed).
      *
-     * @return array{keyboard: array<int, array<int, array{text: string}>>, resize_keyboard: true, is_persistent: true}
+     * @return array{keyboard: array<int, array<int, array<string, mixed>>>, resize_keyboard: true, is_persistent: true}
      */
     public function markup(): array
     {
@@ -56,7 +64,10 @@ class MenuKeyboard
 
         foreach (self::ROWS as $row) {
             $keyboard[] = array_map(
-                fn (array $button): array => ['text' => $button['label']],
+                fn (array $button): array => ['text' => $button['label']]
+                    + (($button['request_location'] ?? false) === true
+                        ? ['request_location' => true]
+                        : []),
                 $row,
             );
         }
@@ -78,7 +89,7 @@ class MenuKeyboard
     {
         foreach (self::ROWS as $row) {
             foreach ($row as $button) {
-                if ($button['label'] !== $text) {
+                if ($button['label'] !== $text || ! isset($button['message'])) {
                     continue;
                 }
 

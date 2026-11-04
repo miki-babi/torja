@@ -315,3 +315,84 @@ test('notification job respects mute, throttle and read state', function () {
     (new NotifyChatMessage($message->id, $b->id))->handle();
     expect($membership->refresh()->last_notified_at)->toBeNull();
 });
+
+test('the inbox suggests unconnected members from the social graph', function () {
+    $me = User::factory()->create();
+    $friend = User::factory()->create();
+    $friendOfFriend = User::factory()->create();
+
+    befriend($me, $friend);
+    befriend($friend, $friendOfFriend);
+
+    $this->actingAs($me)
+        ->get(route('member.messages'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('suggestions.0.id', $friendOfFriend->id)
+            ->where('suggestions.0.reason.key', 'mutual_friends'));
+});
+
+test('the inbox fills suggestions with unconnected members', function () {
+    $me = User::factory()->create();
+    $friend = User::factory()->create();
+    $pending = User::factory()->create();
+    $stranger = User::factory()->create();
+
+    befriend($me, $friend);
+    Friendship::create([
+        'user_id' => $me->id,
+        'friend_id' => $pending->id,
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($me)
+        ->get(route('member.messages'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('suggestions', 1)
+            ->where('suggestions.0.id', $stranger->id));
+});
+
+test('the inbox suggests gym mates with the gym as the reason', function () {
+    $gym = Gym::create(['name' => 'Iron Den']);
+    $me = User::factory()->create(['gym_id' => $gym->id]);
+    $mate = User::factory()->create(['gym_id' => $gym->id]);
+
+    $this->actingAs($me)
+        ->get(route('member.messages'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('suggestions.0.id', $mate->id)
+            ->where('suggestions.0.reason.key', 'gym')
+            ->where('suggestions.0.reason.name', 'Iron Den'));
+});
+
+test('the inbox suggests groupmates with the group as the reason', function () {
+    $me = User::factory()->create();
+    $mate = User::factory()->create();
+    $group = Group::create(['name' => 'Morning Warriors', 'owner_id' => $me->id]);
+    $group->members()->attach([$me->id, $mate->id]);
+
+    $this->actingAs($me)
+        ->get(route('member.messages'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('suggestions.0.id', $mate->id)
+            ->where('suggestions.0.reason.key', 'group')
+            ->where('suggestions.0.reason.name', 'Morning Warriors'));
+});
+
+test('the inbox suggests nearby members with the distance as the reason', function () {
+    $me = User::factory()->create([
+        'latitude' => 9.0301,
+        'longitude' => 38.7654,
+    ]);
+    // ~2 km away.
+    $near = User::factory()->create([
+        'latitude' => 9.0481,
+        'longitude' => 38.7654,
+    ]);
+
+    $this->actingAs($me)
+        ->get(route('member.messages'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('hasLocation', true)
+            ->where('suggestions.0.id', $near->id)
+            ->where('suggestions.0.reason.key', 'nearby'));
+});

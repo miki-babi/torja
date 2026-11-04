@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\Telegram\MenuKeyboard;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
@@ -114,6 +115,68 @@ test('menu taps in group chats are ignored', function () {
 test('unknown texts get no reply', function () {
     $this->postJson(route('telegram.webhook'), menuUpdate('hello there'))
         ->assertOk();
+
+    Http::assertSentCount(0);
+});
+
+test('the menu keyboard includes a share location button', function () {
+    $markup = app(MenuKeyboard::class)->markup();
+
+    $buttons = collect($markup['keyboard'])->flatten(1);
+
+    expect($buttons->contains(
+        fn ($button) => ($button['request_location'] ?? false) === true,
+    ))->toBeTrue();
+});
+
+test('a shared location pins the member\'s coordinates', function () {
+    $user = User::factory()->create(['telegram_id' => 555001]);
+
+    $this->postJson(route('telegram.webhook'), [
+        'message' => [
+            'chat' => ['id' => 12345, 'type' => 'private'],
+            'from' => ['id' => 555001, 'username' => 'janedoe'],
+            'location' => ['latitude' => 9.0301, 'longitude' => 38.7654],
+        ],
+    ])->assertOk();
+
+    expect($user->refresh()->latitude)->toBe(9.0301)
+        ->and($user->longitude)->toBe(38.7654)
+        ->and($user->location_shared_at)->not->toBeNull();
+
+    Http::assertSent(
+        fn ($request) => str_contains((string) $request['text'], 'Location saved'),
+    );
+});
+
+test('a location share from an unlinked user asks to connect first', function () {
+    $this->postJson(route('telegram.webhook'), [
+        'message' => [
+            'chat' => ['id' => 12345, 'type' => 'private'],
+            'from' => ['id' => 999999],
+            'location' => ['latitude' => 9.0301, 'longitude' => 38.7654],
+        ],
+    ])->assertOk();
+
+    expect(User::query()->where('telegram_id', 999999)->exists())->toBeFalse();
+
+    Http::assertSent(
+        fn ($request) => str_contains((string) $request['text'], 'Connect your'),
+    );
+});
+
+test('location shares in group chats are ignored', function () {
+    $user = User::factory()->create(['telegram_id' => 555001]);
+
+    $this->postJson(route('telegram.webhook'), [
+        'message' => [
+            'chat' => ['id' => 12345, 'type' => 'group'],
+            'from' => ['id' => 555001],
+            'location' => ['latitude' => 9.0301, 'longitude' => 38.7654],
+        ],
+    ])->assertOk();
+
+    expect($user->fresh()->latitude)->toBeNull();
 
     Http::assertSentCount(0);
 });

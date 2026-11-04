@@ -1,19 +1,27 @@
-import { Head, usePage } from '@inertiajs/react';
-import { Check, MessageCircle, X } from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Check, MessageCircle, Search, UserPlus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ConversationItem } from '@/components/member/chat/conversation-item';
 import type { InboxConversation } from '@/components/member/chat/types';
 import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
+import {
+    reasonText,
+    ShareLocationButton,
+    type Suggested,
+} from '@/components/member/people-suggestions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { echo } from '@/lib/echo';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
 import {
     accept as friendAccept,
     destroy as friendDestroy,
+    search as friendSearch,
+    store as friendStore,
 } from '@/routes/member/ranks/friends';
 
 type ActivityEvent = {
@@ -36,10 +44,14 @@ export default function MemberMessages({
     conversations: initial,
     pendingIn: initialPendingIn,
     pendingOut: initialPendingOut,
+    suggestions: initialSuggestions,
+    hasLocation,
 }: {
     conversations: InboxConversation[];
     pendingIn: FriendRequest[];
     pendingOut: FriendRequest[];
+    suggestions: Suggested[];
+    hasLocation: boolean;
 }) {
     const { t } = useTranslation();
     const initials = useInitials();
@@ -48,6 +60,11 @@ export default function MemberMessages({
         useState<InboxConversation[]>(initial);
     const [pendingIn, setPendingIn] = useState(initialPendingIn);
     const [pendingOut, setPendingOut] = useState(initialPendingOut);
+    const [suggestions, setSuggestions] = useState(initialSuggestions);
+    const [friendQuery, setFriendQuery] = useState('');
+    const [friendResults, setFriendResults] = useState<Suggested[] | null>(
+        null,
+    );
 
     useEffect(() => {
         const userId = auth.user?.id;
@@ -92,6 +109,37 @@ export default function MemberMessages({
         };
     }, [auth.user?.id]);
 
+    // Debounced live search: results replace the suggestion list while a
+    // query is typed; empty query restores the server-provided defaults.
+    useEffect(() => {
+        if (friendQuery.trim() === '') {
+            setFriendResults(null);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            const response = await fetch(
+                friendSearch({ query: { q: friendQuery } }).url,
+                {
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json' },
+                },
+            );
+            const data = (await response.json()) as {
+                users: Suggested[];
+            };
+            setFriendResults(data.users);
+        }, 250);
+        return () => clearTimeout(timer);
+    }, [friendQuery]);
+
+    async function sendRequest(user: Suggested) {
+        await memberApi(friendStore().url, 'POST', { user_id: user.id });
+        setSuggestions((list) => list.filter((x) => x.id !== user.id));
+        setFriendResults(
+            (list) => list?.filter((x) => x.id !== user.id) ?? null,
+        );
+    }
+
     return (
         <MobileShell>
             <Head title={t('member.chats.title')} />
@@ -101,6 +149,96 @@ export default function MemberMessages({
                     {t('member.chats.title')}
                 </h1>
             </div>
+
+            {(suggestions.length > 0 ||
+                friendResults !== null ||
+                !hasLocation) && (
+                <Card className="mt-4">
+                    <CardHeader>
+                        <CardTitle className="text-base">
+                            {t('member.ranks.suggest.title')}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {!hasLocation && (
+                            <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[#2E2E2E] bg-[#101010] px-3 py-2.5">
+                                <span className="text-xs text-[#8E8E93]">
+                                    {t('member.ranks.suggest.share')}
+                                </span>
+                                <ShareLocationButton
+                                    onShared={() => router.reload()}
+                                />
+                            </div>
+                        )}
+                        <div className="relative">
+                            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8E8E93]" />
+                            <Input
+                                value={friendQuery}
+                                onChange={(e) => setFriendQuery(e.target.value)}
+                                placeholder={t('member.ranks.search_users')}
+                                className="pl-9"
+                            />
+                        </div>
+                        {(() => {
+                            const visible = friendResults ?? suggestions;
+                            return visible.length === 0 &&
+                                friendQuery.trim() !== '' ? (
+                                <p className="mt-3 text-xs text-[#8E8E93]">
+                                    {t('member.ranks.search_no_results')}
+                                </p>
+                            ) : (
+                                <div className="-mx-6 mt-2 divide-y divide-[#2E2E2E] px-6">
+                                    {visible.map((u) => {
+                                        const reason = reasonText(t, u.reason);
+
+                                        return (
+                                            <div
+                                                key={u.id}
+                                                className="flex items-center justify-between gap-2 py-2.5"
+                                            >
+                                                <div className="flex min-w-0 items-center gap-2">
+                                                    <Avatar className="size-8">
+                                                        <AvatarImage
+                                                            src={
+                                                                u.avatar ??
+                                                                undefined
+                                                            }
+                                                            alt={u.name}
+                                                        />
+                                                        <AvatarFallback className="text-[10px]">
+                                                            {initials(u.name)}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="min-w-0">
+                                                        <span className="block truncate text-sm font-medium text-[#F5F5F5]">
+                                                            {u.name}
+                                                        </span>
+                                                        {reason !== null && (
+                                                            <span className="block truncate text-[11px] text-[#8E8E93]">
+                                                                {reason}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    aria-label={u.name}
+                                                    onClick={() =>
+                                                        void sendRequest(u)
+                                                    }
+                                                >
+                                                    <UserPlus className="size-4" />
+                                                </Button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()}
+                    </CardContent>
+                </Card>
+            )}
 
             {(pendingIn.length > 0 || pendingOut.length > 0) && (
                 <Card className="mt-4">

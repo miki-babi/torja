@@ -13,19 +13,23 @@ import {
 } from '@/routes/member/ranks/gym';
 
 export type GymPick = { id: number; name: string };
-type GymResult = GymPick & { members: number };
+type GymResult = GymPick & { members: number; distance_km: number | null };
 
 /**
  * Search-or-create gym picker: type to search the shared list, pick a
  * gym to join it (chat seat included), or create a new one. The current
- * pick can be left entirely.
+ * pick can be left entirely. When the member shared their location,
+ * pinned gyms show a distance badge and nearby gyms appear without
+ * typing.
  */
 export function GymPicker({
     gym,
+    hasLocation = false,
     onPicked,
     onLeft,
 }: {
     gym: GymPick | null;
+    hasLocation?: boolean;
     onPicked: (gym: GymPick, chatId: number) => void;
     onLeft: () => void;
 }) {
@@ -132,44 +136,60 @@ export function GymPicker({
                 )}
             </div>
 
-            {(results.length > 0 || canCreate) && query.trim() !== '' && (
-                <div className="divide-y divide-[#2E2E2E] overflow-hidden rounded-xl border border-[#2E2E2E] bg-[#101010]">
-                    {results.map((r) => (
-                        <button
-                            key={r.id}
-                            type="button"
-                            disabled={saving}
-                            onClick={() => pick(r.id)}
-                            className={cn(
-                                'flex w-full items-center justify-between px-3 py-2.5 text-left text-sm',
-                                gym?.id === r.id
-                                    ? 'text-[#AFFA01]'
-                                    : 'text-[#F5F5F5] hover:bg-[#161616]',
-                            )}
-                        >
-                            <span className="truncate font-semibold">
-                                {r.name}
-                            </span>
-                            <span className="shrink-0 text-[10px] text-[#8E8E93]">
-                                {r.members} {t('member.ranks.gym_members')}
-                            </span>
-                        </button>
-                    ))}
-                    {canCreate && (
-                        <Button
-                            variant="ghost"
-                            disabled={saving}
-                            onClick={() => pick(undefined, query.trim())}
-                            className="h-auto w-full justify-start rounded-none px-3 py-2.5 text-[#AFFA01]"
-                        >
-                            <Plus className="size-4" />
-                            {t('member.ranks.gym_create', {
-                                name: query.trim(),
-                            })}
-                        </Button>
-                    )}
-                </div>
-            )}
+            {(results.length > 0 || canCreate) &&
+                (query.trim() !== '' || hasLocation) && (
+                    <div className="divide-y divide-[#2E2E2E] overflow-hidden rounded-xl border border-[#2E2E2E] bg-[#101010]">
+                        {query.trim() === '' && hasLocation && (
+                            <div className="px-3 py-1.5 text-[10px] font-bold tracking-wider text-[#8E8E93] uppercase">
+                                {t('member.ranks.gym_nearby')}
+                            </div>
+                        )}
+                        {results.map((r) => (
+                            <button
+                                key={r.id}
+                                type="button"
+                                disabled={saving}
+                                onClick={() => pick(r.id)}
+                                className={cn(
+                                    'flex w-full items-center justify-between px-3 py-2.5 text-left text-sm',
+                                    gym?.id === r.id
+                                        ? 'text-[#AFFA01]'
+                                        : 'text-[#F5F5F5] hover:bg-[#161616]',
+                                )}
+                            >
+                                <span className="truncate font-semibold">
+                                    {r.name}
+                                </span>
+                                <span className="flex shrink-0 items-center gap-2 text-[10px] text-[#8E8E93]">
+                                    {r.distance_km !== null && (
+                                        <span>
+                                            {t('member.ranks.gym.distance', {
+                                                name: r.distance_km,
+                                            })}
+                                        </span>
+                                    )}
+                                    <span>
+                                        {r.members}{' '}
+                                        {t('member.ranks.gym_members')}
+                                    </span>
+                                </span>
+                            </button>
+                        ))}
+                        {canCreate && (
+                            <Button
+                                variant="ghost"
+                                disabled={saving}
+                                onClick={() => pick(undefined, query.trim())}
+                                className="h-auto w-full justify-start rounded-none px-3 py-2.5 text-[#AFFA01]"
+                            >
+                                <Plus className="size-4" />
+                                {t('member.ranks.gym_create', {
+                                    name: query.trim(),
+                                })}
+                            </Button>
+                        )}
+                    </div>
+                )}
         </div>
     );
 }

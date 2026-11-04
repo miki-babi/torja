@@ -11,6 +11,7 @@ use App\Models\Friendship;
 use App\Models\Message;
 use App\Models\User;
 use App\Support\Chat\MessagePayload;
+use App\Support\Social\FriendSuggestions;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,6 +104,8 @@ class ConversationController extends Controller
         return Inertia::render('member/messages', [
             'pendingIn' => $pendingIn,
             'pendingOut' => $pendingOut,
+            'suggestions' => app(FriendSuggestions::class)->for($user, 10),
+            'hasLocation' => $user->latitude !== null && $user->longitude !== null,
             'conversations' => $conversations
                 ->map(function (Conversation $conversation) use ($user, $memberships, $lastMessages, $dmOthers, $unread): array {
                     $membership = $memberships[$conversation->id];

@@ -11,6 +11,23 @@ declare global {
                 };
                 ready?: () => void;
                 expand?: () => void;
+                isVersionAtLeast?: (version: string) => boolean;
+                LocationManager?: {
+                    isInited: boolean;
+                    isLocationAvailable: boolean;
+                    accessRequested: boolean;
+                    accessGranted: boolean;
+                    init?: (callback?: () => void) => void;
+                    getLocation?: (
+                        callback: (
+                            location: {
+                                latitude: number;
+                                longitude: number;
+                                accuracy?: number;
+                            } | null,
+                        ) => void,
+                    ) => void;
+                };
             };
         };
     }

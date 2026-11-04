@@ -146,6 +146,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.telegram.link');
     Route::delete('member/telegram', [Member\TelegramController::class, 'disconnect'])
         ->name('member.telegram.disconnect');
+    Route::post('member/location', [Member\LocationController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('member.location.store');
 
     Route::post('shared/playlists/{playlist:share_token}/save', [Member\SharedPlaylistController::class, 'save'])
         ->name('playlists.shared.save');

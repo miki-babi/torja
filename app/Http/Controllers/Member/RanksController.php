@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
-use App\Models\Friendship;
 use App\Models\Group;
 use App\Models\User;
 use App\Support\LeaderboardRank;
@@ -35,9 +34,10 @@ class RanksController extends Controller
             'period' => $period,
             'metric' => $period === 'all' ? 'volume' : 'sessions',
             'gym' => $user->gym?->only(['id', 'name']),
+            'hasLocation' => $user->latitude !== null && $user->longitude !== null,
             'entries' => [],
             'groups' => [],
-            'suggestedUsers' => [],
+
             'joinableGroups' => [],
             'you' => null,
         ];
@@ -53,23 +53,6 @@ class RanksController extends Controller
                 $period,
             );
 
-            $connected = Friendship::where('user_id', $user->id)
-                ->orWhere('friend_id', $user->id)
-                ->get(['user_id', 'friend_id'])
-                ->flatMap(fn (Friendship $f): array => [$f->user_id, $f->friend_id])
-                ->unique();
-
-            $props['suggestedUsers'] = User::where('id', '!=', $user->id)
-                ->whereNotIn('id', $connected->all())
-                ->latest('id')
-                ->limit(10)
-                ->get(['id', 'name', 'username', 'avatar_path'])
-                ->map(fn (User $u): array => [
-                    'id' => $u->id,
-                    'name' => $u->username ?: $u->name,
-                    'avatar' => $u->avatar,
-                ])
-                ->all();
         } elseif ($scope === 'groups') {
             $groups = $user->groups()->withCount('members')->get();
             $chatIds = Conversation::whereIn('group_id', $groups->modelKeys())

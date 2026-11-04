@@ -17,13 +17,28 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property string $name_key
+ * @property float|null $latitude
+ * @property float|null $longitude
  * @property int|null $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'name_key', 'created_by'])]
+#[Fillable(['name', 'name_key', 'latitude', 'longitude', 'created_by'])]
 class Gym extends Model
 {
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'latitude' => 'float',
+            'longitude' => 'float',
+        ];
+    }
+
     /**
      * Normalize the dedupe key on write.
      */
