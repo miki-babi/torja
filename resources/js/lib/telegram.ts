@@ -1,6 +1,18 @@
 import { xsrfToken } from '@/components/member/member-api';
 import { debug, webapp } from '@/routes/telegram/login';
 
+export type TelegramLocationData = {
+    latitude: number;
+    longitude: number;
+    altitude?: number | null;
+    course?: number | null;
+    speed?: number | null;
+    horizontal_accuracy?: number | null;
+    vertical_accuracy?: number | null;
+    course_accuracy?: number | null;
+    speed_accuracy?: number | null;
+};
+
 declare global {
     interface Window {
         Telegram?: {
@@ -12,21 +24,26 @@ declare global {
                 ready?: () => void;
                 expand?: () => void;
                 isVersionAtLeast?: (version: string) => boolean;
+                onEvent?: (
+                    eventType: string,
+                    handler: (payload?: unknown) => void,
+                ) => void;
+                offEvent?: (
+                    eventType: string,
+                    handler: (payload?: unknown) => void,
+                ) => void;
                 LocationManager?: {
                     isInited: boolean;
                     isLocationAvailable: boolean;
-                    accessRequested: boolean;
-                    accessGranted: boolean;
+                    isAccessRequested: boolean;
+                    isAccessGranted: boolean;
                     init?: (callback?: () => void) => void;
                     getLocation?: (
                         callback: (
-                            location: {
-                                latitude: number;
-                                longitude: number;
-                                accuracy?: number;
-                            } | null,
+                            location: TelegramLocationData | null,
                         ) => void,
                     ) => void;
+                    openSettings?: () => void;
                 };
             };
         };

@@ -2,7 +2,11 @@ import { Loader2, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { locationSupported, shareLocation } from '@/lib/location';
+import {
+    locationSupported,
+    openLocationSettings,
+    shareLocation,
+} from '@/lib/location';
 import { useTranslation } from '@/lib/i18n';
 
 /**
@@ -49,10 +53,11 @@ export function reasonText(
 }
 
 /**
- * Prompts the location share (Telegram LocationManager in the Mini App,
- * browser geolocation elsewhere) and persists the coordinates via
- * POST /member/location. `onShared` fires after a successful save so the
- * caller can reload suggestions.
+ * Prompts the location share through Telegram's LocationManager (Mini
+ * App only) and persists the coordinates via POST /member/location.
+ * `onShared` fires after a successful save so the caller can reload
+ * suggestions; a denied prompt offers a shortcut to Telegram's location
+ * settings.
  */
 export function ShareLocationButton({ onShared }: { onShared?: () => void }) {
     const { t } = useTranslation();
@@ -70,12 +75,21 @@ export function ShareLocationButton({ onShared }: { onShared?: () => void }) {
             onClick={async () => {
                 setBusy(true);
                 try {
-                    const shared = await shareLocation();
+                    const result = await shareLocation();
 
-                    if (shared) {
+                    if (result.status === 'granted') {
                         onShared?.();
+                    } else if (result.status === 'denied') {
+                        toast.error(t('member.ranks.suggest.share_denied'), {
+                            action: {
+                                label: t('member.ranks.suggest.share_settings'),
+                                onClick: openLocationSettings,
+                            },
+                        });
                     } else {
-                        toast.error(t('member.ranks.suggest.share_denied'));
+                        toast.error(
+                            t('member.ranks.suggest.share_unavailable'),
+                        );
                     }
                 } catch {
                     toast.error(t('member.ranks.suggest.share_denied'));

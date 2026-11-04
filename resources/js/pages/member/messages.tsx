@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { echo } from '@/lib/echo';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
+import { locationSupported } from '@/lib/location';
 import {
     accept as friendAccept,
     destroy as friendDestroy,
@@ -152,7 +153,7 @@ export default function MemberMessages({
 
             {(suggestions.length > 0 ||
                 friendResults !== null ||
-                !hasLocation) && (
+                (!hasLocation && locationSupported())) && (
                 <Card className="mt-4">
                     <CardHeader>
                         <CardTitle className="text-base">
@@ -160,7 +161,7 @@ export default function MemberMessages({
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {!hasLocation && (
+                        {!hasLocation && locationSupported() && (
                             <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[#2E2E2E] bg-[#101010] px-3 py-2.5">
                                 <span className="text-xs text-[#8E8E93]">
                                     {t('member.ranks.suggest.share')}
