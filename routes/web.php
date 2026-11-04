@@ -188,6 +188,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('member.sessions.backfill');
     Route::get('member/sessions/{session}/exercises', [Member\SessionController::class, 'exercises'])
         ->name('member.sessions.exercises');
+    Route::get('member/sessions/{session}/play', [Member\SessionController::class, 'play'])
+        ->name('member.sessions.play');
     Route::put('member/sessions/{session}/sets', [Member\SessionController::class, 'upsertSet'])
         ->name('member.sessions.sets.upsert');
     Route::delete('member/sessions/{session}/sets/{set}', [Member\SessionController::class, 'destroySet'])

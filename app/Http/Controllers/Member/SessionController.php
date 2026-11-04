@@ -10,6 +10,7 @@ use App\Models\WorkoutSet;
 use App\Support\ExerciseCatalog;
 use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -240,6 +241,72 @@ class SessionController extends Controller
             'backUrl' => str_starts_with($back, '/') ? $back : route('member.progress'),
             'bodyParts' => ExerciseCatalog::bodyPartFilters(),
             'equipment' => Exercise::query()->distinct()->orderBy('equipment')->pluck('equipment')->all(),
+        ]);
+    }
+
+    /**
+     * Guided workout player for a session: forwards to the playlist player
+     * when the session is tied to a playlist that still has exercises, and
+     * otherwise builds the workout from the exercises logged so far.
+     */
+    public function play(Request $request, WorkoutSession $session): Response|RedirectResponse
+    {
+        abort_unless($session->user_id === $request->user()->id, 403);
+
+        $session->load(['sets', 'playlist.items']);
+
+        $back = (string) $request->query('back', '');
+
+        if ($session->playlist !== null && $session->playlist->items->isNotEmpty()) {
+            return to_route('member.playlists.play', array_filter([
+                'playlist' => $session->playlist->id,
+                'back' => $back !== '' ? $back : null,
+            ]));
+        }
+
+        $slugs = $session->sets->sortBy('id')->pluck('exercise_id')->unique()->values();
+
+        $exerciseModels = Exercise::query()
+            ->whereIn('slug', $slugs)
+            ->get()
+            ->keyBy('slug');
+
+        $exercises = $slugs
+            ->map(function (string $slug) use ($exerciseModels): ?array {
+                $exercise = $exerciseModels->get($slug);
+
+                return $exercise === null ? null : [
+                    ...$exercise->toSummary(),
+                    'gif_url' => $exercise->gif_url,
+                    'sets' => null,
+                    'reps' => null,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($exercises === []) {
+            return to_route('member.today', ['session' => $session->id]);
+        }
+
+        app(Tracker::class)->record('session.started', subject: $session, properties: [
+            'playlist_id' => null,
+            'resumed' => true,
+            'player' => true,
+        ]);
+
+        return Inertia::render('member/workout-player', [
+            'program' => [
+                'name' => 'Today',
+            ],
+            'workout' => [
+                'id' => $session->id,
+                'title' => 'Workout',
+                'exercises' => $exercises,
+            ],
+            'session' => $session->toFrontend(),
+            'backUrl' => str_starts_with($back, '/') ? $back : route('member.home'),
         ]);
     }
 

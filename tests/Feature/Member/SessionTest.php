@@ -232,3 +232,76 @@ test('backfill rejects future dates and unknown exercises', function () {
         'sets' => [['exercise_id' => 'not-a-move', 'weight_kg' => 60, 'reps' => 8]],
     ])->assertUnprocessable();
 });
+
+test('playing a free session opens the workout player with the logged exercises', function () {
+    Exercise::factory()->create(['slug' => 'barbell-bench-press']);
+    Exercise::factory()->create(['slug' => 'squat']);
+    $user = User::factory()->create();
+    $session = WorkoutSession::factory()->for($user)->create(['date' => now()->toDateString()]);
+    $session->sets()->create(['exercise_id' => 'barbell-bench-press', 'set_index' => 0, 'reps' => 10]);
+    $session->sets()->create(['exercise_id' => 'squat', 'set_index' => 0, 'reps' => 8]);
+    $session->sets()->create(['exercise_id' => 'barbell-bench-press', 'set_index' => 1, 'reps' => 6]);
+
+    $this->actingAs($user)
+        ->get(route('member.sessions.play', $session->id))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('member/workout-player')
+            ->where('program.name', 'Today')
+            ->where('workout.id', $session->id)
+            ->has('workout.exercises', 2)
+            ->where('workout.exercises.0.slug', 'barbell-bench-press')
+            ->where('workout.exercises.1.slug', 'squat')
+            ->where('session.id', $session->id));
+});
+
+test('playing a playlist session redirects to the playlist player', function () {
+    $user = User::factory()->create();
+    $playlist = ExercisePlaylist::factory()->for($user)->create();
+    $playlist->items()->create(['exercise_id' => 'squat', 'position' => 1]);
+    $session = WorkoutSession::factory()->for($user)->create([
+        'exercise_playlist_id' => $playlist->id,
+        'date' => now()->toDateString(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('member.sessions.play', $session->id))
+        ->assertRedirect(route('member.playlists.play', $playlist->id));
+});
+
+test('playing a session whose playlist has no items falls back to the logged exercises', function () {
+    Exercise::factory()->create(['slug' => 'squat']);
+    $user = User::factory()->create();
+    $playlist = ExercisePlaylist::factory()->for($user)->create();
+    $session = WorkoutSession::factory()->for($user)->create([
+        'exercise_playlist_id' => $playlist->id,
+        'date' => now()->toDateString(),
+    ]);
+    $session->sets()->create(['exercise_id' => 'squat', 'set_index' => 0, 'reps' => 10]);
+
+    $this->actingAs($user)
+        ->get(route('member.sessions.play', $session->id))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('member/workout-player')
+            ->has('workout.exercises', 1)
+            ->where('workout.exercises.0.slug', 'squat')
+            ->where('session.id', $session->id));
+});
+
+test('playing an empty session redirects to today', function () {
+    $user = User::factory()->create();
+    $session = WorkoutSession::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->get(route('member.sessions.play', $session->id))
+        ->assertRedirect(route('member.today', ['session' => $session->id]));
+});
+
+test('users cannot play other users sessions', function () {
+    $session = WorkoutSession::factory()->create();
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('member.sessions.play', $session->id))
+        ->assertForbidden();
+});

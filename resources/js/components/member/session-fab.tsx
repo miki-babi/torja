@@ -1,6 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 import { Play } from 'lucide-react';
-import { play } from '@/routes/member/playlists';
+import { play } from '@/routes/member/sessions';
 
 type ActiveSession = {
     id: number;
@@ -9,9 +9,9 @@ type ActiveSession = {
 
 /**
  * Floating resume-workout button shown app-wide while the member has a
- * session today. Playlist sessions reopen the guided player; free
- * sessions open the session card on /today. Hidden on the player page
- * itself.
+ * session today. Reopens the workout player — playlist sessions forward
+ * to the playlist player, free sessions play the exercises logged so
+ * far. Hidden on the player page itself.
  */
 export function SessionFab() {
     const { props, component } = usePage<{ activeSession?: ActiveSession }>();
@@ -22,11 +22,7 @@ export function SessionFab() {
     }
 
     function open() {
-        router.visit(
-            session!.exercise_playlist_id !== null
-                ? play(session!.exercise_playlist_id).url
-                : `/today?session=${session!.id}`,
-        );
+        router.visit(play(session!.id).url);
     }
 
     return (
