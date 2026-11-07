@@ -33,6 +33,7 @@ class TenantEntryController extends Controller
         $linked = ! $user->isClientOf($trainer->user);
 
         $trainer->clients()->syncWithoutDetaching([$user->id]);
+        $trainer->markClientOpened($user);
 
         if ($linked) {
             Inertia::flash('toast', [

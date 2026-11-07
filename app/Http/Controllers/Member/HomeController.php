@@ -33,19 +33,33 @@ class HomeController extends Controller
         $recaps = $recaps->take(10);
         RecapController::hydrateComments($recaps);
 
+        $coach = $user->activeCoach();
+
         return Inertia::render('member/home', [
             'userName' => Str::before(trim((string) $user?->name), ' ') ?: 'there',
             'streak' => $user->activityStreak(),
-            'coaches' => $user->trainers()
-                ->with('user:id,name,avatar_path')
-                ->latest('trainer_clients.created_at')
+            'coachPrograms' => $coach === null ? [] : $user->programAccess()
+                ->whereHas('program', fn ($query) => $query->where('user_id', $coach->user_id))
+                ->with('program:id,name,name_am,image_path')
+                ->latest('id')
                 ->get()
-                ->map(fn ($trainer): array => [
-                    'id' => $trainer->id,
-                    'name' => $trainer->display_name,
-                    'avatar' => $trainer->user?->avatar,
-                    'slug' => $trainer->slug,
-                    'user_id' => $trainer->user_id,
+                ->map(fn ($access): array => [
+                    'id' => $access->program->id,
+                    'name' => $access->program->localizedName(),
+                    'image_url' => $access->program->image_url,
+                    'url' => route('member.programs.show', $access->program),
+                ])
+                ->all(),
+            'coachMealPrograms' => $coach === null ? [] : $user->mealPlans()
+                ->whereHas('sourceProgram', fn ($query) => $query->where('user_id', $coach->user_id))
+                ->with('sourceProgram:id,user_id,name,name_am,image_path')
+                ->latest('id')
+                ->get()
+                ->map(fn ($plan): array => [
+                    'id' => $plan->id,
+                    'name' => $plan->sourceProgram?->localizedName() ?? $plan->name,
+                    'image_url' => $plan->sourceProgram?->image_url,
+                    'url' => route('member.meal-programs.show', $plan),
                 ])
                 ->all(),
             'banners' => HomeBanners::forMember(),

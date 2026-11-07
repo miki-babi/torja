@@ -26,6 +26,7 @@ class ExploreController extends Controller
 
         $exercisePrograms = ProgramCatalog::exercisePrograms($user, $search);
         $mealPrograms = ProgramCatalog::mealPrograms($user, $search);
+        $coach = $user?->activeCoach();
 
         $products = ShopProduct::query()
             ->whereNotNull('published_at')
@@ -46,6 +47,10 @@ class ExploreController extends Controller
         return Inertia::render('member/explore', [
             'exercisePrograms' => $exercisePrograms,
             'mealPrograms' => $mealPrograms,
+            'coachPrograms' => $coach === null ? [] : [
+                ...ProgramCatalog::exercisePrograms($user, '', $coach->user_id),
+                ...ProgramCatalog::mealPrograms($user, '', $coach->user_id),
+            ],
             'products' => $products
                 ->map(fn (ShopProduct $product): array => [
                     'key' => (string) $product->id,

@@ -169,6 +169,7 @@ class TelegramLoginController extends Controller
 
         if ($trainer !== null) {
             $trainer->clients()->syncWithoutDetaching([$user->id]);
+            $trainer->markClientOpened($user);
             $request->session()->forget('tenant');
         }
 

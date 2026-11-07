@@ -7,13 +7,12 @@ use App\Events\MessagesRead;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
-use App\Models\Friendship;
 use App\Models\Message;
 use App\Models\User;
 use App\Support\Chat\MessagePayload;
-use App\Support\Social\FriendSuggestions;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,9 +23,19 @@ class ConversationController extends Controller
      * The inbox — every room the member sits in, newest activity first,
      * with the last message and the unread count for each.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
+
+        // Members get exactly one thread — the DM with their coach — so the
+        // chat tab lands inside it instead of an inbox.
+        if (! $user->isAdmin() && ! $user->isTrainer()) {
+            $coach = $user->activeCoach();
+
+            abort_if($coach === null, 403);
+
+            return to_route('member.messages.show', Conversation::dmBetween($user, $coach->user));
+        }
 
         $memberships = ConversationParticipant::where('user_id', $user->id)
             ->get()
@@ -34,7 +43,6 @@ class ConversationController extends Controller
 
         /** @var Collection<int, Conversation> $conversations */
         $conversations = Conversation::whereIn('id', $memberships->keys()->all() ?: [0])
-            ->with(['group:id,name', 'gym:id,name'])
             ->withCount('participants')
             ->get();
 
@@ -79,35 +87,11 @@ class ConversationController extends Controller
             ->selectRaw('conversation_id, COUNT(*) as unread')
             ->pluck('unread', 'conversation_id');
 
-        $pendingIn = Friendship::where('friend_id', $user->id)
-            ->where('status', 'pending')
-            ->with('user:id,name,username,avatar_path')
-            ->get()
-            ->map(fn (Friendship $f): array => [
-                'id' => $f->id,
-                'name' => $f->user->username ?: $f->user->name,
-                'avatar' => $f->user->avatar,
-            ])
-            ->all();
-
-        $pendingOut = Friendship::where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->with('friend:id,name,username,avatar_path')
-            ->get()
-            ->map(fn (Friendship $f): array => [
-                'id' => $f->id,
-                'name' => $f->friend->username ?: $f->friend->name,
-                'avatar' => $f->friend->avatar,
-            ])
-            ->all();
+        $coachUserId = $user->activeCoach()?->user_id;
 
         return Inertia::render('member/messages', [
-            'pendingIn' => $pendingIn,
-            'pendingOut' => $pendingOut,
-            'suggestions' => app(FriendSuggestions::class)->for($user, 10),
-            'hasLocation' => $user->latitude !== null && $user->longitude !== null,
             'conversations' => $conversations
-                ->map(function (Conversation $conversation) use ($user, $memberships, $lastMessages, $dmOthers, $unread): array {
+                ->map(function (Conversation $conversation) use ($user, $memberships, $lastMessages, $dmOthers, $unread, $coachUserId): array {
                     $membership = $memberships[$conversation->id];
                     $last = $lastMessages[$conversation->id] ?? null;
                     $other = $dmOthers[$conversation->id]->user ?? null;
@@ -115,16 +99,11 @@ class ConversationController extends Controller
                     return [
                         'id' => $conversation->id,
                         'type' => $conversation->type->value,
-                        'title' => match ($conversation->type) {
-                            ConversationType::Dm => $other !== null
-                                ? ($other->username ?: $other->name)
-                                : 'Chat',
-                            ConversationType::Group => $conversation->group->name,
-                            ConversationType::Gym => $conversation->gym->name,
-                        },
-                        'avatar' => $conversation->type === ConversationType::Dm ? $other?->avatar : null,
+                        'title' => $other !== null ? ($other->username ?: $other->name) : 'Chat',
+                        'avatar' => $other?->avatar,
                         'members' => $conversation->participants_count,
                         'muted' => $membership->muted_at !== null,
+                        'is_coach' => $other?->id === $coachUserId,
                         'unread' => (int) $unread->get($conversation->id, 0),
                         'last_message' => $last !== null ? [
                             'sender' => $last->sender->username ?: $last->sender->name,
@@ -140,6 +119,7 @@ class ConversationController extends Controller
                     ];
                 })
                 ->sortByDesc('activity')
+                ->sortByDesc('is_coach')
                 ->values()
                 ->all(),
         ]);
@@ -158,15 +138,8 @@ class ConversationController extends Controller
 
         abort_if($other->id === $me->id, 422);
 
-        $isFriend = Friendship::where('status', 'accepted')
-            ->where(fn ($q) => $q
-                ->where(fn ($qq) => $qq->where('user_id', $me->id)->where('friend_id', $other->id))
-                ->orWhere(fn ($qq) => $qq->where('user_id', $other->id)->where('friend_id', $me->id)))
-            ->exists();
-
-        $isTrainerPair = $me->isTrainerOf($other) || $me->isClientOf($other);
-
-        abort_unless($isFriend || $isTrainerPair || Conversation::where('dm_key', collect([$me->id, $other->id])->sort()->implode(':'))->exists(), 403);
+        // Members chat only with their coach; staff only with their clients.
+        abort_unless($me->isClientOf($other) || $me->isTrainerOf($other), 403);
 
         $conversation = Conversation::dmBetween($me, $other);
 
@@ -183,6 +156,7 @@ class ConversationController extends Controller
         $membership = $conversation->membershipFor($user);
 
         abort_unless($membership !== null, 403);
+        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $messages = $conversation->messages()
             ->withTrashed()
@@ -198,12 +172,11 @@ class ConversationController extends Controller
             'conversation' => [
                 'id' => $conversation->id,
                 'type' => $conversation->type->value,
-                'title' => match ($conversation->type) {
-                    ConversationType::Dm => $other !== null ? ($other->username ?: $other->name) : 'Chat',
-                    ConversationType::Group => $conversation->group->name,
-                    ConversationType::Gym => $conversation->gym->name,
-                },
-                'avatar' => $conversation->type === ConversationType::Dm ? $other?->avatar : null,
+                'title' => $other !== null ? ($other->username ?: $other->name) : 'Chat',
+                'avatar' => $other?->avatar,
+                'back_url' => $user->isAdmin() || $user->isTrainer()
+                    ? route('member.messages')
+                    : route('member.home'),
                 'can_moderate' => $conversation->canModerate($user),
                 'muted' => $membership->muted_at !== null,
             ],
@@ -227,7 +200,10 @@ class ConversationController extends Controller
      */
     public function older(Request $request, Conversation $conversation): JsonResponse
     {
-        abort_unless($conversation->isParticipant($request->user()), 403);
+        $user = $request->user();
+
+        abort_unless($conversation->isParticipant($user), 403);
+        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $before = (int) $request->query('before_id', PHP_INT_MAX);
 
@@ -256,6 +232,7 @@ class ConversationController extends Controller
         $membership = $conversation->membershipFor($user);
 
         abort_unless($membership !== null, 403);
+        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $data = $request->validate(['message_id' => ['required', 'integer']]);
         $latest = (int) $conversation->messages()->withTrashed()->max('id');
@@ -274,9 +251,11 @@ class ConversationController extends Controller
      */
     public function mute(Request $request, Conversation $conversation): JsonResponse
     {
-        $membership = $conversation->membershipFor($request->user());
+        $user = $request->user();
+        $membership = $conversation->membershipFor($user);
 
         abort_unless($membership !== null, 403);
+        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $membership->update(['muted_at' => now()]);
 
@@ -288,9 +267,11 @@ class ConversationController extends Controller
      */
     public function unmute(Request $request, Conversation $conversation): JsonResponse
     {
-        $membership = $conversation->membershipFor($request->user());
+        $user = $request->user();
+        $membership = $conversation->membershipFor($user);
 
         abort_unless($membership !== null, 403);
+        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $membership->update(['muted_at' => null]);
 

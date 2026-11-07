@@ -3,12 +3,10 @@
 namespace App\Enums;
 
 /**
- * Chat room kinds. `dm` is a two-person conversation between friends,
- * `group` is attached to a Ranks squad and `gym` to a Gym entity.
+ * Chat room kinds — `dm` is a two-person conversation; the only room a
+ * member can reach is the DM with their coach.
  */
 enum ConversationType: string
 {
     case Dm = 'dm';
-    case Group = 'group';
-    case Gym = 'gym';
 }

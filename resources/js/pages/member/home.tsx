@@ -1,5 +1,6 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
+    ChevronRight,
     Compass,
     Dumbbell,
     Flame,
@@ -7,6 +8,7 @@ import {
     NotebookPen,
     Sparkles,
     TrendingUp,
+    UtensilsCrossed,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -32,6 +34,13 @@ function greetingKey(): string {
     return 'greeting_evening';
 }
 
+type CoachPlan = {
+    id: number;
+    name: string;
+    image_url: string | null;
+    url: string;
+};
+
 export default function MemberHome({
     userName,
     weekStats,
@@ -39,7 +48,8 @@ export default function MemberHome({
     streak,
     recaps,
     recapsNextCursor,
-    coaches,
+    coachPrograms,
+    coachMealPrograms,
 }: {
     userName: string;
     weekStats: { sessions: number; volume: number };
@@ -47,17 +57,17 @@ export default function MemberHome({
     streak: number;
     recaps: Recap[];
     recapsNextCursor: number | null;
-    coaches: {
-        id: number;
-        name: string;
-        avatar: string | null;
-        slug: string;
-        user_id: number;
-    }[];
+    coachPrograms: CoachPlan[];
+    coachMealPrograms: CoachPlan[];
 }) {
     const { t } = useTranslation();
+    const { coach } = usePage().props;
     const greeting = t(`member.home.${greetingKey()}`);
     const [messaging, setMessaging] = useState(false);
+    const coachPlans: (CoachPlan & { kind: 'workout' | 'meal' })[] = [
+        ...coachPrograms.map((p) => ({ ...p, kind: 'workout' as const })),
+        ...coachMealPrograms.map((p) => ({ ...p, kind: 'meal' as const })),
+    ];
 
     async function messageCoach(userId: number) {
         setMessaging(true);
@@ -159,36 +169,67 @@ export default function MemberHome({
             )}
 
             {/* Your coach */}
-            {coaches.length > 0 && (
+            {coach && (
                 <section className="mt-4 space-y-2">
-                    {coaches.map((coach) => (
-                        <div
-                            key={coach.id}
-                            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#1C1C1E] p-3"
-                        >
-                            <div className="flex size-10 items-center justify-center rounded-full bg-[#AFFA01]/15 text-sm font-bold text-[#AFFA01]">
-                                {coach.name.slice(0, 1)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-[#F5F5F5]">
-                                    {coach.name}
-                                </p>
-                                <p className="text-xs text-[#8E8E93]">
-                                    Your coach
-                                </p>
-                            </div>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-white/15 text-xs"
-                                disabled={messaging}
-                                onClick={() => messageCoach(coach.user_id)}
-                            >
-                                <MessageCircle className="size-3.5" />
-                                Message
-                            </Button>
+                    <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#1C1C1E] p-3">
+                        <div className="flex size-10 items-center justify-center rounded-full bg-[#AFFA01]/15 text-sm font-bold text-[#AFFA01]">
+                            {coach.name.slice(0, 1)}
                         </div>
-                    ))}
+                        <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-[#F5F5F5]">
+                                {coach.name}
+                            </p>
+                            <p className="text-xs text-[#8E8E93]">
+                                {t('member.coach.your_coach')}
+                            </p>
+                        </div>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-white/15 text-xs"
+                            disabled={messaging}
+                            onClick={() => messageCoach(coach.user_id)}
+                        >
+                            <MessageCircle className="size-3.5" />
+                            {t('member.coach.message')}
+                        </Button>
+                    </div>
+
+                    {/* From your coach */}
+                    {coachPlans.length > 0 && (
+                        <div className="space-y-2">
+                            <h2 className="px-1 text-xs font-semibold tracking-wide text-[#8E8E93] uppercase">
+                                {t('member.coach.from_your_coach')}
+                            </h2>
+                            {coachPlans.map((plan) => (
+                                <Link
+                                    key={`${plan.kind}-${plan.id}`}
+                                    href={plan.url}
+                                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#1C1C1E] p-3 transition-colors hover:border-[#AFFA01]/30"
+                                >
+                                    {plan.image_url ? (
+                                        <img
+                                            src={plan.image_url}
+                                            alt={plan.name}
+                                            className="size-10 rounded-xl object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex size-10 items-center justify-center rounded-xl bg-[#AFFA01]/15">
+                                            {plan.kind === 'meal' ? (
+                                                <UtensilsCrossed className="size-4 text-[#AFFA01]" />
+                                            ) : (
+                                                <Dumbbell className="size-4 text-[#AFFA01]" />
+                                            )}
+                                        </div>
+                                    )}
+                                    <p className="min-w-0 flex-1 truncate text-sm font-semibold text-[#F5F5F5]">
+                                        {plan.name}
+                                    </p>
+                                    <ChevronRight className="size-4 shrink-0 text-[#666666]" />
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </section>
             )}
 

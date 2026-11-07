@@ -42,20 +42,22 @@ export type ChatParticipant = {
 
 export type ConversationMeta = {
     id: number;
-    type: 'dm' | 'group' | 'gym';
+    type: 'dm';
     title: string;
     avatar: string | null;
     can_moderate: boolean;
     muted: boolean;
+    back_url: string;
 };
 
 export type InboxConversation = {
     id: number;
-    type: 'dm' | 'group' | 'gym';
+    type: 'dm';
     title: string;
     avatar: string | null;
     members: number;
     muted: boolean;
+    is_coach: boolean;
     unread: number;
     last_message: {
         sender: string;

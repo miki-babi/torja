@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CaptureAttribution;
+use App\Http\Middleware\EnsureMemberHasCoach;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsTrainer;
 use App\Http\Middleware\HandleAppearance;
@@ -50,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'member.coach' => EnsureMemberHasCoach::class,
             'trainer' => EnsureUserIsTrainer::class,
         ]);
 

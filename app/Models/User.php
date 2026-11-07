@@ -48,13 +48,10 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $telegram_username
  * @property string|null $referral_code
  * @property int|null $referred_by_id
- * @property float|null $latitude
- * @property float|null $longitude
- * @property Carbon|null $location_shared_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id', 'gym_id', 'latitude', 'longitude', 'location_shared_at', 'leaderboard_opted_in'])]
+#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'telegram_link_token', 'attribution'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -82,10 +79,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'attribution' => 'array',
             'telegram_id' => 'integer',
-            'latitude' => 'float',
-            'longitude' => 'float',
-            'location_shared_at' => 'datetime',
-            'leaderboard_opted_in' => 'boolean',
         ];
     }
 
@@ -372,77 +365,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Friendships this user initiated or received.
-     *
-     * @return HasMany<Friendship, $this>
-     */
-    public function friendships(): HasMany
-    {
-        return $this->hasMany(Friendship::class);
-    }
-
-    /**
-     * Accepted friend ids in both directions.
-     *
-     * @return array<int>
-     */
-    public function friendIds(): array
-    {
-        return Friendship::where('status', 'accepted')
-            ->where(fn ($q) => $q
-                ->where('user_id', $this->id)
-                ->orWhere('friend_id', $this->id))
-            ->get(['user_id', 'friend_id'])
-            ->map(fn (Friendship $f): int => $f->user_id === $this->id
-                ? $f->friend_id
-                : $f->user_id)
-            ->all();
-    }
-
-    /**
-     * Squads the user belongs to on the Ranks page.
-     *
-     * @return BelongsToMany<Group, $this>
-     */
-    public function groups(): BelongsToMany
-    {
-        return $this->belongsToMany(Group::class, 'group_user')
-            ->withTimestamps();
-    }
-
-    /**
-     * The gym this member picked from the shared list.
-     *
-     * @return BelongsTo<Gym, $this>
-     */
-    public function gym(): BelongsTo
-    {
-        return $this->belongsTo(Gym::class);
-    }
-
-    /**
-     * Set the member's gym and move their gym-chat seat along with it —
-     * joining the new room and leaving the old one.
-     */
-    public function setGym(?Gym $gym): void
-    {
-        $previous = $this->gym_id;
-
-        if ($previous === $gym?->id) {
-            return;
-        }
-
-        $this->gym()->associate($gym);
-        $this->save();
-
-        Conversation::where('gym_id', $previous)->first()?->removeParticipant($this);
-
-        if ($gym !== null) {
-            Conversation::forGym($gym)->addParticipant($this);
-        }
-    }
-
-    /**
      * Chat rooms the user sits in.
      *
      * @return BelongsToMany<Conversation, $this>
@@ -455,20 +377,38 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Total unread chat messages across every room the user sits in —
-     * drives the badge on the Ranks chats entry.
+     * Total unread chat messages across every room the user sits in.
+     * Members can only reach their coach DM, so their badge is scoped to
+     * that thread; staff keep the all-rooms count.
      */
     public function unreadChatCount(): int
     {
-        return (int) DB::table('messages')
+        $query = DB::table('messages')
             ->join('conversation_user', function ($join): void {
                 $join->on('conversation_user.conversation_id', '=', 'messages.conversation_id')
                     ->where('conversation_user.user_id', '=', $this->id);
             })
             ->whereNull('messages.deleted_at')
             ->where('messages.user_id', '!=', $this->id)
-            ->whereRaw('messages.id > COALESCE(conversation_user.last_read_message_id, 0)')
-            ->count();
+            ->whereRaw('messages.id > COALESCE(conversation_user.last_read_message_id, 0)');
+
+        if (! $this->isAdmin() && ! $this->isTrainer()) {
+            $coach = $this->activeCoach();
+
+            if ($coach === null) {
+                return 0;
+            }
+
+            $roomId = Conversation::where('dm_key', collect([$this->id, $coach->user_id])->sort()->implode(':'))->value('id');
+
+            if ($roomId === null) {
+                return 0;
+            }
+
+            $query->where('messages.conversation_id', $roomId);
+        }
+
+        return (int) $query->count();
     }
 
     /**
@@ -642,7 +582,22 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function trainers(): BelongsToMany
     {
         return $this->belongsToMany(Trainer::class, 'trainer_clients')
+            ->withPivot('last_opened_at')
             ->withTimestamps();
+    }
+
+    /**
+     * The coach whose surface the member most recently opened the app
+     * through — their bot, `/t/{slug}` invite, or mini-app launch — so the
+     * member app can brand and scope itself to that tenant. Members who
+     * never opened via a coach fall back to their latest link.
+     */
+    public function activeCoach(): ?Trainer
+    {
+        return $this->trainers()
+            ->with('user:id,name,avatar_path')
+            ->orderByRaw('COALESCE(trainer_clients.last_opened_at, trainer_clients.created_at) DESC')
+            ->first();
     }
 
     /**

@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { useEffect, type ReactNode } from 'react';
 import { BottomNav } from '@/components/member/bottom-nav';
+import { CoachBrand } from '@/components/member/coach-brand';
 import { SessionFab } from '@/components/member/session-fab';
 import { NudgeBanner } from '@/components/nudge-banner';
 import {
@@ -58,9 +59,11 @@ function useTelegramStartParam() {
 export function MobileShell({
     children,
     hideNav = false,
+    hideBrand = false,
 }: {
     children: ReactNode;
     hideNav?: boolean;
+    hideBrand?: boolean;
 }) {
     const { auth } = usePage().props;
 
@@ -75,6 +78,7 @@ export function MobileShell({
                 )}
             >
                 <NudgeBanner />
+                {auth.user && !hideBrand && <CoachBrand />}
                 {children}
             </div>
             <SessionFab />

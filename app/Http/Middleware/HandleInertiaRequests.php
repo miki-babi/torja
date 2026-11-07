@@ -48,6 +48,15 @@ class HandleInertiaRequests extends Middleware
             ],
             'pro' => $request->user()?->isPro() ?? false,
             'unreadChats' => $request->user()?->unreadChatCount() ?? 0,
+            'coach' => ($coach = $request->user()?->activeCoach()) === null
+                ? null
+                : [
+                    'id' => $coach->id,
+                    'name' => $coach->display_name,
+                    'avatar' => $coach->user?->avatar,
+                    'slug' => $coach->slug,
+                    'user_id' => $coach->user_id,
+                ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'locale' => app()->getLocale(),
             'languages' => Locales::active()

@@ -106,7 +106,10 @@ Route::get('t/{trainer:slug}', Member\TenantEntryController::class)
 
 Route::get('r/{code}', AmbassadorRedirectController::class)->name('invite.show');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'member.coach'])->group(function () {
+    Route::inertia('member/no-coach', 'member/no-coach')
+        ->name('member.no-coach');
+
     Route::get('pro', [ProController::class, 'show'])->name('pro.show');
     Route::post('plan/checkout', [PaymentController::class, 'store'])
         ->name('plan.checkout');
@@ -156,9 +159,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('member.telegram.link');
     Route::delete('member/telegram', [Member\TelegramController::class, 'disconnect'])
         ->name('member.telegram.disconnect');
-    Route::post('member/location', [Member\LocationController::class, 'store'])
-        ->middleware('throttle:30,1')
-        ->name('member.location.store');
 
     Route::post('shared/playlists/{playlist:share_token}/save', [Member\SharedPlaylistController::class, 'save'])
         ->name('playlists.shared.save');
@@ -250,34 +250,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('member.progress-photos.store');
     Route::delete('member/progress-photos/{progressPhoto}', [Member\ProgressPhotoController::class, 'destroy'])
         ->name('member.progress-photos.destroy');
-
-    Route::get('member/ranks', [Member\RanksController::class, 'index'])->name('member.ranks');
-    Route::post('member/ranks/opt-in', [Member\RanksController::class, 'optIn'])
-        ->name('member.ranks.opt-in');
-    Route::post('member/ranks/opt-out', [Member\RanksController::class, 'optOut'])
-        ->name('member.ranks.opt-out');
-    Route::get('member/ranks/friends/search', [Member\FriendController::class, 'search'])
-        ->name('member.ranks.friends.search');
-    Route::post('member/ranks/friends', [Member\FriendController::class, 'store'])
-        ->name('member.ranks.friends.store');
-    Route::post('member/ranks/friends/{friendship}/accept', [Member\FriendController::class, 'accept'])
-        ->name('member.ranks.friends.accept');
-    Route::delete('member/ranks/friends/{friendship}', [Member\FriendController::class, 'destroy'])
-        ->name('member.ranks.friends.destroy');
-    Route::get('member/ranks/groups/search', [Member\GroupController::class, 'search'])
-        ->name('member.ranks.groups.search');
-    Route::post('member/ranks/groups', [Member\GroupController::class, 'store'])
-        ->name('member.ranks.groups.store');
-    Route::post('member/ranks/groups/join', [Member\GroupController::class, 'join'])
-        ->name('member.ranks.groups.join');
-    Route::delete('member/ranks/groups/{group}', [Member\GroupController::class, 'destroy'])
-        ->name('member.ranks.groups.destroy');
-    Route::get('member/ranks/gyms', [Member\GymController::class, 'index'])
-        ->name('member.ranks.gyms.index');
-    Route::post('member/ranks/gym', [Member\GymController::class, 'store'])
-        ->name('member.ranks.gym.store');
-    Route::delete('member/ranks/gym', [Member\GymController::class, 'destroy'])
-        ->name('member.ranks.gym.destroy');
 
     Route::get('member/messages', [Member\ConversationController::class, 'index'])
         ->name('member.messages');

@@ -23,19 +23,8 @@ test('members see their account info and stats', function () {
             ->where('account.name', $user->name)
             ->where('account.email', $user->email)
             ->where('profileCompleted', true)
-            ->where('ranksOptedIn', false)
             ->has('body')
             ->has('goal'));
-});
-
-test('profile exposes the leaderboard opt-in state', function () {
-    $user = User::factory()->create(['leaderboard_opted_in' => true]);
-
-    $this->actingAs($user)
-        ->get(route('member.profile'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('ranksOptedIn', true));
 });
 
 test('pro members see the profile page', function () {

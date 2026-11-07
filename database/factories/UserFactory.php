@@ -88,6 +88,18 @@ class UserFactory extends Factory
     }
 
     /**
+     * Link the user to a coach tenant, as if they joined via a trainer's
+     * bot or `/t/{slug}` invite — required before member routes open.
+     */
+    public function withCoach(?Trainer $trainer = null): static
+    {
+        return $this->afterCreating(
+            fn (User $user) => ($trainer ?? Trainer::factory()->create())
+                ->clients()->attach($user->id),
+        );
+    }
+
+    /**
      * An account linked to a Telegram identity.
      */
     public function withTelegram(): static

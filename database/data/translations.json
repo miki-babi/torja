@@ -1184,5 +1184,33 @@
             "en": "Log in to order",
             "am": "ለማዘዝ ይግቡ"
         }
+    },
+    "member.coach": {
+        "your_coach": {
+            "en": "Your coach",
+            "am": "አሰልጣኝዎ"
+        },
+        "message": {
+            "en": "Message",
+            "am": "መልእክት"
+        },
+        "from_your_coach": {
+            "en": "From your coach",
+            "am": "ከአሰልጣኝዎ"
+        },
+        "chat_failed": {
+            "en": "Could not open chat",
+            "am": "ውይይቱን መክፈት አልተቻለም"
+        }
+    },
+    "member.no_coach": {
+        "title": {
+            "en": "Your coach's app",
+            "am": "የአሰልጣኝዎ መተግበሪያ"
+        },
+        "body": {
+            "en": "This app is where your coach trains you. Ask them for their invite link or open their Telegram bot to get started.",
+            "am": "ይህ መተግበሪያ አሰልጣኝዎ የሚያሠለጥንበት ነው። ለመጀመር የግብዣ ሊንካቸውን ይጠይቁ ወይም የቴሌግራም ቦታቸውን ይክፈቱ።"
+        }
     }
 }

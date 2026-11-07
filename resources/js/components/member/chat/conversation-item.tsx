@@ -1,5 +1,4 @@
 import { Link } from '@inertiajs/react';
-import { Dumbbell, Users } from 'lucide-react';
 import {
     formatMessageTime,
     type InboxConversation,
@@ -32,13 +31,7 @@ export function ConversationItem({
                         alt={conversation.title}
                     />
                     <AvatarFallback className="bg-[#1C1C1E] text-xs font-bold text-[#AFFA01]">
-                        {conversation.type === 'gym' ? (
-                            <Dumbbell className="size-4" />
-                        ) : conversation.type === 'group' ? (
-                            <Users className="size-4" />
-                        ) : (
-                            initials(conversation.title)
-                        )}
+                        {initials(conversation.title)}
                     </AvatarFallback>
                 </Avatar>
                 {conversation.unread > 0 && (
@@ -69,7 +62,7 @@ export function ConversationItem({
                     >
                         {conversation.last_message === null
                             ? '…'
-                            : `${conversation.last_message.mine ? 'You: ' : conversation.type === 'dm' ? '' : `${conversation.last_message.sender}: `}${conversation.last_message.snippet}`}
+                            : `${conversation.last_message.mine ? 'You: ' : ''}${conversation.last_message.snippet}`}
                     </p>
                     {conversation.muted && (
                         <span className="shrink-0 text-[11px] text-[#8E8E93]">

@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Bell, BellOff, Dumbbell, Users } from 'lucide-react';
+import { ArrowLeft, Bell, BellOff } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { MessageBubble } from '@/components/member/chat/message-bubble';
@@ -17,7 +17,6 @@ import { useInitials } from '@/hooks/use-initials';
 import { echo } from '@/lib/echo';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { messages as messagesIndex } from '@/routes/member';
 import {
     destroy as destroyMessage,
     mute as muteConversation,
@@ -422,7 +421,7 @@ export default function MemberMessagesShow({
         return others.every((p) => (cursors.get(p.id) ?? 0) >= message.id);
     }
 
-    const onlineCount = online.size;
+
     const typingNames = [...typing.values()];
     const showSender = conversation.type !== 'dm';
 
@@ -432,7 +431,7 @@ export default function MemberMessagesShow({
 
             <div className="sticky top-0 z-10 -mx-4 flex items-center gap-3 border-b border-[#1C1C1E] bg-[#0A0A0A]/95 px-4 py-2.5 backdrop-blur-md">
                 <Link
-                    href={messagesIndex().url}
+                    href={conversation.back_url}
                     aria-label={t('member.chats.back')}
                     className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#2E2E2E] text-[#8E8E93] hover:text-[#F5F5F5]"
                 >
@@ -444,13 +443,7 @@ export default function MemberMessagesShow({
                         alt={conversation.title}
                     />
                     <AvatarFallback className="bg-[#1C1C1E] text-[10px] font-bold text-[#AFFA01]">
-                        {conversation.type === 'gym' ? (
-                            <Dumbbell className="size-4" />
-                        ) : conversation.type === 'group' ? (
-                            <Users className="size-4" />
-                        ) : (
-                            initials(conversation.title)
-                        )}
+                        {initials(conversation.title)}
                     </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
@@ -460,14 +453,12 @@ export default function MemberMessagesShow({
                     <p className="truncate text-[11px] text-[#8E8E93]">
                         {typingNames.length > 0
                             ? `${typingNames.join(', ')} ${t('member.chat.typing')}`
-                            : conversation.type === 'dm'
-                              ? online.has(
+                            : online.has(
                                     participants.find((p) => p.id !== me)?.id ??
                                         -1,
                                 )
-                                  ? t('member.chat.online')
-                                  : t('member.chat.offline')
-                              : `${onlineCount} ${t('member.chat.online_count')}`}
+                              ? t('member.chat.online')
+                              : t('member.chat.offline')}
                     </p>
                 </div>
                 <button

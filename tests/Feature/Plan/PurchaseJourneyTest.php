@@ -2,6 +2,7 @@
 
 use App\Models\NutritionProfile;
 use App\Models\Payment;
+use App\Models\Trainer;
 use App\Models\User;
 use Database\Seeders\FoodDatabaseSeeder;
 use Illuminate\Support\Facades\Http;
@@ -51,6 +52,10 @@ test('a guest completes the wizard, registers, pays and unlocks the full plan', 
     $this->assertAuthenticated();
 
     $user = User::sole();
+
+    // Members reach the app through a coach — member routes and checkout
+    // are gated on a trainer link.
+    Trainer::factory()->create()->clients()->attach($user->id);
 
     // Email verification is currently not gated — new accounts reach the
     // preview straight away.

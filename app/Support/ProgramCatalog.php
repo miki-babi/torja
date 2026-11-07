@@ -23,11 +23,12 @@ class ProgramCatalog
      *
      * @return array<int, array{key: string, kind: string, name: string, description: string|null, image_url: string|null, meta_count: int, view_url: string, save_url: string, claimed: bool, member_url: string}>
      */
-    public static function exercisePrograms(?User $user, string $search = ''): array
+    public static function exercisePrograms(?User $user, string $search = '', ?int $authorId = null): array
     {
         $programs = ExerciseProgram::query()
             ->whereNotNull('published_at')
             ->whereNotNull('share_token')
+            ->when($authorId !== null, fn ($query) => $query->where('user_id', $authorId))
             ->when($search !== '', fn ($query) => $query->where(
                 fn ($q) => $q->where('name', 'like', "%{$search}%")
                     ->orWhere('name_am', 'like', "%{$search}%"),
@@ -63,11 +64,12 @@ class ProgramCatalog
      *
      * @return array<int, array{key: string, kind: string, name: string, description: string|null, image_url: string|null, meta_count: int, view_url: string, save_url: string, claimed: bool, member_url: string|null}>
      */
-    public static function mealPrograms(?User $user, string $search = ''): array
+    public static function mealPrograms(?User $user, string $search = '', ?int $authorId = null): array
     {
         $programs = MealProgram::query()
             ->whereNotNull('published_at')
             ->whereNotNull('share_token')
+            ->when($authorId !== null, fn ($query) => $query->where('user_id', $authorId))
             ->when($search !== '', fn ($query) => $query->where(
                 fn ($q) => $q->where('name', 'like', "%{$search}%")
                     ->orWhere('name_am', 'like', "%{$search}%"),

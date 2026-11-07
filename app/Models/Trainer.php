@@ -73,7 +73,20 @@ class Trainer extends Model
     public function clients(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'trainer_clients')
+            ->withPivot('last_opened_at')
             ->withTimestamps();
+    }
+
+    /**
+     * Stamp the client's link as having just opened the app through this
+     * trainer's surface — feeds `User::activeCoach()` so the member app
+     * shows the coach whose bot or invite launched it.
+     */
+    public function markClientOpened(User $user): void
+    {
+        $this->clients()->updateExistingPivot($user->id, [
+            'last_opened_at' => now(),
+        ]);
     }
 
     /**

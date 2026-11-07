@@ -5,25 +5,22 @@ namespace App\Models;
 use App\Enums\ConversationType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
  * A chat room. `dm` rooms are keyed by the canonical `dm_key` pair
- * ("lowId:highId"); `group` and `gym` rooms are bound 1:1 to their
- * owning entity and created lazily/auto on membership.
+ * ("lowId:highId") — in the coach-scoped app the only room a member can
+ * open is the DM with their coach.
  *
  * @property int $id
  * @property ConversationType $type
  * @property string|null $dm_key
- * @property int|null $group_id
- * @property int|null $gym_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['type', 'dm_key', 'group_id', 'gym_id'])]
+#[Fillable(['type', 'dm_key'])]
 class Conversation extends Model
 {
     /**
@@ -70,26 +67,6 @@ class Conversation extends Model
     }
 
     /**
-     * The squad this room belongs to, when type is `group`.
-     *
-     * @return BelongsTo<Group, $this>
-     */
-    public function group(): BelongsTo
-    {
-        return $this->belongsTo(Group::class);
-    }
-
-    /**
-     * The gym this room belongs to, when type is `gym`.
-     *
-     * @return BelongsTo<Gym, $this>
-     */
-    public function gym(): BelongsTo
-    {
-        return $this->belongsTo(Gym::class);
-    }
-
-    /**
      * Whether the user is a member of this room.
      */
     public function isParticipant(User $user): bool
@@ -125,20 +102,20 @@ class Conversation extends Model
     }
 
     /**
-     * Whether the user may delete others' messages here: squad owners and
-     * gym creators moderate their rooms; admins moderate everywhere.
+     * Whether the user may delete others' messages here — admins only.
      */
     public function canModerate(User $user): bool
     {
-        if ($user->isAdmin()) {
-            return true;
-        }
+        return $user->isAdmin();
+    }
 
-        return match ($this->type) {
-            ConversationType::Group => $this->group?->owner_id === $user->id,
-            ConversationType::Gym => $this->gym?->created_by === $user->id,
-            ConversationType::Dm => false,
-        };
+    /**
+     * Whether this room is the member's DM with their active coach — the
+     * only thread a member may open in the coach-scoped app.
+     */
+    public function isCoachThreadFor(User $user): bool
+    {
+        return $this->otherParticipant($user)?->id === $user->activeCoach()?->user_id;
     }
 
     /**
@@ -146,10 +123,6 @@ class Conversation extends Model
      */
     public function otherParticipant(User $user): ?User
     {
-        if ($this->type !== ConversationType::Dm) {
-            return null;
-        }
-
         return $this->participants()->where('users.id', '!=', $user->id)->first();
     }
 
@@ -167,23 +140,5 @@ class Conversation extends Model
         $conversation->addParticipant($b);
 
         return $conversation;
-    }
-
-    /**
-     * Find or create the chat room for a squad.
-     */
-    public static function forGroup(Group $group): self
-    {
-        return static::where('group_id', $group->id)->first()
-            ?? static::create(['group_id' => $group->id, 'type' => ConversationType::Group]);
-    }
-
-    /**
-     * Find or create the chat room for a gym.
-     */
-    public static function forGym(Gym $gym): self
-    {
-        return static::where('gym_id', $gym->id)->first()
-            ?? static::create(['gym_id' => $gym->id, 'type' => ConversationType::Gym]);
     }
 }

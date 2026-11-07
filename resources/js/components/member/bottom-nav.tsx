@@ -4,7 +4,6 @@ import {
     House,
     MessageCircle,
     TrendingUp,
-    Trophy,
     User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,7 +13,6 @@ import {
     messages,
     profile,
     progress,
-    ranks,
 } from '@/routes/member';
 
 const TABS = [
@@ -30,12 +28,6 @@ const TABS = [
         href: progress,
         paths: ['/progress'],
         icon: TrendingUp,
-    },
-    {
-        label: 'ranks',
-        href: ranks,
-        paths: ['/member/ranks'],
-        icon: Trophy,
     },
     {
         label: 'chat',

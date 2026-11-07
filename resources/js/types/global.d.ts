@@ -13,6 +13,13 @@ declare module '@inertiajs/core' {
             auth: Auth;
             pro: boolean;
             unreadChats: number;
+            coach: {
+                id: number;
+                name: string;
+                avatar: string | null;
+                slug: string;
+                user_id: number;
+            } | null;
             sidebarOpen: boolean;
             nudge: import('@/components/nudge-banner').NudgePayload | null;
             [key: string]: unknown;

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Member;
 
-use App\Enums\ConversationType;
 use App\Events\ConversationActivity;
 use App\Events\MessageDeleted;
 use App\Events\MessageSent;
@@ -31,6 +30,7 @@ class MessageController extends Controller
         $membership = $conversation->membershipFor($user);
 
         abort_unless($membership !== null, 403);
+        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $data = $request->validate([
             'body' => ['nullable', 'string', 'max:4000'],
@@ -76,8 +76,11 @@ class MessageController extends Controller
      */
     public function update(Request $request, Conversation $conversation, Message $message): JsonResponse
     {
-        abort_unless($conversation->isParticipant($request->user()), 403);
-        abort_unless($message->user_id === $request->user()->id, 403);
+        $user = $request->user();
+
+        abort_unless($conversation->isParticipant($user), 403);
+        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
+        abort_unless($message->user_id === $user->id, 403);
         abort_if($message->trashed(), 404);
 
         $data = $request->validate(['body' => ['required', 'string', 'max:4000']]);
@@ -93,13 +96,13 @@ class MessageController extends Controller
     }
 
     /**
-     * Soft-delete a message — the sender, or a room moderator (squad
-     * owner, gym creator, or app admin).
+     * Soft-delete a message — the sender, or an app admin.
      */
     public function destroy(Request $request, Conversation $conversation, Message $message): JsonResponse
     {
         $user = $request->user();
 
+        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
         abort_unless(
             $message->user_id === $user->id || $conversation->canModerate($user),
             403,
@@ -118,13 +121,16 @@ class MessageController extends Controller
      */
     public function react(Request $request, Conversation $conversation, Message $message): JsonResponse
     {
-        abort_unless($conversation->isParticipant($request->user()), 403);
+        $user = $request->user();
+
+        abort_unless($conversation->isParticipant($user), 403);
+        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
         abort_if($message->trashed(), 404);
 
         $data = $request->validate(['emoji' => ['required', 'string', 'max:16']]);
 
         $existing = MessageReaction::where('message_id', $message->id)
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->where('emoji', $data['emoji'])
             ->first();
 
@@ -175,8 +181,6 @@ class MessageController extends Controller
      */
     private function fanOut(Conversation $conversation, Message $message): void
     {
-        $conversation->loadMissing(['group', 'gym']);
-
         $snippet = $message->body !== null && $message->body !== ''
             ? mb_strimwidth($message->body, 0, 60, '…')
             : '📎';
@@ -193,11 +197,7 @@ class MessageController extends Controller
                 broadcast(new ConversationActivity($recipient->id, [
                     'conversation_id' => $conversation->id,
                     'type' => $conversation->type->value,
-                    'title' => match ($conversation->type) {
-                        ConversationType::Dm => $senderName,
-                        ConversationType::Group => $conversation->group->name,
-                        ConversationType::Gym => $conversation->gym->name,
-                    },
+                    'title' => $senderName,
                     'sender' => $senderName,
                     'snippet' => $snippet,
                     'created_at' => $message->created_at?->toIso8601String(),

@@ -50,7 +50,7 @@ class ProfileController extends Controller
             'activity' => $profile->activity,
             'pace' => $profile->pace,
             'profileCompleted' => $profile->completed_at !== null,
-            'ranksOptedIn' => (bool) $user?->leaderboard_opted_in,
+
             'streak' => $user->activityStreak(),
             'activityWeek' => $user->activityWeek(),
             'weightLogs' => $user->weightLogs()->limit(8)->get()

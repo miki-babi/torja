@@ -149,11 +149,13 @@ function ProductRow({ product }: { product: ShopProduct }) {
 
 export default function MemberExplore({
     exercisePrograms,
+    coachPrograms,
     products,
     filters,
 }: {
     exercisePrograms: CatalogProgram[];
     mealPrograms: CatalogProgram[];
+    coachPrograms: CatalogProgram[];
     products: ShopProduct[];
     filters: { q: string; chip: Chip };
 }) {
@@ -269,6 +271,13 @@ export default function MemberExplore({
                     className="pl-9"
                 />
             </div>
+
+            {!isGuest && coachPrograms.length > 0 && (
+                <Section
+                    title={t('member.coach.from_your_coach')}
+                    programs={coachPrograms}
+                />
+            )}
 
             {!isGuest && (
                 <Section

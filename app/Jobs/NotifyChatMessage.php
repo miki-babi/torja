@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\ConversationType;
 use App\Models\Message;
 use App\Models\User;
 use App\Support\Telegram\TelegramApi;
@@ -35,7 +34,7 @@ class NotifyChatMessage implements ShouldQueue
      */
     public function handle(): void
     {
-        $message = Message::with(['conversation.group', 'conversation.gym', 'sender'])->find($this->messageId);
+        $message = Message::with(['conversation', 'sender'])->find($this->messageId);
         $recipient = User::find($this->recipientId);
 
         if ($message === null || $recipient === null || $message->trashed()) {
@@ -46,6 +45,11 @@ class NotifyChatMessage implements ShouldQueue
         $membership = $conversation->membershipFor($recipient);
 
         if ($membership === null || $membership->muted_at !== null) {
+            return;
+        }
+
+        // Members only hear about their coach's thread.
+        if (! $recipient->isAdmin() && ! $recipient->isTrainer() && ! $conversation->isCoachThreadFor($recipient)) {
             return;
         }
 
@@ -65,19 +69,12 @@ class NotifyChatMessage implements ShouldQueue
         }
 
         $sender = $message->sender->username ?: $message->sender->name;
-        $room = match ($conversation->type) {
-            ConversationType::Group => $conversation->group?->name,
-            ConversationType::Gym => $conversation->gym?->name,
-            ConversationType::Dm => null,
-        };
         $count = $message->attachments()->count();
         $snippet = $message->body !== null && $message->body !== ''
             ? mb_strimwidth($message->body, 0, 120, '…')
             : "📎 {$count} attachment".($count === 1 ? '' : 's');
 
-        $text = '<b>'.e($sender).'</b>'
-            .($room !== null ? ' in <b>'.e($room).'</b>' : '')
-            .":\n".e($snippet);
+        $text = '<b>'.e($sender).'</b>'.":\n".e($snippet);
 
         $result = app(TelegramApi::class)->sendMessage($chatId, $text);
 
