@@ -1,7 +1,6 @@
-import { Form, Head, Link, router } from '@inertiajs/react';
-import { Bot, Search, Users, Wallet } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Bot, Search, UserPlus, Users, Wallet } from 'lucide-react';
 import { useState } from 'react';
-import InputError from '@/components/input-error';
 import { EmptyState } from '@/components/admin/empty-state';
 import { AdminPageHeader } from '@/components/admin/page-header';
 import { AdminPagination } from '@/components/admin/pagination';
@@ -48,14 +47,25 @@ type Trainer = {
     joined: string;
 };
 
+type Member = {
+    id: number;
+    name: string;
+    email: string | null;
+    username: string | null;
+    avatar: string | null;
+    joined: string;
+};
+
 type Props = {
     trainers: Paginated<Trainer>;
+    members: Paginated<Member>;
     filters: { search: string };
     stats: { trainers: number; clients: number; revenue: number };
 };
 
 export default function AdminTrainersIndex({
     trainers,
+    members,
     filters,
     stats,
 }: Props) {
@@ -77,6 +87,17 @@ export default function AdminTrainersIndex({
                 <AdminPageHeader
                     title="Trainers"
                     description="Coach tenants on the platform."
+                    actions={
+                        <form onSubmit={submitSearch} className="relative">
+                            <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
+                            <Input
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search trainers & members…"
+                                className="w-64 pl-8"
+                            />
+                        </form>
+                    }
                 />
 
                 <div className="grid gap-4 sm:grid-cols-3">
@@ -94,41 +115,6 @@ export default function AdminTrainersIndex({
                 </div>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">
-                            Promote a member
-                        </CardTitle>
-                        <CardDescription>
-                            Enter an existing member's email to give them a
-                            coach workspace.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Form
-                            {...promote.form()}
-                            className="flex max-w-md items-start gap-2"
-                        >
-                            {({ processing, errors }) => (
-                                <>
-                                    <div className="flex-1">
-                                        <Input
-                                            name="email"
-                                            type="email"
-                                            placeholder="member@example.com"
-                                            required
-                                        />
-                                        <InputError message={errors.email} />
-                                    </div>
-                                    <Button type="submit" disabled={processing}>
-                                        Promote to trainer
-                                    </Button>
-                                </>
-                            )}
-                        </Form>
-                    </CardContent>
-                </Card>
-
-                <Card>
                     <CardHeader className="flex-row items-center justify-between space-y-0">
                         <div>
                             <CardTitle className="text-base">
@@ -139,15 +125,6 @@ export default function AdminTrainersIndex({
                                 {trainers.total === 1 ? '' : 's'}
                             </CardDescription>
                         </div>
-                        <form onSubmit={submitSearch} className="relative">
-                            <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
-                            <Input
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search trainers…"
-                                className="w-56 pl-8"
-                            />
-                        </form>
                     </CardHeader>
                     <CardContent>
                         {trainers.data.length === 0 ? (
@@ -245,6 +222,101 @@ export default function AdminTrainersIndex({
                         )}
                         <div className="mt-4">
                             <AdminPagination page={trainers} />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">Members</CardTitle>
+                        <CardDescription>
+                            {members.total} member
+                            {members.total === 1 ? '' : 's'} — promote anyone to
+                            give them a coach workspace.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {members.data.length === 0 ? (
+                            <EmptyState
+                                icon={Users}
+                                title="No members found"
+                                description="Members appear here as they sign up."
+                            />
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Member</TableHead>
+                                        <TableHead>Telegram</TableHead>
+                                        <TableHead>Joined</TableHead>
+                                        <TableHead className="text-right">
+                                            Action
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {members.data.map((member) => (
+                                        <TableRow key={member.id}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="size-8">
+                                                        <AvatarImage
+                                                            src={
+                                                                member.avatar ??
+                                                                undefined
+                                                            }
+                                                        />
+                                                        <AvatarFallback>
+                                                            {member.name.slice(
+                                                                0,
+                                                                1,
+                                                            )}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <p className="text-sm font-medium">
+                                                            {member.name}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {member.email ??
+                                                                '—'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {member.username
+                                                    ? `@${member.username}`
+                                                    : '—'}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {member.joined}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        router.post(
+                                                            promote().url,
+                                                            {
+                                                                user_id:
+                                                                    member.id,
+                                                            },
+                                                        )
+                                                    }
+                                                >
+                                                    <UserPlus className="size-4" />
+                                                    Make trainer
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                        <div className="mt-4">
+                            <AdminPagination page={members} />
                         </div>
                     </CardContent>
                 </Card>

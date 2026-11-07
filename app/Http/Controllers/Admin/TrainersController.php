@@ -40,7 +40,18 @@ class TrainersController extends Controller
                     ->orWhere('email', 'like', "%{$search}%")));
         }
 
-        $trainers = $query->paginate(15)->withQueryString();
+        $trainers = $query->paginate(15, ['*'], 'trainers')->withQueryString();
+
+        $members = User::query()
+            ->whereNotIn('role', ['trainer', 'admin'])
+            ->when($search !== '', fn ($users) => $users
+                ->where(fn ($inner) => $inner
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('username', 'like', "%{$search}%")))
+            ->latest()
+            ->paginate(10, ['*'], 'members')
+            ->withQueryString();
 
         return Inertia::render('admin/trainers/index', [
             'trainers' => $trainers->through(fn (Trainer $trainer): array => [
@@ -56,6 +67,14 @@ class TrainersController extends Controller
                 'meal_programs_count' => $trainer->meal_programs_count,
                 'revenue' => $this->revenueFor($trainer),
                 'joined' => $trainer->created_at->toDateString(),
+            ]),
+            'members' => $members->through(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'username' => $user->username,
+                'avatar' => $user->avatar,
+                'joined' => $user->created_at->toDateString(),
             ]),
             'filters' => ['search' => $search],
             'stats' => [
@@ -135,13 +154,19 @@ class TrainersController extends Controller
     }
 
     /**
-     * Promote an existing member to trainer by email.
+     * Promote an existing member to trainer — by id from the members
+     * table, or by email for direct entry.
      */
     public function promote(Request $request): RedirectResponse
     {
-        $validated = $request->validate(['email' => ['required', 'email']]);
+        $validated = $request->validate([
+            'user_id' => ['required_without:email', 'integer', 'exists:users,id'],
+            'email' => ['required_without:user_id', 'email'],
+        ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        $user = isset($validated['user_id'])
+            ? User::find($validated['user_id'])
+            : User::where('email', $validated['email'])->first();
 
         if ($user === null) {
             Inertia::flash('toast', ['type' => 'error', 'message' => __('No member found with that email.')]);
