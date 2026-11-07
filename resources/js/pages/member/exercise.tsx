@@ -47,6 +47,7 @@ export default function MemberExercise({
     levels,
     initialExercises,
     initialTotal,
+    coachPrograms,
 }: {
     playlists: ExercisePlaylist[];
     sessions: WorkoutSession[];
@@ -55,6 +56,16 @@ export default function MemberExercise({
     levels: string[];
     initialExercises: ExerciseSummary[];
     initialTotal: number;
+    coachPrograms: {
+        id: number;
+        name: string;
+        coach: string;
+        image_url: string | null;
+        price_etb: number;
+        is_free: boolean;
+        share_url: string;
+        claimed: boolean;
+    }[];
 }) {
     const { url } = usePage();
     const { t, locale } = useTranslation();
@@ -281,6 +292,44 @@ export default function MemberExercise({
         <MobileShell>
             <Head title={t('member.exercise.title')} />
             <div className="mt-6 space-y-4">
+                {coachPrograms.length > 0 && (
+                    <section>
+                        <p className="mb-2 text-sm font-semibold text-[#F5F5F5]">
+                            From your coach
+                        </p>
+                        <div className="flex gap-3 overflow-x-auto pb-1">
+                            {coachPrograms.map((program) => (
+                                <Link
+                                    key={program.id}
+                                    href={program.share_url}
+                                    className="w-44 shrink-0 rounded-2xl border border-white/10 bg-[#1C1C1E] p-3"
+                                >
+                                    {program.image_url !== null && (
+                                        <img
+                                            src={program.image_url}
+                                            alt=""
+                                            className="mb-2 h-20 w-full rounded-lg object-cover"
+                                        />
+                                    )}
+                                    <p className="truncate text-sm font-semibold text-[#F5F5F5]">
+                                        {program.name}
+                                    </p>
+                                    <p className="text-xs text-[#8E8E93]">
+                                        {program.coach}
+                                    </p>
+                                    <p className="mt-1 text-xs font-semibold text-[#AFFA01]">
+                                        {program.claimed
+                                            ? 'In your workouts'
+                                            : program.is_free
+                                              ? 'Free'
+                                              : `${program.price_etb.toLocaleString()} ETB`}
+                                    </p>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
                 <PlaylistManager
                     playlists={playlists}
                     onChange={setPlaylists}

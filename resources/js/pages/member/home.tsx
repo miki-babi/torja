@@ -1,17 +1,23 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Compass,
     Dumbbell,
     Flame,
+    MessageCircle,
     NotebookPen,
     Sparkles,
     TrendingUp,
 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import {
     BannerCarousel,
     type HomeBanner,
 } from '@/components/member/banner-carousel';
+import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
+import { Button } from '@/components/ui/button';
+import { dm } from '@/routes/member/messages';
 import { RecapFeed } from '@/components/member/recap-feed';
 import { TodaysWorkoutCard } from '@/components/member/todays-workout-card';
 import type { Recap } from '@/components/member/types';
@@ -33,6 +39,7 @@ export default function MemberHome({
     streak,
     recaps,
     recapsNextCursor,
+    coaches,
 }: {
     userName: string;
     weekStats: { sessions: number; volume: number };
@@ -40,9 +47,31 @@ export default function MemberHome({
     streak: number;
     recaps: Recap[];
     recapsNextCursor: number | null;
+    coaches: {
+        id: number;
+        name: string;
+        avatar: string | null;
+        slug: string;
+        user_id: number;
+    }[];
 }) {
     const { t } = useTranslation();
     const greeting = t(`member.home.${greetingKey()}`);
+    const [messaging, setMessaging] = useState(false);
+
+    async function messageCoach(userId: number) {
+        setMessaging(true);
+        try {
+            const { conversation_id } = await memberApi<{
+                conversation_id: number;
+            }>(dm().url, 'POST', { user_id: userId });
+            router.visit(`/member/messages/${conversation_id}`);
+        } catch {
+            toast.error('Could not open chat');
+        } finally {
+            setMessaging(false);
+        }
+    }
 
     return (
         <MobileShell>
@@ -126,6 +155,40 @@ export default function MemberHome({
             {banners.length > 0 && (
                 <section className="mt-4">
                     <BannerCarousel banners={banners} />
+                </section>
+            )}
+
+            {/* Your coach */}
+            {coaches.length > 0 && (
+                <section className="mt-4 space-y-2">
+                    {coaches.map((coach) => (
+                        <div
+                            key={coach.id}
+                            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#1C1C1E] p-3"
+                        >
+                            <div className="flex size-10 items-center justify-center rounded-full bg-[#AFFA01]/15 text-sm font-bold text-[#AFFA01]">
+                                {coach.name.slice(0, 1)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold text-[#F5F5F5]">
+                                    {coach.name}
+                                </p>
+                                <p className="text-xs text-[#8E8E93]">
+                                    Your coach
+                                </p>
+                            </div>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-white/15 text-xs"
+                                disabled={messaging}
+                                onClick={() => messageCoach(coach.user_id)}
+                            >
+                                <MessageCircle className="size-3.5" />
+                                Message
+                            </Button>
+                        </div>
+                    ))}
                 </section>
             )}
 

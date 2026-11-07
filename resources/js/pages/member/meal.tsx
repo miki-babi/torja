@@ -69,6 +69,7 @@ export default function MemberMeal({
     unlocked,
     price,
     claimedPrograms,
+    coachPrograms,
 }: {
     targets: NutritionTargets | null;
     planDays: Record<string, PlanDay | null>;
@@ -80,6 +81,16 @@ export default function MemberMeal({
         days_count: number;
         image_url: string | null;
         url: string;
+        coach: string | null;
+    }[];
+    coachPrograms: {
+        id: number;
+        name: string;
+        coach: string;
+        image_url: string | null;
+        price_etb: number;
+        is_free: boolean;
+        share_url: string;
     }[];
 }) {
     const { t } = useTranslation();
@@ -304,6 +315,46 @@ export default function MemberMeal({
                     )
                 )}
 
+                {coachPrograms.length > 0 && (
+                    <Card>
+                        <CardContent className="p-4">
+                            <p className="text-sm font-medium">
+                                From your coach
+                            </p>
+                            <div className="mt-3 space-y-2">
+                                {coachPrograms.map((program) => (
+                                    <Link
+                                        key={program.id}
+                                        href={program.share_url}
+                                        className="flex items-center gap-3 rounded-lg border p-2 hover:bg-accent/50"
+                                    >
+                                        {program.image_url !== null && (
+                                            <img
+                                                src={program.image_url}
+                                                alt=""
+                                                className="size-10 rounded-md object-cover"
+                                            />
+                                        )}
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-medium">
+                                                {program.name}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {program.coach}
+                                                {' · '}
+                                                {program.is_free
+                                                    ? 'Free'
+                                                    : `${program.price_etb.toLocaleString()} ETB`}
+                                            </p>
+                                        </div>
+                                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                                    </Link>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {claimedPrograms.length > 0 && (
                     <Card>
                         <CardContent className="p-4">
@@ -336,6 +387,8 @@ export default function MemberMeal({
                                                 {t('meal_program.days_count', {
                                                     count: program.days_count,
                                                 })}
+                                                {program.coach !== null &&
+                                                    ` · ${program.coach}`}
                                             </p>
                                         </div>
                                         <ChevronRight className="size-4 shrink-0 text-muted-foreground" />

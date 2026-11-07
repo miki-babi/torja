@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\Concerns\RedirectsUsersByRole;
 use App\Listeners\BindReferrer;
+use App\Models\Trainer;
 use App\Models\User;
 use App\Support\ExerciseCatalog;
 use App\Support\Telegram\InitData;
@@ -117,7 +118,17 @@ class TelegramLoginController extends Controller
     {
         Log::info('telegram.webapp hit', ['has_init_data' => $request->filled('init_data')]);
 
-        $botToken = config('services.telegram.bot_token');
+        $tenantSlug = $request->input('tenant');
+
+        if (! is_string($tenantSlug) || $tenantSlug === '') {
+            $tenantSlug = $request->session()->get('tenant');
+        }
+
+        $trainer = is_string($tenantSlug) && $tenantSlug !== ''
+            ? Trainer::query()->where('slug', $tenantSlug)->first()
+            : null;
+
+        $botToken = $trainer?->bot_token ?? config('services.telegram.bot_token');
 
         if (empty($botToken)) {
             Log::warning('telegram.webapp rejected: bot token not configured');
@@ -155,6 +166,11 @@ class TelegramLoginController extends Controller
             'user_id' => $user->id,
             'created' => $user->wasRecentlyCreated,
         ]);
+
+        if ($trainer !== null) {
+            $trainer->clients()->syncWithoutDetaching([$user->id]);
+            $request->session()->forget('tenant');
+        }
 
         $this->bindInvite($initData, $user);
 

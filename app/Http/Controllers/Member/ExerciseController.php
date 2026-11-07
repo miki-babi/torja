@@ -33,8 +33,33 @@ class ExerciseController extends Controller
             ->limit(20)
             ->get();
 
+        $coachPrograms = $user->trainers()
+            ->with(['user', 'programs' => fn ($query) => $query->whereNotNull('share_token')])
+            ->get()
+            ->flatMap(fn ($trainer) => $trainer->programs->map(
+                fn ($program): array => [
+                    'id' => $program->id,
+                    'name' => $program->localizedName(),
+                    'coach' => $trainer->display_name,
+                    'image_url' => $program->image_url,
+                    'price_etb' => $program->price_etb,
+                    'is_free' => $program->isFree(),
+                    'share_url' => $program->shareUrl(),
+                ],
+            ))
+            ->values();
+
+        $claimedIds = $user->programAccess()
+            ->whereIn('exercise_program_id', $coachPrograms->pluck('id'))
+            ->pluck('exercise_program_id')
+            ->flip();
+
         return Inertia::render('member/exercise', [
             'playlists' => $playlists->map->toFrontend()->all(),
+            'coachPrograms' => $coachPrograms->map(fn (array $program): array => [
+                ...$program,
+                'claimed' => $claimedIds->has($program['id']),
+            ])->all(),
             'sessions' => $sessions->map->toFrontend()->all(),
             'bodyParts' => ExerciseCatalog::bodyPartFilters(),
             'equipment' => Exercise::query()->distinct()->orderBy('equipment')->pluck('equipment')->all(),

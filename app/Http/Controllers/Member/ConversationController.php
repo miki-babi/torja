@@ -164,7 +164,9 @@ class ConversationController extends Controller
                 ->orWhere(fn ($qq) => $qq->where('user_id', $other->id)->where('friend_id', $me->id)))
             ->exists();
 
-        abort_unless($isFriend || Conversation::where('dm_key', collect([$me->id, $other->id])->sort()->implode(':'))->exists(), 403);
+        $isTrainerPair = $me->isTrainerOf($other) || $me->isClientOf($other);
+
+        abort_unless($isFriend || $isTrainerPair || Conversation::where('dm_key', collect([$me->id, $other->id])->sort()->implode(':'))->exists(), 403);
 
         $conversation = Conversation::dmBetween($me, $other);
 

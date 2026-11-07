@@ -50,6 +50,22 @@ class MealController extends Controller
                 ->all(),
             'unlocked' => $unlocked,
             'price' => ProPage::price(),
+            'coachPrograms' => $request->user()->trainers()
+                ->with(['user', 'mealPrograms' => fn ($query) => $query->whereNotNull('share_token')])
+                ->get()
+                ->flatMap(fn ($trainer) => $trainer->mealPrograms->map(
+                    fn ($program): array => [
+                        'id' => $program->id,
+                        'name' => $program->localizedName(),
+                        'coach' => $trainer->display_name,
+                        'image_url' => $program->image_url,
+                        'price_etb' => $program->price_etb,
+                        'is_free' => $program->isFree(),
+                        'share_url' => $program->shareUrl(),
+                    ],
+                ))
+                ->values()
+                ->all(),
             'claimedPrograms' => $request->user()->mealPlans()
                 ->with('sourceProgram')
                 ->get()
@@ -58,6 +74,9 @@ class MealController extends Controller
                     'name' => $plan->sourceProgram?->localizedName() ?? $plan->name,
                     'days_count' => $plan->meals()->reorder()->distinct()->count('day'),
                     'image_url' => $plan->sourceProgram?->image_url,
+                    'coach' => $plan->sourceProgram?->user?->isTrainer()
+                        ? $plan->sourceProgram->user->name
+                        : null,
                     'url' => route('member.meal-programs.show', $plan),
                 ])
                 ->all(),

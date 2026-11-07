@@ -36,6 +36,18 @@ class HomeController extends Controller
         return Inertia::render('member/home', [
             'userName' => Str::before(trim((string) $user?->name), ' ') ?: 'there',
             'streak' => $user->activityStreak(),
+            'coaches' => $user->trainers()
+                ->with('user:id,name,avatar_path')
+                ->latest('trainer_clients.created_at')
+                ->get()
+                ->map(fn ($trainer): array => [
+                    'id' => $trainer->id,
+                    'name' => $trainer->display_name,
+                    'avatar' => $trainer->user?->avatar,
+                    'slug' => $trainer->slug,
+                    'user_id' => $trainer->user_id,
+                ])
+                ->all(),
             'banners' => HomeBanners::forMember(),
             'recaps' => $recaps->map(fn ($recap) => $recap->toFeed($user))->all(),
             'recapsNextCursor' => $hasMore ? $recaps->last()->id : null,

@@ -12,6 +12,7 @@ use App\Http\Controllers\Plan\ProController;
 use App\Http\Controllers\Plan\VerifyCheckoutWebhookController;
 use App\Http\Controllers\Settings\LocalizationController;
 use App\Http\Controllers\ShortLinkController;
+use App\Http\Controllers\Telegram\TenantWebhookController;
 use App\Http\Controllers\Telegram\WebhookController;
 use App\Http\Controllers\Tracking\BeaconController;
 use Illuminate\Http\Request;
@@ -27,6 +28,10 @@ Route::post('t', BeaconController::class)
 Route::post('telegram/webhook', WebhookController::class)
     ->middleware('throttle:300,1')
     ->name('telegram.webhook');
+
+Route::post('telegram/webhook/t/{trainer:slug}', TenantWebhookController::class)
+    ->middleware('throttle:300,1')
+    ->name('telegram.tenant.webhook');
 
 Route::middleware('guest')->group(function () {
     Route::post('auth/telegram/init', [TelegramLoginController::class, 'init'])
@@ -96,6 +101,9 @@ Route::get('shared/meal-programs/{mealProgram:share_token}', [Member\SharedMealP
 
 Route::get('s/{code}', ShortLinkController::class)->name('links.resolve');
 
+Route::get('t/{trainer:slug}', Member\TenantEntryController::class)
+    ->name('tenant.entry');
+
 Route::get('r/{code}', AmbassadorRedirectController::class)->name('invite.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -114,7 +122,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('dashboard', fn (Request $request) => $request->user()->isAdmin()
         ? to_route('admin.dashboard')
-        : to_route('member.home')
+        : ($request->user()->isTrainer()
+            ? to_route('trainer.dashboard')
+            : to_route('member.home'))
     )->name('dashboard');
 
     Route::get('/', Member\HomeController::class)->name('member.home');
@@ -156,8 +166,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('programs.shared.save');
     Route::post('shared/programs/{program:share_token}/start', [Member\SharedProgramController::class, 'start'])
         ->name('programs.shared.start');
+    Route::post('shared/programs/{program:share_token}/checkout', [Member\SharedProgramController::class, 'checkout'])
+        ->name('programs.shared.checkout');
     Route::post('shared/meal-programs/{mealProgram:share_token}/save', [Member\SharedMealProgramController::class, 'save'])
         ->name('meal-programs.shared.save');
+    Route::post('shared/meal-programs/{mealProgram:share_token}/checkout', [Member\SharedMealProgramController::class, 'checkout'])
+        ->name('meal-programs.shared.checkout');
     Route::get('member/meal-programs/{mealPlan}', [Member\MealProgramController::class, 'show'])
         ->name('member.meal-programs.show');
     Route::get('member/programs/{program}', [Member\ExerciseProgramController::class, 'show'])

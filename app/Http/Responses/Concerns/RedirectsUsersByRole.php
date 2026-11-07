@@ -17,6 +17,10 @@ trait RedirectsUsersByRole
             return route('admin.users.index');
         }
 
+        if ($user instanceof User && $user->isTrainer()) {
+            return route('trainer.dashboard');
+        }
+
         return (string) config('fortify.home', '/dashboard');
     }
 }

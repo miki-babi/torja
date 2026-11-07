@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     CalendarDays,
     Check,
@@ -59,8 +59,13 @@ export default function MemberSharedMealProgram({
     program,
     isOwner,
     isPro,
+    isCoachProgram,
+    priceEtb,
+    canClaim,
     alreadyClaimed,
     saveUrl,
+    checkoutUrl,
+    providers,
     homeUrl,
     editUrl,
     claimedPlanUrl,
@@ -68,8 +73,13 @@ export default function MemberSharedMealProgram({
     program: SharedMealProgram;
     isOwner: boolean;
     isPro: boolean;
+    isCoachProgram: boolean;
+    priceEtb: number;
+    canClaim: boolean;
     alreadyClaimed: boolean;
     saveUrl: string;
+    checkoutUrl: string | null;
+    providers: Record<'chapa' | 'verify_checkout' | 'jami', boolean>;
     homeUrl: string;
     editUrl: string | null;
     claimedPlanUrl: string | null;
@@ -370,7 +380,7 @@ export default function MemberSharedMealProgram({
                                         {t('shared_program.login_to_save')}
                                     </Link>
                                 </Button>
-                            ) : isPro ? (
+                            ) : canClaim ? (
                                 <Button
                                     className="w-full rounded-full"
                                     disabled={saving}
@@ -382,6 +392,29 @@ export default function MemberSharedMealProgram({
                                               'shared_meal_program.claim_program',
                                           )}
                                 </Button>
+                            ) : checkoutUrl !== null ? (
+                                (Object.keys(providers) as Array<
+                                    keyof typeof providers
+                                >)
+                                    .filter((provider) => providers[provider])
+                                    .map((provider) => (
+                                        <Button
+                                            key={provider}
+                                            className="w-full rounded-full"
+                                            variant={
+                                                provider === 'jami'
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
+                                            onClick={() =>
+                                                router.post(checkoutUrl, {
+                                                    provider,
+                                                })
+                                            }
+                                        >
+                                            {`Buy for ${priceEtb.toLocaleString()} ETB — ${provider === 'verify_checkout' ? 'Verify' : provider === 'jami' ? 'Jami' : 'Chapa'}`}
+                                        </Button>
+                                    ))
                             ) : null}
                             <Button
                                 variant="outline"

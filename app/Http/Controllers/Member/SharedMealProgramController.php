@@ -6,17 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Models\Food;
 use App\Models\MealProgram;
 use App\Models\MealProgramMeal;
+use App\Models\Payment;
+use App\Models\User;
+use App\Services\Payments\CheckoutLauncher;
 use App\Services\Programs\MealProgramAccessGranter;
 use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class SharedMealProgramController extends Controller
 {
     public function __construct(
         private readonly MealProgramAccessGranter $grants,
+        private readonly CheckoutLauncher $launcher,
     ) {}
 
     /**
@@ -62,8 +69,19 @@ class SharedMealProgramController extends Controller
             ],
             'isOwner' => $user?->id === $mealProgram->user_id,
             'isPro' => $user?->isPro() ?? false,
+            'isCoachProgram' => $mealProgram->user->isTrainer(),
+            'priceEtb' => $mealProgram->price_etb,
+            'canClaim' => $user !== null && $this->canClaim($user, $mealProgram),
             'alreadyClaimed' => $claimedPlan !== null || ($user !== null && $this->grants->hasAccess($user, $mealProgram)),
             'saveUrl' => route('meal-programs.shared.save', $mealProgram->share_token),
+            'checkoutUrl' => $mealProgram->isFree()
+                ? null
+                : route('meal-programs.shared.checkout', $mealProgram->share_token),
+            'providers' => [
+                'chapa' => filled(config('services.chapa.secret_key')),
+                'verify_checkout' => filled(config('services.verify_checkout.api_key')),
+                'jami' => filled(config('services.jami.token')),
+            ],
             'proUrl' => route('pro.show'),
             'homeUrl' => $user !== null ? route('member.home') : route('explore.index'),
             'editUrl' => $user?->isAdmin() ? route('admin.meal-programs.edit', $mealProgram) : null,
@@ -79,7 +97,7 @@ class SharedMealProgramController extends Controller
      */
     public function save(Request $request, MealProgram $mealProgram): JsonResponse
     {
-        abort_unless($request->user()->isPro(), 403);
+        $this->authorizeClaim($request->user(), $mealProgram);
 
         $granted = $this->grants->grant($request->user(), $mealProgram);
 
@@ -95,6 +113,113 @@ class SharedMealProgramController extends Controller
             'claimed' => true,
             'plan_url' => $plan !== null ? route('member.meal-programs.show', $plan) : null,
         ], $granted ? 201 : 200);
+    }
+
+    /**
+     * Start a paid purchase for a priced meal program through the normal
+     * provider checkout. Buyers of a trainer-authored plan are linked as
+     * clients automatically.
+     */
+    public function checkout(Request $request, MealProgram $mealProgram): SymfonyResponse|RedirectResponse
+    {
+        abort_if($mealProgram->isFree(), 422);
+
+        $user = $request->user();
+
+        $author = $mealProgram->user;
+
+        if ($author->isTrainer()) {
+            $author->trainer?->clients()->syncWithoutDetaching([$user->id]);
+        }
+
+        $validated = $request->validate([
+            'provider' => ['required', 'string', 'in:chapa,verify_checkout,jami'],
+            'gateway' => ['nullable', 'string', 'in:telebirr,mpesa,cbe'],
+            'customer_phone' => ['required_with:gateway', 'nullable', 'string', 'min:9', 'max:16'],
+        ]);
+
+        $payment = Payment::create([
+            'user_id' => $user->id,
+            'provider' => $validated['provider'],
+            'tx_ref' => "tp-{$user->id}-".Str::uuid(),
+            'idempotency_key' => 'checkout_'.Str::uuid(),
+            'amount' => $mealProgram->price_etb,
+            'currency' => 'ETB',
+            'status' => 'pending',
+            'purpose' => 'meal_program_purchase',
+            'payable_type' => $mealProgram->getMorphClass(),
+            'payable_id' => $mealProgram->id,
+            'email' => $user->email ?? "user-{$user->id}@trainpro.local",
+            'first_name' => Str::before(trim($user->name).' ', ' '),
+            'last_name' => trim(Str::after(trim($user->name).' ', ' ')) ?: null,
+        ]);
+
+        app(Tracker::class)->record('checkout.started', $user, [
+            'payment_id' => $payment->id,
+            'amount' => (float) $payment->amount,
+            'currency' => $payment->currency,
+            'provider' => $payment->provider,
+        ], $payment);
+
+        $launch = $this->launcher->start(
+            $payment,
+            $validated['gateway'] ?? null,
+            $validated['customer_phone'] ?? null,
+        );
+
+        if ($launch->checkoutUrl !== null) {
+            return Inertia::location($launch->checkoutUrl);
+        }
+
+        if ($launch->pushInitiated) {
+            Inertia::flash('toast', [
+                'type' => 'info',
+                'message' => __('Approve the payment on your phone — the meal program unlocks once confirmed.'),
+            ]);
+
+            return back();
+        }
+
+        $payment->update(['status' => 'failed']);
+
+        Inertia::flash('toast', [
+            'type' => 'error',
+            'message' => __('We could not start the payment. Please try again.'),
+        ]);
+
+        return back();
+    }
+
+    /**
+     * Whether the member may claim the program without paying. Platform
+     * (admin-authored) programs keep the old rule — Pro claims anything.
+     * Trainer-authored programs: the author always can, priced ones are
+     * purchase-only, and free ones open to Pro or linked clients.
+     */
+    private function canClaim(User $user, MealProgram $mealProgram): bool
+    {
+        if (! $mealProgram->user->isTrainer()) {
+            return $user->isPro();
+        }
+
+        if ($user->id === $mealProgram->user_id) {
+            return true;
+        }
+
+        if (! $mealProgram->isFree()) {
+            return false;
+        }
+
+        return $user->isPro() || $user->isClientOf($mealProgram->user);
+    }
+
+    /**
+     * Gate a free claim: paid programs must go through checkout, everyone
+     * else needs Pro or a client link to the coach.
+     */
+    private function authorizeClaim(User $user, MealProgram $mealProgram): void
+    {
+        abort_unless($this->canClaim($user, $mealProgram), 403);
     }
 
     /**

@@ -139,6 +139,8 @@ export function reportTelegramDebug(
 export async function telegramSignIn(
     initData: string,
 ): Promise<{ redirect: string }> {
+    const tenant = tenantSlugFromPath();
+
     const response = await fetch(webapp().url, {
         method: 'POST',
         credentials: 'same-origin',
@@ -148,7 +150,10 @@ export async function telegramSignIn(
             'X-Requested-With': 'XMLHttpRequest',
             'X-XSRF-TOKEN': xsrfToken(),
         },
-        body: JSON.stringify({ init_data: initData }),
+        body: JSON.stringify({
+            init_data: initData,
+            ...(tenant !== null ? { tenant } : {}),
+        }),
     });
 
     if (!response.ok) {
@@ -158,6 +163,20 @@ export async function telegramSignIn(
     }
 
     return response.json() as Promise<{ redirect: string }>;
+}
+
+/**
+ * The coach-tenant slug when the app was opened via `/t/{slug}` — the
+ * mini-app entry URL each trainer's bot points at.
+ */
+function tenantSlugFromPath(): string | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    const match = /^\/t\/([\w-]+)/.exec(window.location.pathname);
+
+    return match?.[1] ?? null;
 }
 
 /**

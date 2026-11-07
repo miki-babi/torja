@@ -575,12 +575,21 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         }
 
         $bot = config('services.telegram.bot_username');
+        $app = config('services.telegram.mini_app_name');
+
+        // Clients invite their friends through their coach's bot when it
+        // has a Mini App short name configured, keeping referrals inside
+        // the tenant.
+        $trainer = $this->trainers()->latest('trainer_clients.created_at')->first();
+
+        if ($trainer?->bot_username !== null && $trainer->mini_app_name !== null) {
+            return "https://t.me/{$trainer->bot_username}/{$trainer->mini_app_name}?startapp=ref_{$this->referral_code}";
+        }
 
         if (! is_string($bot) || $bot === '') {
             return route('invite.show', $this->referral_code);
         }
 
-        $app = config('services.telegram.mini_app_name');
         $app = is_string($app) && $app !== '' ? "/{$app}" : '';
 
         return "https://t.me/{$bot}{$app}?startapp=ref_{$this->referral_code}";
@@ -605,6 +614,67 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * Whether the user coaches clients from the trainer area.
+     */
+    public function isTrainer(): bool
+    {
+        return $this->role === 'trainer';
+    }
+
+    /**
+     * The coaching tenant this account operates, when the role is trainer.
+     *
+     * @return HasOne<Trainer, $this>
+     */
+    public function trainer(): HasOne
+    {
+        return $this->hasOne(Trainer::class);
+    }
+
+    /**
+     * Trainers this member is a client of.
+     *
+     * @return BelongsToMany<Trainer, $this>
+     */
+    public function trainers(): BelongsToMany
+    {
+        return $this->belongsToMany(Trainer::class, 'trainer_clients')
+            ->withTimestamps();
+    }
+
+    /**
+     * Whether this trainer's tenant coaches the given member.
+     */
+    public function isTrainerOf(User $other): bool
+    {
+        $trainer = $this->trainer;
+
+        return $trainer !== null
+            && $trainer->clients()->where('users.id', $other->id)->exists();
+    }
+
+    /**
+     * Whether this member is a client of the given trainer account.
+     */
+    public function isClientOf(User $trainer): bool
+    {
+        $model = $trainer->trainer;
+
+        return $model !== null
+            && $this->trainers()->whereKey($model->id)->exists();
+    }
+
+    /**
+     * The user's coaching tenant, creating it on first use — accounts
+     * promoted to trainer by an admin never went through registration.
+     */
+    public function ensureTrainer(): Trainer
+    {
+        return $this->trainer
+            ?? $this->trainer()->create(['slug' => Trainer::mintSlug($this->name)]);
     }
 
     /**

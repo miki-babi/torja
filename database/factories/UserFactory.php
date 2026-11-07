@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Trainer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -47,6 +48,21 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'role' => 'admin',
         ]);
+    }
+
+    /**
+     * Indicate that the user is a trainer with a coaching tenant.
+     */
+    public function trainer(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'trainer',
+        ])->afterCreating(
+            fn (User $user) => $user->trainer()->firstOrCreate(
+                [],
+                ['slug' => Trainer::mintSlug($user->name)],
+            ),
+        );
     }
 
     /**

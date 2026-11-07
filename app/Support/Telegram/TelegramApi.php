@@ -16,6 +16,23 @@ class TelegramApi
     private const BASE = 'https://api.telegram.org';
 
     /**
+     * Bot token override — set for tenant (trainer) bots; the global
+     * `services.telegram.bot_token` is used when null.
+     */
+    private ?string $token = null;
+
+    /**
+     * An instance bound to a specific bot token (trainer tenant bots).
+     */
+    public static function forToken(string $token): static
+    {
+        $api = new static;
+        $api->token = $token;
+
+        return $api;
+    }
+
+    /**
      * Update types the webhook serves — messages, broadcast callbacks and
      * inline-mode queries (plus share feedback).
      */
@@ -254,20 +271,35 @@ class TelegramApi
      * update types the controller serves; the configured secret token is
      * attached automatically so the app can verify deliveries.
      */
-    public function setWebhook(string $url): ApiResult
+    public function setWebhook(string $url, ?string $secret = null): ApiResult
     {
         $payload = [
             'url' => $url,
             'allowed_updates' => self::ALLOWED_UPDATES,
         ];
 
-        $secret = config('services.telegram.webhook_secret');
+        $secret ??= config('services.telegram.webhook_secret');
 
         if (is_string($secret) && $secret !== '') {
             $payload['secret_token'] = $secret;
         }
 
         return $this->post('setWebhook', $payload);
+    }
+
+    /**
+     * setChatMenuButton — pin a Mini App launch button to the bot's chat
+     * menu so clients can open the app without a deep link.
+     */
+    public function setChatMenuButton(string $webAppUrl, string $text = 'Open'): ApiResult
+    {
+        return $this->post('setChatMenuButton', [
+            'menu_button' => [
+                'type' => 'web_app',
+                'text' => $text,
+                'web_app' => ['url' => $webAppUrl],
+            ],
+        ]);
     }
 
     /**
@@ -288,7 +320,7 @@ class TelegramApi
      */
     private function post(string $method, array $payload): ApiResult
     {
-        $token = config('services.telegram.bot_token');
+        $token = $this->token ?? config('services.telegram.bot_token');
 
         $response = Http::timeout(10)->post(self::BASE."/bot{$token}/{$method}", $payload);
 
@@ -304,7 +336,7 @@ class TelegramApi
      */
     private function postUpload(string $method, array $payload, ?string $field, ?string $path, array $uploads = []): ApiResult
     {
-        $token = config('services.telegram.bot_token');
+        $token = $this->token ?? config('services.telegram.bot_token');
 
         $request = Http::timeout(60);
 
