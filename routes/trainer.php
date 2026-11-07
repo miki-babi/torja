@@ -4,6 +4,7 @@ use App\Http\Controllers\Trainer\BotController;
 use App\Http\Controllers\Trainer\BroadcastsController;
 use App\Http\Controllers\Trainer\ClientsController;
 use App\Http\Controllers\Trainer\DashboardController;
+use App\Http\Controllers\Trainer\FoodSearchController;
 use App\Http\Controllers\Trainer\MealProgramsController;
 use App\Http\Controllers\Trainer\ProgramsController;
 use App\Http\Controllers\Trainer\RegisterController;
@@ -17,7 +18,7 @@ Route::middleware('guest')->group(function () {
         ->name('trainer.register.store');
 });
 
-Route::middleware(['auth', 'verified', 'trainer'])
+Route::middleware(['auth', 'trainer'])
     ->prefix('trainer')
     ->name('trainer.')
     ->group(function () {
@@ -44,6 +45,9 @@ Route::middleware(['auth', 'verified', 'trainer'])
             ->name('programs.unshare');
         Route::post('programs/{program}/assign', [ProgramsController::class, 'assign'])
             ->name('programs.assign');
+
+        Route::get('foods/search', FoodSearchController::class)
+            ->name('foods.search');
 
         Route::resource('meal-programs', MealProgramsController::class)
             ->except(['show'])

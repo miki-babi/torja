@@ -84,7 +84,9 @@ class SharedMealProgramController extends Controller
             ],
             'proUrl' => route('pro.show'),
             'homeUrl' => $user !== null ? route('member.home') : route('explore.index'),
-            'editUrl' => $user?->isAdmin() ? route('admin.meal-programs.edit', $mealProgram) : null,
+            'editUrl' => $user?->isTrainer() && $mealProgram->user_id === $user->id
+                ? route('trainer.meal-programs.edit', $mealProgram)
+                : null,
             'claimedPlanUrl' => $claimedPlan !== null
                 ? route('member.meal-programs.show', $claimedPlan)
                 : null,

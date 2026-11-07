@@ -72,7 +72,7 @@ Route::patch('plan/wizard/{section}', [NutritionWizardController::class, 'update
 Route::get('plan/review', [NutritionWizardController::class, 'review'])->name('plan.review');
 
 Route::get('plan/preview', [NutritionPreviewController::class, 'show'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('plan.preview');
 
 Route::post('plan/payment/webhook', [PaymentController::class, 'webhook'])
@@ -106,7 +106,7 @@ Route::get('t/{trainer:slug}', Member\TenantEntryController::class)
 
 Route::get('r/{code}', AmbassadorRedirectController::class)->name('invite.show');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('pro', [ProController::class, 'show'])->name('pro.show');
     Route::post('plan/checkout', [PaymentController::class, 'store'])
         ->name('plan.checkout');

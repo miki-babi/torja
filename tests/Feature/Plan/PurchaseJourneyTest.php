@@ -50,17 +50,10 @@ test('a guest completes the wizard, registers, pays and unlocks the full plan', 
 
     $this->assertAuthenticated();
 
-    // New accounts land on the verification notice; verifying continues the
-    // funnel back to the preview (covered by Fortify's own tests).
-    $this->get(route('plan.preview'))
-        ->assertRedirect(route('verification.notice'));
-
     $user = User::sole();
-    $user->forceFill(['email_verified_at' => now()])->save();
-    // The session guard memoizes the resolved user between requests — re-auth
-    // with the fresh instance so the verified flag is seen.
-    $this->actingAs($user->fresh());
 
+    // Email verification is currently not gated — new accounts reach the
+    // preview straight away.
     $this->get(route('plan.preview'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page

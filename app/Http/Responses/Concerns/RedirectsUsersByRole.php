@@ -14,7 +14,7 @@ trait RedirectsUsersByRole
     private function homeFor(?Authenticatable $user): string
     {
         if ($user instanceof User && $user->isAdmin()) {
-            return route('admin.users.index');
+            return route('admin.trainers.index');
         }
 
         if ($user instanceof User && $user->isTrainer()) {

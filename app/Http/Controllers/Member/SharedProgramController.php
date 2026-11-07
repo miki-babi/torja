@@ -114,7 +114,9 @@ class SharedProgramController extends Controller
             ],
             'proUrl' => route('pro.show'),
             'homeUrl' => $user !== null ? route('member.home') : route('explore.index'),
-            'editUrl' => $user?->isAdmin() ? route('admin.programs.edit', $program) : null,
+            'editUrl' => $user?->isTrainer() && $program->user_id === $user->id
+                ? route('trainer.programs.edit', $program)
+                : null,
         ]);
     }
 

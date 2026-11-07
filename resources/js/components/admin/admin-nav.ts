@@ -1,42 +1,7 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
-import {
-    Activity,
-    Apple,
-    Carrot,
-    ChartLine,
-    CreditCard,
-    Crown,
-    Dumbbell,
-    Globe,
-    HandCoins,
-    Images,
-    Languages,
-    LayoutDashboard,
-    Megaphone,
-    Package,
-    ShoppingBag,
-    Users,
-    UtensilsCrossed,
-    Webhook,
-} from 'lucide-react';
+import { Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { analytics, dashboard } from '@/routes/admin';
-import { index as ambassadorsIndex } from '@/routes/admin/ambassadors';
-import { index as broadcastsIndex } from '@/routes/admin/broadcasts';
-import { index as foodsIndex } from '@/routes/admin/foods';
-import { edit as homeBannersEdit } from '@/routes/admin/home-banners';
-import { index as ingredientsIndex } from '@/routes/admin/ingredients';
-import { index as languagesIndex } from '@/routes/admin/languages';
-import { index as mealProgramsIndex } from '@/routes/admin/meal-programs';
-import { index as paymentsIndex } from '@/routes/admin/payments';
-import { edit as proPageEdit } from '@/routes/admin/pro-page';
-import { index as programsIndex } from '@/routes/admin/programs';
-import { index as shopOrdersIndex } from '@/routes/admin/shop-orders';
-import { index as shopProductsIndex } from '@/routes/admin/shop-products';
-import { show as webhookShow } from '@/routes/admin/telegram/webhook';
-import { index as trackingIndex } from '@/routes/admin/tracking';
-import { index as translationsIndex } from '@/routes/admin/translations';
-import { index as usersIndex } from '@/routes/admin/users';
+import { index as trainersIndex } from '@/routes/admin/trainers';
 
 export type AdminNavItem = {
     title: string;
@@ -52,80 +17,9 @@ export type AdminNavGroup = {
 
 export const adminNavGroups: AdminNavGroup[] = [
     {
-        label: 'Overview',
+        label: 'Management',
         items: [
-            {
-                title: 'Dashboard',
-                href: dashboard(),
-                icon: LayoutDashboard,
-                exact: true,
-            },
-            { title: 'Analytics', href: analytics(), icon: ChartLine },
-        ],
-    },
-    {
-        label: 'People',
-        items: [{ title: 'Users', href: usersIndex(), icon: Users }],
-    },
-    {
-        label: 'Engagement',
-        items: [
-            { title: 'Broadcasts', href: broadcastsIndex(), icon: Megaphone },
-        ],
-    },
-    {
-        label: 'Sales',
-        items: [
-            { title: 'Payments', href: paymentsIndex(), icon: CreditCard },
-            { title: 'Ambassadors', href: ambassadorsIndex(), icon: HandCoins },
-            { title: 'Pro page', href: proPageEdit(), icon: Crown },
-        ],
-    },
-    {
-        label: 'Shop',
-        items: [
-            {
-                title: 'Products',
-                href: shopProductsIndex(),
-                icon: Package,
-            },
-            {
-                title: 'Orders',
-                href: shopOrdersIndex(),
-                icon: ShoppingBag,
-            },
-        ],
-    },
-    {
-        label: 'Content',
-        items: [
-            {
-                title: 'Home banners',
-                href: homeBannersEdit(),
-                icon: Images,
-            },
-            { title: 'Programs', href: programsIndex(), icon: Dumbbell },
-            {
-                title: 'Meal programs',
-                href: mealProgramsIndex(),
-                icon: UtensilsCrossed,
-            },
-            { title: 'Foods', href: foodsIndex(), icon: Apple },
-            { title: 'Ingredients', href: ingredientsIndex(), icon: Carrot },
-        ],
-    },
-    {
-        label: 'Localization',
-        items: [
-            { title: 'Languages', href: languagesIndex(), icon: Languages },
-            { title: 'Translations', href: translationsIndex(), icon: Globe },
-        ],
-    },
-    {
-        label: 'System',
-        items: [
-            { title: 'Tracking', href: trackingIndex(), icon: Activity },
-            { title: 'Webhook', href: webhookShow(), icon: Webhook },
+            { title: 'Trainers', href: trainersIndex(), icon: Users },
         ],
     },
 ];

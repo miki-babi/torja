@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { search } from '@/routes/admin/foods';
+import { search } from '@/routes/trainer/foods';
 
 export type FoodSearchResult = {
     id: number;
