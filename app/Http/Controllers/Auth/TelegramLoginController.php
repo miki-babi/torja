@@ -170,6 +170,10 @@ class TelegramLoginController extends Controller
             $trainer->clients()->syncWithoutDetaching([$user->id]);
             $trainer->markClientOpened($user);
             $request->session()->forget('tenant');
+        } else {
+            // The main bot's mini app is the coach funnel — everyone who
+            // opens it becomes a trainer and lands on bot-token setup.
+            $coach = $user->promoteToTrainer();
         }
 
         $this->bindInvite($initData, $user);
@@ -179,10 +183,16 @@ class TelegramLoginController extends Controller
             $request->session()->regenerate();
         }
 
-        return response()->json([
-            'redirect' => $this->exerciseRedirect($initData)
-                ?? redirect()->intended($this->homeFor($user))->getTargetUrl(),
-        ]);
+        $redirect = $this->exerciseRedirect($initData)
+            ?? redirect()->intended($this->homeFor($user))->getTargetUrl();
+
+        if (isset($coach) && $coach !== null) {
+            $redirect = $coach->hasConnectedBot()
+                ? route('trainer.dashboard')
+                : route('trainer.bot.edit');
+        }
+
+        return response()->json(['redirect' => $redirect]);
     }
 
     /**

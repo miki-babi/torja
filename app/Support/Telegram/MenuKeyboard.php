@@ -9,37 +9,42 @@ namespace App\Support\Telegram;
  * links into the mini app (a message can carry either an inline keyboard
  * or a reply keyboard, never both — the reply keyboard is persistent, so
  * it stays visible after the tap).
+ *
+ * The main bot is the coach funnel: every row serves trainer onboarding.
+ * Buttons with a `path` answer with a web_app deep link; a `path` of null
+ * answers with plain text (the invite link) and re-shows the keyboard.
  */
 class MenuKeyboard
 {
     /**
      * Ordered keyboard rows. Each entry is the button label users tap, the
-     * app path the inline button opens, the reply copy, and the inline
-     * button label. `{app}` in `message` is replaced with the app name.
+     * app path the inline button opens (null for a text-only reply), the
+     * reply copy, and the inline button label. `{app}` renders the app name
+     * and `{invite}` the coach invite deep link.
      *
-     * @var array<int, array<int, array{label: string, path: string, message: string, button: string}>>
+     * @var array<int, array<int, array{label: string, path: ?string, message: string, button: ?string}>>
      */
     private const ROWS = [
         [
             [
                 'label' => '🚀 Open App',
                 'path' => '/',
-                'message' => 'Tap below to open {app}.',
+                'message' => 'Tap below to open {app} — set up your coaching bot to go live.',
                 'button' => 'Open {app}',
             ],
         ],
         [
             [
-                'label' => '🏋️ Today\'s workout',
-                'path' => '/today',
-                'message' => 'Tap below to start today\'s workout.',
-                'button' => 'Start workout',
+                'label' => '🤖 Bot setup',
+                'path' => '/trainer/bot',
+                'message' => 'Connect your bot token — this is the bot your clients talk to.',
+                'button' => 'Bot setup',
             ],
             [
-                'label' => '👥 Invite friends',
-                'path' => '/ambassador',
-                'message' => 'Tap below to grab your invite link.',
-                'button' => 'Get invite link',
+                'label' => '👥 Invite trainers',
+                'path' => null,
+                'message' => "Know a coach? Share this link — it opens {app} as a trainer:\n\n{invite}",
+                'button' => null,
             ],
         ],
     ];
@@ -70,9 +75,10 @@ class MenuKeyboard
 
     /**
      * The response for a tapped menu button — a message with an inline
-     * web_app button — or null when the text matches no button.
+     * web_app button, or a plain text reply for path-less buttons — or
+     * null when the text matches no button.
      *
-     * @return array{text: string, reply_markup: array{inline_keyboard: array<int, array<int, array{text: string, web_app: array{url: string}}>>}}|null
+     * @return array{text: string, reply_markup: array<string, mixed>}|null
      */
     public function responseFor(string $text): ?array
     {
@@ -82,12 +88,19 @@ class MenuKeyboard
                     continue;
                 }
 
+                if ($button['path'] === null) {
+                    return [
+                        'text' => $this->render($button['message']),
+                        'reply_markup' => $this->markup(),
+                    ];
+                }
+
                 return [
                     'text' => $this->render($button['message']),
                     'reply_markup' => [
                         'inline_keyboard' => [[
                             [
-                                'text' => $this->render($button['button']),
+                                'text' => $this->render($button['button'] ?? ''),
                                 'web_app' => [
                                     'url' => $this->baseUrl().$button['path'],
                                 ],
@@ -118,10 +131,20 @@ class MenuKeyboard
     }
 
     /**
-     * Render `{app}` placeholders with the app name.
+     * Render `{app}` with the app name and `{invite}` with the deep link
+     * that opens the mini app for a new coach (`?startapp=<mini app name>`).
      */
     private function render(string $template): string
     {
-        return str_replace('{app}', (string) config('app.name'), $template);
+        $bot = (string) config('services.telegram.bot_username');
+        $miniApp = (string) config('services.telegram.mini_app_name');
+
+        $invite = "https://t.me/{$bot}".($miniApp !== '' ? "?startapp={$miniApp}" : '');
+
+        return str_replace(
+            ['{app}', '{invite}'],
+            [(string) config('app.name'), $invite],
+            $template,
+        );
     }
 }

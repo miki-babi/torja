@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Exercise;
+use App\Models\Trainer;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -296,13 +297,15 @@ test('webapp leaves the chat id empty without write permission', function () {
         ->toBeNull();
 });
 
-test('webapp redirects an ex start param to the exercise detail page', function () {
-    $exercise = Exercise::factory()->create(['slug' => 'barbell-bench-press']);
+test('webapp redirects an ex start param to the coach landing', function () {
+    Exercise::factory()->create(['slug' => 'barbell-bench-press']);
 
+    // The main mini app is the coach funnel — an exercise share no longer
+    // beats the trainer-onboarding redirect.
     $this->postJson(route('telegram.login.webapp'), [
         'init_data' => signedInitData(startParam: 'ex_barbell-bench-press'),
     ])->assertOk()
-        ->assertJson(['redirect' => route('member.exercises.show', $exercise)]);
+        ->assertJson(['redirect' => route('trainer.bot.edit')]);
 });
 
 test('webapp falls back to the home redirect for unknown exercises', function () {
@@ -330,6 +333,52 @@ test('webapp rejects a stale payload', function () {
     ])->assertStatus(401);
 
     $this->assertGuest();
+});
+
+test('webapp registers a new mini app user as a trainer and lands on bot setup', function () {
+    $response = $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(),
+    ])->assertOk();
+
+    $user = User::firstWhere('telegram_id', 555001);
+
+    expect($user->isTrainer())->toBeTrue()
+        ->and($user->trainer)->not->toBeNull()
+        ->and($response->json('redirect'))->toBe(route('trainer.bot.edit'));
+});
+
+test('webapp promotes an existing client to trainer', function () {
+    $member = User::factory()->withTelegram()->create(['telegram_id' => 555001]);
+
+    $response = $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(),
+    ])->assertOk();
+
+    expect($member->fresh()->isTrainer())->toBeTrue()
+        ->and($member->trainer)->not->toBeNull()
+        ->and($response->json('redirect'))->toBe(route('trainer.bot.edit'));
+});
+
+test('webapp leaves staff accounts alone', function () {
+    $staff = User::factory()->staff()->withTelegram()->create(['telegram_id' => 555001]);
+
+    $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(),
+    ])->assertOk();
+
+    expect($staff->fresh()->isStaff())->toBeTrue()
+        ->and($staff->trainer)->toBeNull();
+});
+
+test('webapp lands a connected trainer on their dashboard', function () {
+    $trainer = Trainer::factory()->withBot()->create();
+    $trainer->user->update(['telegram_id' => 555001]);
+
+    $response = $this->postJson(route('telegram.login.webapp'), [
+        'init_data' => signedInitData(),
+    ])->assertOk();
+
+    expect($response->json('redirect'))->toBe(route('trainer.dashboard'));
 });
 
 test('webapp requires the init data field', function () {

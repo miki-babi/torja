@@ -143,7 +143,7 @@ class WebhookController extends Controller
         }
 
         if ($token === '') {
-            $this->reply($chatId, 'Welcome to '.config('app.name').'! Use the menu below to open the app or invite friends.');
+            $this->reply($chatId, 'Welcome to '.config('app.name').'! Open the app below to set up your coaching bot, or invite a fellow trainer.');
 
             return;
         }

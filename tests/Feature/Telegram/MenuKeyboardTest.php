@@ -79,17 +79,25 @@ test('open app button replies with an inline mini app button', function () {
     );
 });
 
-test('quick action buttons deep link into the app', function () {
-    $this->postJson(route('telegram.webhook'), menuUpdate('🏋️ Today\'s workout'))
-        ->assertOk();
-    $this->postJson(route('telegram.webhook'), menuUpdate('👥 Invite friends'))
+test('bot setup button deep links into the coach bot page', function () {
+    $this->postJson(route('telegram.webhook'), menuUpdate('🤖 Bot setup'))
         ->assertOk();
 
     Http::assertSent(
-        fn ($request) => ($request['reply_markup']['inline_keyboard'][0][0]['web_app']['url'] ?? '') === rtrim(config('app.url'), '/').'/today'
+        fn ($request) => ($request['reply_markup']['inline_keyboard'][0][0]['web_app']['url'] ?? '') === rtrim(config('app.url'), '/').'/trainer/bot'
     );
+});
+
+test('invite trainers replies with the coach deep link', function () {
+    config()->set('services.telegram.mini_app_name', 'coachapp');
+
+    $this->postJson(route('telegram.webhook'), menuUpdate('👥 Invite trainers'))
+        ->assertOk();
+
     Http::assertSent(
-        fn ($request) => ($request['reply_markup']['inline_keyboard'][0][0]['web_app']['url'] ?? '') === rtrim(config('app.url'), '/').'/ambassador'
+        fn ($request) => str_contains((string) $request['text'], 'https://t.me/trainpro_bot?startapp=coachapp')
+            && ! isset($request['reply_markup']['inline_keyboard'])
+            && isset($request['reply_markup']['keyboard'])
     );
 });
 

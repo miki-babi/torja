@@ -660,6 +660,24 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Turn this account into a coach — the main platform bot's mini app is
+     * the trainer funnel, so anyone who opens it becomes one. Staff keep
+     * their admin access; existing trainers just get their tenant ensured.
+     */
+    public function promoteToTrainer(): ?Trainer
+    {
+        if ($this->isStaff()) {
+            return null;
+        }
+
+        if (! $this->isTrainer()) {
+            $this->forceFill(['role' => 'trainer'])->save();
+        }
+
+        return $this->ensureTrainer();
+    }
+
+    /**
      * Whether the user holds a paid lifetime Pro membership — a
      * successful `pro` payment. Legacy per-program purchases don't
      * count; they live on the access rows instead.
