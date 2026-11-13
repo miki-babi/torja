@@ -7,8 +7,8 @@ use Illuminate\Database\Migrations\Migration;
 return new class extends Migration
 {
     /**
-     * Lines for the chats inbox (`member.chats`), the chat thread
-     * (`member.chat`) and the new gym picker strings (`member.ranks`).
+     * Lines for the chats inbox (`member.chats`) and the chat thread
+     * (`member.chat`).
      *
      * @var array<string, array<string, array<string, string>>>
      */
@@ -43,13 +43,6 @@ return new class extends Migration
             'mute' => ['en' => 'Mute notifications', 'am' => 'ማሳወቂያዎችን አጥፋ'],
             'unmute' => ['en' => 'Unmute notifications', 'am' => 'ማሳወቂያዎችን አብራ'],
             'send_failed' => ['en' => 'Message failed to send', 'am' => 'መልእክቱ መላክ አልተቻለም'],
-        ],
-        'member.ranks' => [
-            'gym_placeholder' => ['en' => 'Search or create your gym', 'am' => 'ጂምዎን ይፈልጉ ወይም ይፍጠሩ'],
-            'gym_create' => ['en' => 'Create ":name"', 'am' => '":name" ፍጠር'],
-            'gym_members' => ['en' => 'members', 'am' => 'አባላት'],
-            'gym_leave' => ['en' => 'Leave gym', 'am' => 'ጂም ውለይ'],
-            'gym_error' => ['en' => 'Could not save the gym', 'am' => 'ጂሙን ማስቀመጥ አልተቻለም'],
         ],
     ];
 

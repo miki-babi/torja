@@ -201,15 +201,15 @@ test('the shared page exposes the pro state and upgrade url', function () {
 
 test('a successful legacy program payment still grants access and does not grant pro', function () {
     Http::fake([
-        'https://api.chapa.co/v1/transaction/verify/*' => Http::response([
-            'status' => 'success',
-            'data' => ['status' => 'success'],
+        'https://jami.bio/api/jamidev/checkout/*' => Http::response([
+            'status' => 'completed',
+            'orderStatus' => 'paid',
         ]),
     ]);
 
     $program = sharedProgram(['price_etb' => 300]);
     $user = User::factory()->create();
-    $payment = Payment::factory()->for($user)->create([
+    $payment = Payment::factory()->for($user)->jami()->create([
         'status' => 'pending',
         'purpose' => 'program_purchase',
         'payable_type' => $program->getMorphClass(),
@@ -228,28 +228,33 @@ test('a successful legacy program payment still grants access and does not grant
 });
 
 test('the webhook also fulfills a legacy program purchase', function () {
-    config(['services.chapa.webhook_secret' => 'wh-secret']);
+    config(['services.jami.webhook_secret' => 'wh-secret']);
 
     Http::fake([
-        'https://api.chapa.co/v1/transaction/verify/*' => Http::response([
-            'status' => 'success',
-            'data' => ['status' => 'success'],
+        'https://jami.bio/api/jamidev/checkout/*' => Http::response([
+            'status' => 'completed',
+            'orderStatus' => 'paid',
         ]),
     ]);
 
     $program = sharedProgram(['price_etb' => 300]);
-    $payment = Payment::factory()->create([
+    $payment = Payment::factory()->jami()->create([
         'purpose' => 'program_purchase',
         'payable_type' => $program->getMorphClass(),
         'payable_id' => $program->id,
     ]);
 
-    $body = json_encode(['tx_ref' => $payment->tx_ref]);
-    $signature = hash_hmac('sha256', $body, 'wh-secret');
+    $body = json_encode([
+        'id' => 'evt_program',
+        'type' => 'checkout.session.completed',
+        'data' => ['sessionId' => $payment->deposit_id],
+    ]);
+    $timestamp = time();
+    $signature = hash_hmac('sha256', "{$timestamp}.{$body}", 'wh-secret');
 
-    $this->call('POST', route('payment.webhook'), [], [], [], [
+    $this->call('POST', route('payment.jami.webhook'), [], [], [], [
         'CONTENT_TYPE' => 'application/json',
-        'HTTP_X_CHAPA_SIGNATURE' => $signature,
+        'HTTP_X_JAMIDEV_SIGNATURE' => "t={$timestamp},v1={$signature}",
     ], $body)->assertNoContent();
 
     expect($payment->fresh()->isSuccessful())->toBeTrue()

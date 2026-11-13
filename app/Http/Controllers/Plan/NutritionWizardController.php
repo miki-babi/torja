@@ -6,7 +6,6 @@ use App\Enums\WizardSection;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Plan\WizardStepRequest;
 use App\Services\Nutrition\ProfileResolver;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -49,26 +48,6 @@ class NutritionWizardController extends Controller
         }
 
         $profile->save();
-
-        $tracker = app(Tracker::class);
-
-        $stepProperties = [
-            'section' => $wizardSection->value,
-            'step' => $wizardSection->step(),
-        ];
-
-        if ($wizardSection === WizardSection::Goal) {
-            $stepProperties['primary_goal'] = $profile->goal['primary_goal'] ?? null;
-        }
-
-        $tracker->record('wizard.step_completed', properties: $stepProperties);
-
-        if ($wizardSection === WizardSection::Obstacles) {
-            $tracker->record('wizard.completed', properties: [
-                'primary_goal' => $profile->goal['primary_goal'] ?? null,
-                'motivations' => $profile->goal['motivations'] ?? [],
-            ]);
-        }
 
         return back();
     }

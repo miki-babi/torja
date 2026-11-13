@@ -72,28 +72,24 @@ function ExerciseRow({ ex, detail }: { ex: ExerciseSummary; detail: string }) {
 export default function MemberSharedProgram({
     program,
     isOwner,
-    isPro,
-    isCoachProgram,
     priceEtb,
     canClaim,
     alreadyClaimed,
     saveUrl,
     checkoutUrl,
-    providers,
+    jamiEnabled,
     homeUrl,
     editUrl,
     todaysSessions: initialTodaysSessions,
 }: {
     program: SharedProgram;
     isOwner: boolean;
-    isPro: boolean;
-    isCoachProgram: boolean;
     priceEtb: number;
     canClaim: boolean;
     alreadyClaimed: boolean;
     saveUrl: string;
     checkoutUrl: string | null;
-    providers: Record<'chapa' | 'verify_checkout' | 'jami', boolean>;
+    jamiEnabled: boolean;
     homeUrl: string;
     editUrl: string | null;
     todaysSessions: Record<string, WorkoutSession>;
@@ -560,29 +556,13 @@ export default function MemberSharedProgram({
                                         ? t('shared_program.saving')
                                         : t('shared_program.claim_program')}
                                 </Button>
-                            ) : checkoutUrl !== null ? (
-                                (Object.keys(providers) as Array<
-                                    keyof typeof providers
-                                >)
-                                    .filter((provider) => providers[provider])
-                                    .map((provider) => (
-                                        <Button
-                                            key={provider}
-                                            className="w-full rounded-full"
-                                            variant={
-                                                provider === 'jami'
-                                                    ? 'default'
-                                                    : 'outline'
-                                            }
-                                            onClick={() =>
-                                                router.post(checkoutUrl, {
-                                                    provider,
-                                                })
-                                            }
-                                        >
-                                            {`Buy for ${priceEtb.toLocaleString()} ETB — ${provider === 'verify_checkout' ? 'Verify' : provider === 'jami' ? 'Jami' : 'Chapa'}`}
-                                        </Button>
-                                    ))
+                            ) : checkoutUrl !== null && jamiEnabled ? (
+                                <Button
+                                    className="w-full rounded-full"
+                                    onClick={() => router.post(checkoutUrl)}
+                                >
+                                    {`Buy for ${priceEtb.toLocaleString()} ETB — Jami`}
+                                </Button>
                             ) : null}
                             <Button
                                 variant="outline"

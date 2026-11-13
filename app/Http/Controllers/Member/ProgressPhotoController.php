@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProgressPhoto;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -32,8 +31,6 @@ class ProgressPhotoController extends Controller
             'path' => $path,
             'taken_on' => $data['taken_on'] ?? today()->toDateString(),
         ]);
-
-        app(Tracker::class)->record('progress.photo_uploaded', subject: $photo);
 
         return response()->json([
             'photo' => [

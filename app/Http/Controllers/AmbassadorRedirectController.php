@@ -4,17 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Listeners\BindReferrer;
 use App\Models\User;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Inertia\Inertia;
 
 /**
  * The ambassador invite link (/r/{code}). Drops a `tp_ref` cookie so a
  * guest's later registration binds the referrer (last click wins — the
  * cookie is rewritten on every click), binds logged-in users immediately,
- * then sends the visitor somewhere useful: the welcome page for guests,
+ * then sends the visitor somewhere useful: registration for guests,
  * the Pro page for members who haven't upgraded.
  */
 class AmbassadorRedirectController extends Controller
@@ -28,10 +26,6 @@ class AmbassadorRedirectController extends Controller
     {
         $referrer = User::query()->where('referral_code', $code)->firstOrFail();
 
-        app(Tracker::class)->record('ambassador.clicked', $request->user() ?? $referrer, [
-            'referrer_id' => $referrer->id,
-        ], $referrer);
-
         $user = $request->user();
 
         if ($user !== null) {
@@ -39,11 +33,7 @@ class AmbassadorRedirectController extends Controller
         }
 
         $target = $user === null
-            ? route('home').'?'.Arr::query([
-                'utm_source' => 'ambassador',
-                'utm_medium' => 'invite',
-                'utm_content' => $code,
-            ])
+            ? route('register')
             : route($user->isPro() ? 'member.home' : 'pro.show');
 
         if ($user !== null && ! $user->is($referrer)) {

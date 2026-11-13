@@ -114,7 +114,6 @@ export function ProScreen({
     onUnlock?: () => void;
     preview?: boolean;
 }) {
-
     return (
         <div
             className={cn(
@@ -200,7 +199,9 @@ export function ProScreen({
                     <BadgeCheck className="mt-0.5 size-5 shrink-0 text-[#AFFA01]" />
                     <div>
                         <p className="text-sm font-bold">{copy.pro_title}</p>
-                        <p className="text-sm text-[#8E8E93]">{copy.pro_body}</p>
+                        <p className="text-sm text-[#8E8E93]">
+                            {copy.pro_body}
+                        </p>
                     </div>
                 </div>
             ) : (
@@ -224,7 +225,6 @@ export function ProScreen({
                     )}
                 </div>
             )}
-
         </div>
     );
 }

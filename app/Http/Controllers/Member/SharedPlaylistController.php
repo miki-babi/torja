@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\Exercise;
 use App\Models\ExercisePlaylist;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,11 +20,6 @@ class SharedPlaylistController extends Controller
     public function show(Request $request, ExercisePlaylist $playlist): Response
     {
         $playlist->load(['items', 'user']);
-
-        app(Tracker::class)->record('shared_playlist.viewed', subject: $playlist, properties: [
-            'owner_id' => $playlist->user_id,
-            'is_owner' => $request->user()?->id === $playlist->user_id,
-        ]);
 
         $exercises = Exercise::query()
             ->whereIn('slug', $playlist->items->pluck('exercise_id'))
@@ -57,10 +51,6 @@ class SharedPlaylistController extends Controller
         if ($request->user()->id === $playlist->user_id) {
             return response()->json(['playlist_id' => $playlist->id]);
         }
-
-        app(Tracker::class)->record('shared_playlist.saved', subject: $playlist, properties: [
-            'owner_id' => $playlist->user_id,
-        ]);
 
         $copy = DB::transaction(function () use ($request, $playlist): ExercisePlaylist {
             $copy = $request->user()->exercisePlaylists()->create([

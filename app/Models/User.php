@@ -41,7 +41,6 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
- * @property array<string, mixed>|null $attribution
  * @property string|null $telegram_chat_id
  * @property string|null $telegram_link_token
  * @property int|null $telegram_id
@@ -52,7 +51,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $updated_at
  */
 #[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'telegram_link_token', 'attribution'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'telegram_link_token'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
@@ -77,7 +76,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'phone_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
-            'attribution' => 'array',
             'telegram_id' => 'integer',
         ];
     }
@@ -322,16 +320,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
-    }
-
-    /**
-     * The user's materialized trait row used for segmentation.
-     *
-     * @return HasOne<UserTrait, $this>
-     */
-    public function traits(): HasOne
-    {
-        return $this->hasOne(UserTrait::class);
     }
 
     /**

@@ -355,68 +355,6 @@
             "am": "ተመሳሳይ መሳሪያ"
         }
     },
-    "nudges": {
-        "checkout_abandoned.title": {
-            "en": "Almost there",
-            "am": "ትንሽ ቀርቷል"
-        },
-        "checkout_abandoned.body": {
-            "en": "Your :goal plan is waiting — complete the payment to unlock it.",
-            "am": "የ :goal እቅድዎ በመጠባበቅ ላይ ነው — ለመክፈት ክፍያውን ያጠናቅቁ።"
-        },
-        "checkout_abandoned.cta": {
-            "en": "Complete payment",
-            "am": "ክፍያ ያጠናቅቁ"
-        },
-        "plan_ready_unpaid.title": {
-            "en": "Your plan is ready",
-            "am": "እቅድዎ ዝግጁ ነው"
-        },
-        "plan_ready_unpaid.body": {
-            "en": "Your :goal plan is built and waiting. Unlock it to get every meal and workout.",
-            "am": "የ :goal እቅድዎ ተዘጋጅቷል። እያንዳንዱን ምግብ እና ልምምድ ለማግኘት ይክፈቱ።"
-        },
-        "plan_ready_unpaid.cta": {
-            "en": "Unlock my plan",
-            "am": "እቅዴን ክፈት"
-        },
-        "wizard_abandoned.title": {
-            "en": "Finish your setup",
-            "am": "ማስነጃዎን ያጠናቅቁ"
-        },
-        "wizard_abandoned.body": {
-            "en": "You're :steps steps away from your personalized :goal plan.",
-            "am": "ከግል :goal እቅድዎ :steps ደረጃዎች ቀርተውታል።"
-        },
-        "wizard_abandoned.cta": {
-            "en": "Continue setup",
-            "am": "ይቀጥሉ"
-        },
-        "goal_lose_fat": {
-            "en": "fat-loss",
-            "am": "የስብ መቀነስ"
-        },
-        "goal_build_muscle": {
-            "en": "muscle-gain",
-            "am": "የጭንቅላት መገንባት"
-        },
-        "goal_recomp": {
-            "en": "recomp",
-            "am": "ሪኮምፕ"
-        },
-        "goal_maintain": {
-            "en": "weight maintenance",
-            "am": "የክብደት መጠበቅ"
-        },
-        "goal_general": {
-            "en": "fitness",
-            "am": "የአካል ብቃት"
-        },
-        "goal_default": {
-            "en": "fitness",
-            "am": "የአካል ብቃት"
-        }
-    },
     "programs": {
         "title": {
             "en": "Explore",

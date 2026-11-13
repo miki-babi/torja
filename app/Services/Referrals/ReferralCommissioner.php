@@ -6,7 +6,6 @@ use App\Models\Payment;
 use App\Models\ReferralCommission;
 use App\Models\User;
 use App\Support\AmbassadorProgram;
-use App\Support\Tracking\Tracker;
 
 /**
  * Creates and voids ambassador commissions. Commissions are created
@@ -41,7 +40,7 @@ class ReferralCommissioner
             return;
         }
 
-        $commission = ReferralCommission::query()->firstOrCreate(
+        ReferralCommission::query()->firstOrCreate(
             ['payment_id' => $payment->id],
             [
                 'affiliate_user_id' => $referrer->id,
@@ -50,15 +49,6 @@ class ReferralCommissioner
                 'status' => 'pending',
             ],
         );
-
-        if ($commission->wasRecentlyCreated) {
-            app(Tracker::class)->record('ambassador.commission_pending', $referrer, [
-                'commission_id' => $commission->id,
-                'amount' => (float) $commission->amount,
-                'referred_user_id' => $buyer->id,
-                'payment_id' => $payment->id,
-            ], $commission);
-        }
     }
 
     /**

@@ -1,17 +1,5 @@
 import { xsrfToken } from '@/components/member/member-api';
-import { debug, webapp } from '@/routes/telegram/login';
-
-export type TelegramLocationData = {
-    latitude: number;
-    longitude: number;
-    altitude?: number | null;
-    course?: number | null;
-    speed?: number | null;
-    horizontal_accuracy?: number | null;
-    vertical_accuracy?: number | null;
-    course_accuracy?: number | null;
-    speed_accuracy?: number | null;
-};
+import { webapp } from '@/routes/telegram/login';
 
 declare global {
     interface Window {
@@ -32,19 +20,6 @@ declare global {
                     eventType: string,
                     handler: (payload?: unknown) => void,
                 ) => void;
-                LocationManager?: {
-                    isInited: boolean;
-                    isLocationAvailable: boolean;
-                    isAccessRequested: boolean;
-                    isAccessGranted: boolean;
-                    init?: (callback?: () => void) => void;
-                    getLocation?: (
-                        callback: (
-                            location: TelegramLocationData | null,
-                        ) => void,
-                    ) => void;
-                    openSettings?: () => void;
-                };
             };
         };
     }
@@ -109,27 +84,6 @@ export function telegramStartParam(initData: string): string | null {
     }
 
     return null;
-}
-
-/**
- * Fire-and-forget client log sink — reports Mini App auth outcomes to the
- * server so sign-in attempts leave a trail in the Laravel log.
- */
-export function reportTelegramDebug(
-    event: string,
-    context: Record<string, unknown> = {},
-): void {
-    fetch(debug().url, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-XSRF-TOKEN': xsrfToken(),
-        },
-        body: JSON.stringify({ event, context }),
-    }).catch(() => {});
 }
 
 /**

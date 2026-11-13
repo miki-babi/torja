@@ -5,7 +5,6 @@ namespace App\Services\Referrals;
 use App\Models\ProGrant;
 use App\Models\User;
 use App\Support\AmbassadorProgram;
-use App\Support\Tracking\Tracker;
 
 /**
  * Grants the "earned" Pro tier. When a member's referred-signup count
@@ -34,20 +33,12 @@ class ProGrantEvaluator
             return;
         }
 
-        $grant = ProGrant::query()->firstOrCreate(
+        ProGrant::query()->firstOrCreate(
             ['user_id' => $referrer->id, 'revoked_at' => null],
             [
                 'source' => 'referral_reward',
                 'referral_count' => $count,
             ],
         );
-
-        if ($grant->wasRecentlyCreated) {
-            app(Tracker::class)->record('pro.granted', $referrer, [
-                'grant_id' => $grant->id,
-                'source' => $grant->source,
-                'referral_count' => $grant->referral_count,
-            ], $grant);
-        }
     }
 }

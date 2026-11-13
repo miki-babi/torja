@@ -299,17 +299,18 @@ test('program checkout creates a payable payment at the program price', function
     ]);
 
     Http::fake([
-        'https://api.chapa.co/*' => Http::response([
-            'status' => 'success',
-            'data' => ['checkout_url' => 'https://checkout.chapa.co/x'],
+        'https://jami.bio/api/jamidev/checkout' => Http::response([
+            'sessionId' => 'cs_trainer_program',
+            'mode' => 'redirect',
+            'checkoutUrl' => 'https://jami.bio/jamidev/pay/cs_trainer_program',
         ]),
     ]);
 
-    config()->set('services.chapa.secret_key', 'test-secret');
+    config()->set('services.jami.token', 'test-token');
 
     $this->actingAs($buyer)
-        ->post('/shared/programs/tok-paid/checkout', ['provider' => 'chapa'])
-        ->assertRedirect('https://checkout.chapa.co/x');
+        ->post('/shared/programs/tok-paid/checkout')
+        ->assertRedirect('https://jami.bio/jamidev/pay/cs_trainer_program');
 
     $payment = $buyer->payments()->latest('id')->first();
 

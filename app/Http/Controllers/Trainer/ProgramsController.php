@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Trainer;
 
-use App\Http\Controllers\Admin\Concerns\StoresPublicImage;
+use App\Http\Controllers\Concerns\StoresPublicImage;
 use App\Http\Controllers\Controller;
 use App\Models\Exercise;
 use App\Models\ExerciseProgram;

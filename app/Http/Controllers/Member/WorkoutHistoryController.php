@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\Exercise;
 use App\Support\ExerciseCatalog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,8 +34,6 @@ class WorkoutHistoryController extends Controller
             ->merge($sessions->flatMap->sets->pluck('exercise_id'))
             ->unique()
             ->all();
-
-        app(Tracker::class)->record('history.viewed');
 
         return Inertia::render('member/history', [
             'sessions' => $sessions->map->toFrontend()->all(),

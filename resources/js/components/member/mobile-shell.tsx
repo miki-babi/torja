@@ -3,7 +3,6 @@ import { useEffect, type ReactNode } from 'react';
 import { BottomNav } from '@/components/member/bottom-nav';
 import { CoachBrand } from '@/components/member/coach-brand';
 import { SessionFab } from '@/components/member/session-fab';
-import { NudgeBanner } from '@/components/nudge-banner';
 import {
     telegramInitData,
     telegramSignIn,
@@ -77,7 +76,6 @@ export function MobileShell({
                     auth.user && !hideNav ? 'pb-28' : 'pb-8',
                 )}
             >
-                <NudgeBanner />
                 {auth.user && !hideBrand && <CoachBrand />}
                 {children}
             </div>

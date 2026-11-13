@@ -18,8 +18,6 @@ export type AdminNavGroup = {
 export const adminNavGroups: AdminNavGroup[] = [
     {
         label: 'Management',
-        items: [
-            { title: 'Trainers', href: trainersIndex(), icon: Users },
-        ],
+        items: [{ title: 'Trainers', href: trainersIndex(), icon: Users }],
     },
 ];

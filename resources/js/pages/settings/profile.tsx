@@ -203,7 +203,7 @@ function ProfilePhoto() {
             <Heading
                 variant="small"
                 title="Profile photo"
-                description="Shown next to your name and on the leaderboard"
+                description="Shown next to your name"
             />
             <div className="flex items-center gap-4">
                 <button

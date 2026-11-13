@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\MealPlanMeal;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,11 +25,6 @@ class MealShowController extends Controller
             $this->canView($request, $mealPlanMeal),
             403,
         );
-
-        app(Tracker::class)->record('meal.item_viewed', subject: $mealPlanMeal, properties: [
-            'day' => $mealPlanMeal->day,
-            'meal_type' => $mealPlanMeal->meal_type->value,
-        ]);
 
         return Inertia::render('member/meal-show', [
             'planName' => $mealPlanMeal->mealPlan->name,

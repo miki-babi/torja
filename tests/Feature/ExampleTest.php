@@ -1,7 +1,7 @@
 <?php
 
-test('returns a successful response', function () {
+test('the welcome url redirects to the member home', function () {
     $response = $this->get(route('home'));
 
-    $response->assertOk();
+    $response->assertRedirect('/');
 });

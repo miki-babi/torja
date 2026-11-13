@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
  * An admin-authored meal program: a set of days, each with meal-type slots
  * and food items, that a member can claim. Claiming copies the days into
  * the member's account as a member-owned MealPlan. Free programs are
- * claimable via the share link; priced ones go through a Chapa payment.
+ * claimable via the share link; priced ones go through a Jami payment.
  *
  * @property int $id
  * @property int $user_id
@@ -154,7 +153,6 @@ class MealProgram extends Model
 
     /**
      * The public shared-program URL, or null when the program is not shared.
-     * Carries `ref` + utm params so program distribution is attributed.
      */
     public function shareUrl(): ?string
     {
@@ -162,13 +160,6 @@ class MealProgram extends Model
             return null;
         }
 
-        $url = route('meal-programs.shared.show', $this->share_token).'?'.Arr::query([
-            'ref' => (string) $this->user_id,
-            'utm_source' => 'program',
-            'utm_medium' => 'share',
-            'utm_content' => 'meal_program',
-        ]);
-
-        return ShortLink::for($this, $url)->shortUrl();
+        return ShortLink::for($this, route('meal-programs.shared.show', $this->share_token))->shortUrl();
     }
 }

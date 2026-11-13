@@ -43,7 +43,7 @@ export function PlanMealsCard({
                                 {m.id !== undefined ? (
                                     <Link
                                         href={mealShow(m.id).url}
-                                        className="hover:text-[#AFFA01] transition-colors"
+                                        className="transition-colors hover:text-[#AFFA01]"
                                     >
                                         {mealTypeLabel(m.type)}
                                     </Link>

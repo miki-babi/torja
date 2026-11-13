@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\WeightLog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -35,10 +34,6 @@ class WeightLogController extends Controller
                 'weight_kg' => $data['weight_kg'],
             ]);
         }
-
-        app(Tracker::class)->record('weight.logged', subject: $log, properties: [
-            'logged_on' => $log->logged_on->toDateString(),
-        ]);
 
         return response()->json(['log' => $log], 201);
     }

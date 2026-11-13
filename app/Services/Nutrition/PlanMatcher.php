@@ -6,7 +6,7 @@ use App\Models\NutritionProfile;
 
 /**
  * Maps a nutrition profile to the seeded meal-plan slug it should follow.
- * Shared between the preview builder and the traits/segmentation pipeline.
+ * Shared between the preview builder and the plan generator.
  */
 class PlanMatcher
 {

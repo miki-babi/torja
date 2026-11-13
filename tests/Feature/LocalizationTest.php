@@ -43,7 +43,7 @@ test('guests locale is driven by the cookie', function () {
     ]);
 
     $this->withCookie('locale', 'en')
-        ->get(route('home'))
+        ->get(route('calculator'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('locale', 'en')
             ->has('translations')
@@ -58,15 +58,15 @@ test('translator falls back to default then the key', function () {
     ]);
     Language::factory()->create(['code' => 'am', 'is_active' => true]);
     LanguageLine::factory()->create([
-        'group' => 'common',
+        'group' => 'test.group',
         'key' => 'save',
         'text' => ['en' => 'Save'],
     ]);
 
     Translator::flush();
 
-    expect(Translator::t('common', 'save', 'am'))->toBe('Save')
-        ->and(Translator::t('common', 'missing', 'en'))->toBe('common.missing');
+    expect(Translator::t('test.group', 'save', 'am'))->toBe('Save')
+        ->and(Translator::t('test.group', 'missing', 'en'))->toBe('test.group.missing');
 });
 
 test('exercise names localize to amharic when available', function () {
@@ -83,42 +83,8 @@ test('exercise names localize to amharic when available', function () {
     expect($exercise->toSummary()['name'])->toBe('barbell bench press');
 });
 
-test('admins can manage languages and translations', function () {
-    Language::factory()->create(['code' => 'en', 'is_default' => true]);
-    $admin = User::factory()->admin()->create();
-
-    $this->actingAs($admin)
-        ->get(route('admin.languages.index'))
-        ->assertOk();
-
-    $this->actingAs($admin)
-        ->post(route('admin.languages.store'), [
-            'code' => 'ti',
-            'name' => 'Tigrinya',
-            'native_name' => 'ትግርኛ',
-        ])
-        ->assertRedirect();
-
-    expect(Language::where('code', 'ti')->exists())->toBeTrue();
-
-    $line = LanguageLine::factory()->create([
-        'group' => 'common',
-        'key' => 'save',
-        'text' => ['en' => 'Save'],
-    ]);
-
-    $this->actingAs($admin)
-        ->patch(route('admin.translations.update', $line->id), [
-            'text' => ['en' => 'Save', 'am' => 'አስቀምጥ'],
-        ])
-        ->assertRedirect();
-
-    expect($line->refresh()->text['am'])->toBe('አስቀምጥ');
-});
-
-test('non-admins cannot access translation management', function () {
+test('non-admins cannot access admin pages', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->get(route('admin.languages.index'))->assertForbidden();
-    $this->actingAs($user)->get(route('admin.translations.index'))->assertForbidden();
+    $this->actingAs($user)->get(route('admin.trainers.index'))->assertForbidden();
 });

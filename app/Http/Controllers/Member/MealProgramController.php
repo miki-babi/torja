@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\MealPlan;
 use App\Services\Nutrition\MealPlanPreviewBuilder;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,10 +24,6 @@ class MealProgramController extends Controller
         abort_unless($mealPlan->user_id === $request->user()->id, 404);
 
         $mealPlan->loadMissing('sourceProgram');
-
-        app(Tracker::class)->record('meal_program.viewed', subject: $mealPlan, properties: [
-            'meal_program_id' => $mealPlan->meal_program_id,
-        ]);
 
         return Inertia::render('member/meal-program', [
             'plan' => [

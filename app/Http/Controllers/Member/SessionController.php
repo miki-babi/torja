@@ -8,7 +8,6 @@ use App\Models\ExercisePlaylist;
 use App\Models\WorkoutSession;
 use App\Models\WorkoutSet;
 use App\Support\ExerciseCatalog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,11 +44,6 @@ class SessionController extends Controller
             'user_id' => $request->user()->id,
             'date' => now()->toDateString(),
             'exercise_playlist_id' => $playlistId,
-        ]);
-
-        app(Tracker::class)->record('session.started', subject: $session, properties: [
-            'playlist_id' => $playlistId,
-            'resumed' => $resumed,
         ]);
 
         return response()->json(['session' => $session->toFrontend()], 201);
@@ -98,12 +92,6 @@ class SessionController extends Controller
             ],
         );
 
-        app(Tracker::class)->record('workout.set_logged', subject: $session, properties: [
-            'exercise_id' => $data['exercise_id'],
-            'has_weight' => ($data['weight_kg'] ?? null) !== null,
-            'has_reps' => ($data['reps'] ?? null) !== null,
-        ]);
-
         return response()->json(['session' => $session->refresh()->toFrontend()]);
     }
 
@@ -151,13 +139,6 @@ class SessionController extends Controller
             'set_index' => $nextIndex,
             'weight_kg' => $data['weight_kg'] ?? null,
             'reps' => $data['reps'],
-        ]);
-
-        app(Tracker::class)->record('workout.set_logged', subject: $session, properties: [
-            'exercise_id' => $data['exercise_id'],
-            'quick' => true,
-            'has_weight' => ($data['weight_kg'] ?? null) !== null,
-            'has_reps' => true,
         ]);
 
         return response()->json(['session' => $session->refresh()->toFrontend()], 201);
@@ -217,11 +198,6 @@ class SessionController extends Controller
                 'reps' => $set['reps'],
             ]);
         }
-
-        app(Tracker::class)->record('session.backfilled', subject: $session, properties: [
-            'date' => $session->date->toDateString(),
-            'sets' => count($data['sets']),
-        ]);
 
         return response()->json(['session' => $session->refresh()->toFrontend()], 201);
     }
@@ -289,12 +265,6 @@ class SessionController extends Controller
         if ($exercises === []) {
             return to_route('member.today', ['session' => $session->id]);
         }
-
-        app(Tracker::class)->record('session.started', subject: $session, properties: [
-            'playlist_id' => null,
-            'resumed' => true,
-            'player' => true,
-        ]);
 
         return Inertia::render('member/workout-player', [
             'program' => [

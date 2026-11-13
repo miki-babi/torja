@@ -133,9 +133,7 @@ export default function AdminTrainerShow({
                                         confirmLabel: 'Demote',
                                         destructive: true,
                                         onConfirm: () =>
-                                            router.post(
-                                                demote(trainer.id).url,
-                                            ),
+                                            router.post(demote(trainer.id).url),
                                     })
                                 }
                             >
@@ -203,8 +201,7 @@ export default function AdminTrainerShow({
                             {trainer.bot_connected ? (
                                 <>
                                     <p>
-                                        <b>@{trainer.bot_username}</b>{' '}
-                                        connected
+                                        <b>@{trainer.bot_username}</b> connected
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         webhook{' '}
@@ -242,11 +239,7 @@ export default function AdminTrainerShow({
                     {(
                         [
                             ['Clients', trainer.counts.clients, Users],
-                            [
-                                'Programs',
-                                trainer.counts.programs,
-                                Dumbbell,
-                            ],
+                            ['Programs', trainer.counts.programs, Dumbbell],
                             [
                                 'Meal plans',
                                 trainer.counts.meal_programs,
@@ -317,9 +310,7 @@ export default function AdminTrainerShow({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base">
-                                Plans
-                            </CardTitle>
+                            <CardTitle className="text-base">Plans</CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-1.5">
                             {programs.length === 0 &&

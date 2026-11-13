@@ -229,9 +229,7 @@ export default function TrainerClientShow({
                     <Card>
                         <CardContent className="flex items-center gap-4 pt-6">
                             <Avatar className="size-14">
-                                <AvatarImage
-                                    src={client.avatar ?? undefined}
-                                />
+                                <AvatarImage src={client.avatar ?? undefined} />
                                 <AvatarFallback className="text-lg">
                                     {client.name.slice(0, 1)}
                                 </AvatarFallback>
@@ -254,9 +252,7 @@ export default function TrainerClientShow({
 
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm">
-                                This week
-                            </CardTitle>
+                            <CardTitle className="text-sm">This week</CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-1 text-sm">
                             <p>

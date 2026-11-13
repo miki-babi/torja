@@ -2,9 +2,7 @@
 
 namespace App\Services\Payments;
 
-use App\Exceptions\Payments\ChapaException;
 use App\Exceptions\Payments\JamiException;
-use App\Exceptions\Payments\VerifyCheckoutException;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Crypt;
 
@@ -44,8 +42,6 @@ final class CheckoutLaunch
 class CheckoutLauncher
 {
     public function __construct(
-        private readonly ChapaService $chapa,
-        private readonly VerifyCheckoutService $verifyCheckout,
         private readonly JamiService $jami,
     ) {}
 
@@ -54,83 +50,7 @@ class CheckoutLauncher
      */
     public function start(Payment $payment, ?string $gateway = null, ?string $phone = null): CheckoutLaunch
     {
-        if ($payment->isJami()) {
-            return $this->jami($payment, $gateway, $phone);
-        }
-
-        $checkoutUrl = $payment->isVerifyCheckout()
-            ? $this->verifyCheckoutUrl($payment)
-            : $this->chapaUrl($payment);
-
-        return $checkoutUrl !== null
-            ? CheckoutLaunch::redirect($checkoutUrl)
-            : CheckoutLaunch::failed();
-    }
-
-    /**
-     * Initialize a Chapa checkout and return the hosted checkout URL, or
-     * null when Chapa rejects the request.
-     */
-    private function chapaUrl(Payment $payment): ?string
-    {
-        $returnUrl = $this->returnUrl($payment);
-
-        try {
-            $response = $this->chapa->initialize([
-                'amount' => (string) $payment->amount,
-                'currency' => $payment->currency,
-                'email' => $payment->email,
-                'first_name' => $payment->first_name ?? 'Customer',
-                'last_name' => $payment->last_name ?? '-',
-                'tx_ref' => $payment->tx_ref,
-                'callback_url' => $returnUrl,
-                'return_url' => $returnUrl,
-                'customization' => [
-                    'title' => 'Toraj Pro',
-                    'description' => 'One-time payment for lifetime Pro access.',
-                ],
-            ]);
-        } catch (ChapaException $e) {
-            report($e);
-
-            return null;
-        }
-
-        $payment->update(['provider_response' => $response]);
-
-        $checkoutUrl = $response['data']['checkout_url'] ?? null;
-
-        return is_string($checkoutUrl) ? $checkoutUrl : null;
-    }
-
-    /**
-     * Create a Verify Checkout deposit and return the hosted checkout URL,
-     * or null when the API rejects the request. The deposit id and the
-     * idempotency key are persisted so retries and webhooks reconcile.
-     */
-    private function verifyCheckoutUrl(Payment $payment): ?string
-    {
-        try {
-            $data = $this->verifyCheckout->createDeposit(
-                (string) $payment->idempotency_key,
-                "user-{$payment->user_id}",
-                (string) $payment->amount,
-                $this->returnUrl($payment),
-            );
-        } catch (VerifyCheckoutException $e) {
-            report($e);
-
-            return null;
-        }
-
-        $payment->update([
-            'deposit_id' => $data['id'] ?? null,
-            'provider_response' => $data,
-        ]);
-
-        $checkoutUrl = $data['checkout_url'] ?? null;
-
-        return is_string($checkoutUrl) ? $checkoutUrl : null;
+        return $this->jami($payment, $gateway, $phone);
     }
 
     /**

@@ -10,7 +10,6 @@ use App\Models\User;
 use App\Support\ExerciseCatalog;
 use App\Support\Telegram\InitData;
 use App\Support\Telegram\UserResolver;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -224,28 +223,7 @@ class TelegramLoginController extends Controller
             return;
         }
 
-        app(Tracker::class)->record('ambassador.clicked', $user, [
-            'referrer_id' => $referrer->id,
-        ], $referrer);
-
         app(BindReferrer::class)->bind($user, $matches[1]);
-    }
-
-    /**
-     * Fire-and-forget client log sink: the auth screen reports what it saw
-     * (payload found, sign-in failure status) so Mini App sign-in attempts
-     * leave a trail in the log.
-     */
-    public function debug(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'event' => ['required', 'string', 'max:60', 'regex:/^[a-z0-9_.-]{2,60}$/'],
-            'context' => ['nullable', 'array', 'max:20'],
-        ]);
-
-        Log::info('telegram.webapp.client', $validated);
-
-        return response()->json(['ok' => true]);
     }
 
     /**

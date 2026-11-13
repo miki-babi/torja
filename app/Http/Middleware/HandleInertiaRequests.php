@@ -3,9 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Language;
-use App\Models\TrackingIntegration;
 use App\Support\Locales;
-use App\Support\Nudges\NudgeResolver;
 use App\Support\Translator;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -67,7 +65,6 @@ class HandleInertiaRequests extends Middleware
                 ])
                 ->all(),
             'translations' => Translator::map(app()->getLocale()),
-            'nudge' => app(NudgeResolver::class)->forRequest($request),
             'activeSession' => $request->user()
                 ? $request->user()->workoutSessions()
                     ->whereDate('date', today())
@@ -76,12 +73,6 @@ class HandleInertiaRequests extends Middleware
                     ->first(['id', 'exercise_playlist_id'])
                     ?->only(['id', 'exercise_playlist_id'])
                 : null,
-            'tracking' => [
-                'visitor_id' => $request->attributes->get('visitor_id'),
-                'integrations' => TrackingIntegration::frontendPayload(
-                    $request->route()?->getName(),
-                ),
-            ],
         ];
     }
 }

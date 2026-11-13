@@ -421,7 +421,6 @@ export default function MemberMessagesShow({
         return others.every((p) => (cursors.get(p.id) ?? 0) >= message.id);
     }
 
-
     const typingNames = [...typing.values()];
     const showSender = conversation.type !== 'dm';
 

@@ -1,5 +1,9 @@
 <?php
 
+use App\Enums\MealType;
+use App\Models\MealPlan;
+use App\Models\MealPlanItem;
+use App\Models\MealPlanMeal;
 use App\Models\NutritionProfile;
 use App\Models\Payment;
 use App\Models\Trainer;
@@ -70,23 +74,25 @@ test('a guest completes the wizard, registers, pays and unlocks the full plan', 
     expect($user->nutritionProfile)->not->toBeNull()
         ->and($user->nutritionProfile->isCompleted())->toBeTrue();
 
-    // Pay via Chapa.
+    // Pay via Jami.
     Http::fake([
-        'https://api.chapa.co/v1/transaction/initialize' => Http::response([
-            'status' => 'success',
-            'data' => ['checkout_url' => 'https://checkout.chapa.co/journey'],
+        'https://jami.bio/api/jamidev/checkout' => Http::response([
+            'sessionId' => 'cs_journey',
+            'mode' => 'redirect',
+            'checkoutUrl' => 'https://jami.bio/jamidev/pay/cs_journey',
         ]),
-        'https://api.chapa.co/v1/transaction/verify/*' => Http::response([
-            'status' => 'success',
-            'data' => ['status' => 'success'],
+        'https://jami.bio/api/jamidev/checkout/*' => Http::response([
+            'sessionId' => 'cs_journey',
+            'status' => 'completed',
+            'orderStatus' => 'paid',
         ]),
     ]);
 
     // Per-request header: withHeader() would persist X-Inertia into later
     // requests and trip Inertia's asset-version conflict (409).
-    $this->post(route('plan.checkout'), ['provider' => 'chapa'], ['X-Inertia' => 'true'])
+    $this->post(route('plan.checkout'), [], ['X-Inertia' => 'true'])
         ->assertStatus(409)
-        ->assertHeader('X-Inertia-Location', 'https://checkout.chapa.co/journey');
+        ->assertHeader('X-Inertia-Location', 'https://jami.bio/jamidev/pay/cs_journey');
 
     $payment = Payment::sole();
     expect($payment->purpose)->toBe('pro');
@@ -95,6 +101,18 @@ test('a guest completes the wizard, registers, pays and unlocks the full plan', 
         ->assertRedirect(route('pro.show'));
 
     expect($user->fresh()->isPro())->toBeTrue();
+
+    // A member-owned plan spanning the week — the member meal screen only
+    // serves plans the user built or claimed, never the global PDF plans.
+    $plan = MealPlan::factory()->for($user)->create();
+
+    foreach ([1, 7] as $day) {
+        $meal = MealPlanMeal::factory()->for($plan, 'mealPlan')->create([
+            'day' => $day,
+            'meal_type' => MealType::Lunch,
+        ]);
+        MealPlanItem::factory()->for($meal, 'meal')->create(['food_id' => null]);
+    }
 
     // The full week is now unlocked on the meal screen.
     $this->get(route('member.meal'))

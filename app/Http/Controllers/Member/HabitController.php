@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\Habit;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -44,8 +43,6 @@ class HabitController extends Controller
             'position' => $position,
         ]);
 
-        app(Tracker::class)->record('habit.created', subject: $habit);
-
         return response()->json(['habit' => $habit->toFrontend()], 201);
     }
 
@@ -70,8 +67,6 @@ class HabitController extends Controller
 
         $habit->delete();
 
-        app(Tracker::class)->record('habit.deleted', subject: $habit);
-
         return response()->json(['deleted' => true]);
     }
 
@@ -92,11 +87,6 @@ class HabitController extends Controller
         } else {
             $habit->logs()->create(['date' => $date]);
         }
-
-        app(Tracker::class)->record('habit.toggled', subject: $habit, properties: [
-            'date' => $date,
-            'done' => $existing === null,
-        ]);
 
         $habit->load('logs');
 

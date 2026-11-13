@@ -25,11 +25,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { dashboard } from '@/routes/admin';
-import {
-    index,
-    promote,
-    show,
-} from '@/routes/admin/trainers';
+import { index, promote, show } from '@/routes/admin/trainers';
 import type { Paginated } from '@/types';
 
 type Trainer = {
@@ -101,7 +97,11 @@ export default function AdminTrainersIndex({
                 />
 
                 <div className="grid gap-4 sm:grid-cols-3">
-                    <StatCard label="Trainers" value={stats.trainers} icon={Users} />
+                    <StatCard
+                        label="Trainers"
+                        value={stats.trainers}
+                        icon={Users}
+                    />
                     <StatCard
                         label="Coached clients"
                         value={stats.clients}

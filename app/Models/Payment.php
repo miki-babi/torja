@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Services\Programs\MealProgramAccessGranter;
 use App\Services\Programs\ProgramAccessGranter;
 use App\Services\Referrals\ReferralCommissioner;
-use App\Support\Tracking\Tracker;
 use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,15 +14,14 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 
 /**
- * A payment attempt for the lifetime Pro unlock, via Chapa or Verify
- * Checkout. `tx_ref` is the reference we generate and send to Chapa; for
- * Verify Checkout, `deposit_id` stores the authoritative deposit id and
- * `idempotency_key` the key persisted before the create call.
- * `provider_response` keeps the raw payload from the last initialize/verify
- * call for admin inspection. `purpose` says what the payment buys: `pro`
- * (the default) or, for legacy rows, `program_purchase` /
- * `meal_program_purchase`, in which case `payable` points at the
- * ExerciseProgram or MealProgram that was bought.
+ * A payment attempt for the lifetime Pro unlock, via Jami. `tx_ref` is
+ * the reference we generate and send to Jami; `deposit_id` stores the
+ * authoritative deposit id and `idempotency_key` the key persisted before
+ * the create call. `provider_response` keeps the raw payload from the last
+ * initialize/verify call for inspection. `purpose` says what the
+ * payment buys: `pro` (the default) or, for legacy rows,
+ * `program_purchase` / `meal_program_purchase`, in which case `payable`
+ * points at the ExerciseProgram or MealProgram that was bought.
  *
  * @property int $id
  * @property int $user_id
@@ -58,7 +56,7 @@ class Payment extends Model
      * @var array<string, mixed>
      */
     protected $attributes = [
-        'provider' => 'chapa',
+        'provider' => 'jami',
         'currency' => 'ETB',
         'status' => 'pending',
         'purpose' => 'pro',
@@ -107,22 +105,6 @@ class Payment extends Model
     }
 
     /**
-     * Whether this attempt goes through Chapa.
-     */
-    public function isChapa(): bool
-    {
-        return $this->provider === 'chapa';
-    }
-
-    /**
-     * Whether this attempt goes through Verify Checkout.
-     */
-    public function isVerifyCheckout(): bool
-    {
-        return $this->provider === 'verify_checkout';
-    }
-
-    /**
      * Whether this attempt goes through Jami.
      */
     public function isJami(): bool
@@ -131,10 +113,9 @@ class Payment extends Model
     }
 
     /**
-     * Mark the payment as confirmed by its provider, record the conversion
-     * event and fulfill the purchase (Pro unlock, or program access for
-     * legacy rows). Single transition point used by the callback, webhook,
-     * user re-verify and admin re-verify paths.
+     * Mark the payment as confirmed by Jami and fulfill the purchase (Pro
+     * unlock, or program access for legacy rows). Single transition point
+     * used by the callback, webhook, and user re-verify paths.
      */
     public function markSuccessful(): void
     {
@@ -142,14 +123,6 @@ class Payment extends Model
             'status' => 'success',
             'paid_at' => $this->paid_at ?? now(),
         ]);
-
-        app(Tracker::class)->record('payment.succeeded', $this->user, [
-            'amount' => (float) $this->amount,
-            'currency' => $this->currency,
-            'tx_ref' => $this->tx_ref,
-            'provider' => $this->provider,
-            'purpose' => $this->purpose,
-        ], $this);
 
         $payable = $this->payable;
 

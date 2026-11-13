@@ -4,7 +4,6 @@ use App\Models\ExercisePlaylist;
 use App\Models\ExerciseProgram;
 use App\Models\ShortLink;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
@@ -18,13 +17,7 @@ test('a program share_url is a short link that resolves to the program page', fu
         ->and(Str::length((string) Str::after($url, url('/s/'))))->toBeLessThan(20);
 
     $this->get($url)
-        ->assertRedirect(route('programs.shared.show', 'prog-token-123')
-            .'?'.Arr::query([
-                'ref' => (string) $program->user_id,
-                'utm_source' => 'program',
-                'utm_medium' => 'share',
-                'utm_content' => 'exercise_program',
-            ]));
+        ->assertRedirect(route('programs.shared.show', 'prog-token-123'));
 });
 
 test('resolving a short link counts clicks', function () {

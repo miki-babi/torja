@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\Exercise;
 use App\Support\ExerciseCatalog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -55,13 +54,6 @@ class ExerciseShowController extends Controller
             ->inRandomOrder()
             ->limit(6)
             ->get();
-
-        app(Tracker::class)->record('exercise.viewed', subject: $model, properties: [
-            'slug' => $model->slug,
-            'equipment' => $model->equipment,
-            'body_part' => $model->body_part,
-            'level' => $model->level,
-        ]);
 
         return Inertia::render('member/exercise-show', [
             'exercise' => $model->toDetail(),

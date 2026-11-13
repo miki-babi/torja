@@ -117,7 +117,6 @@ export default function MemberProfile({
     const [avatarUrl, setAvatarUrl] = useState<string | null>(account.avatar);
     const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
 
-
     async function connectTelegram() {
         setTelegramBusy(true);
         try {
@@ -132,8 +131,6 @@ export default function MemberProfile({
             setTelegramBusy(false);
         }
     }
-
-
 
     async function disconnectTelegram() {
         setTelegramBusy(true);

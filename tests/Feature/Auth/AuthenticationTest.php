@@ -45,7 +45,7 @@ test('admin users are redirected to the admin area after login', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('admin.users.index', absolute: false));
+    $response->assertRedirect(route('admin.trainers.index', absolute: false));
 });
 
 test('the intended url still wins over the admin redirect', function () {

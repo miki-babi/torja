@@ -1,14 +1,11 @@
 <?php
 
-use App\Http\Middleware\CaptureAttribution;
 use App\Http\Middleware\EnsureMemberHasCoach;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsTrainer;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
-use App\Http\Middleware\SetVisitorId;
-use App\Http\Middleware\TrackPageView;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -31,21 +28,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->validateCsrfTokens(except: [
-            'plan/payment/webhook',
-            'webhooks/verify-checkout',
             'webhooks/jami',
-            't',
             'telegram/webhook',
             'telegram/webhook/*',
         ]);
 
         $middleware->web(append: [
-            SetVisitorId::class,
-            CaptureAttribution::class,
             HandleAppearance::class,
             SetLocale::class,
             HandleInertiaRequests::class,
-            TrackPageView::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 

@@ -47,7 +47,7 @@ test('users cannot touch other users habits', function () {
         ->assertForbidden();
 });
 
-test('habits page and home include habit props', function () {
+test('habits page includes habit props', function () {
     $user = User::factory()->create();
     Habit::factory()->for($user)->create(['name' => 'Water']);
     $this->actingAs($user);
@@ -58,10 +58,4 @@ test('habits page and home include habit props', function () {
             ->component('member/habits')
             ->has('habits', 1)
             ->where('habits.0.name', 'Water'));
-
-    $this->get(route('member.home'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->has('habits', 1)
-            ->where('habits.0.done', false));
 });

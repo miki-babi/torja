@@ -26,7 +26,10 @@ import {
 } from '@/components/ui/card';
 import { dashboard } from '@/routes/trainer';
 import { edit as botEdit } from '@/routes/trainer/bot';
-import { index as clientsIndex, show as clientShow } from '@/routes/trainer/clients';
+import {
+    index as clientsIndex,
+    show as clientShow,
+} from '@/routes/trainer/clients';
 import { create as createProgram } from '@/routes/trainer/programs';
 import { create as createMealProgram } from '@/routes/trainer/meal-programs';
 

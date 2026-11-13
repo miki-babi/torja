@@ -10,7 +10,6 @@ use App\Models\ExerciseProgramWorkoutItem;
 use App\Models\WorkoutSession;
 use App\Services\Programs\ProgramAccessGranter;
 use App\Support\ExerciseCatalog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -54,10 +53,6 @@ class ExerciseProgramController extends Controller
             ->merge($sessions->flatMap->sets->pluck('exercise_id'))
             ->unique()
             ->all();
-
-        app(Tracker::class)->record('member_program.viewed', subject: $program, properties: [
-            'owner_id' => $program->user_id,
-        ]);
 
         return Inertia::render('member/program-show', [
             'program' => [
@@ -105,10 +100,6 @@ class ExerciseProgramController extends Controller
             ->whereIn('slug', $workout->items->pluck('exercise_id'))
             ->get()
             ->keyBy('slug');
-
-        app(Tracker::class)->record('member_program.workout_played', subject: $program, properties: [
-            'workout_id' => $workout->id,
-        ]);
 
         return Inertia::render('member/workout-player', [
             'program' => [

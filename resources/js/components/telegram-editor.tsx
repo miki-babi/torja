@@ -104,9 +104,7 @@ export function TelegramEditor({
                 <ToolButton
                     label="Italic"
                     active={editor?.isActive('italic')}
-                    onClick={() =>
-                        editor?.chain().focus().toggleItalic().run()
-                    }
+                    onClick={() => editor?.chain().focus().toggleItalic().run()}
                 >
                     <Italic className="size-4" />
                 </ToolButton>
@@ -122,16 +120,16 @@ export function TelegramEditor({
                 <ToolButton
                     label="Strikethrough"
                     active={editor?.isActive('strike')}
-                    onClick={() =>
-                        editor?.chain().focus().toggleStrike().run()
-                    }
+                    onClick={() => editor?.chain().focus().toggleStrike().run()}
                 >
                     <Strikethrough className="size-4" />
                 </ToolButton>
                 <ToolButton
                     label="Spoiler"
                     active={editor?.isActive('spoiler')}
-                    onClick={() => editor?.chain().focus().toggleSpoiler().run()}
+                    onClick={() =>
+                        editor?.chain().focus().toggleSpoiler().run()
+                    }
                 >
                     <EyeOff className="size-4" />
                 </ToolButton>

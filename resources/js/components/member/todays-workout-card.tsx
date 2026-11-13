@@ -44,7 +44,7 @@ export function TodaysWorkoutCard({
                     {/* Bottom Info and Action */}
                     <div className="space-y-3">
                         <div>
-                            <h2 className="text-2xl font-bold leading-tight tracking-tight text-white line-clamp-2">
+                            <h2 className="line-clamp-2 text-2xl leading-tight font-bold tracking-tight text-white">
                                 {title}
                             </h2>
                             <p className="mt-1 text-sm font-medium text-white/80">

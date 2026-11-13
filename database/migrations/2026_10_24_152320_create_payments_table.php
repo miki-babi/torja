@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('email');
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
-            $table->json('chapa_response')->nullable();
+            $table->json('provider_response')->nullable();
             $table->timestamp('paid_at')->nullable();
             $table->timestamp('refunded_at')->nullable();
             $table->timestamps();

@@ -3,13 +3,11 @@
 namespace App\Support\Telegram;
 
 use App\Models\Exercise;
-use App\Models\User;
 use App\Models\WorkoutSet;
-use App\Support\Tracking\Tracker;
 
 /**
- * Handles `inline_query` and `chosen_inline_result` updates — the inline
- * mode flow that lets members share exercises into any chat. A query is
+ * Handles `inline_query` updates — the inline mode flow that lets
+ * members share exercises into any chat. A query is
  * answered with InlineQueryResultGif cards: the animated demo, a short
  * HTML caption, and a `t.me/<bot>[/<app>]?startapp=ex_<slug>` url button
  * (web_app buttons are rejected on inline-mode messages, so the deep
@@ -59,33 +57,6 @@ class InlineQueries
         } catch (\Throwable $e) {
             report($e);
         }
-    }
-
-    /**
-     * Record a `chosen_inline_result` — the event Telegram sends when a
-     * user actually inserts a result into a chat (requires
-     * /setinlinefeedback in BotFather).
-     *
-     * @param  array<string, mixed>  $chosen
-     */
-    public function handleChosen(array $chosen): void
-    {
-        $slug = (string) ($chosen['result_id'] ?? '');
-
-        if ($slug === '') {
-            return;
-        }
-
-        $from = is_array($chosen['from'] ?? null) ? $chosen['from'] : [];
-        $telegramId = app(UserResolver::class)->telegramId($from);
-        $user = $telegramId === null
-            ? null
-            : User::query()->where('telegram_id', $telegramId)->first();
-
-        app(Tracker::class)->record('exercise.shared', $user, [
-            'query' => mb_substr((string) ($chosen['query'] ?? ''), 0, 100),
-            'inline_message_id' => $chosen['inline_message_id'] ?? null,
-        ], Exercise::query()->where('slug', $slug)->first());
     }
 
     /**

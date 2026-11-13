@@ -6,16 +6,16 @@ use App\Models\ReferralCommission;
 use App\Models\ReferralPayout;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\Referrals\ReferralCommissioner;
 
-test('the invite link redirects guests to the welcome page and sets the referral cookie', function () {
+test('the invite link redirects guests to registration and sets the referral cookie', function () {
     $ambassador = User::factory()->create();
     $ambassador->ensureReferralCode();
 
     $response = $this->get(route('invite.show', $ambassador->referral_code));
 
-    $response->assertRedirect();
+    $response->assertRedirect(route('register'));
     $response->assertCookie(BindReferrer::COOKIE);
-    expect($response->headers->get('Location'))->toContain('utm_source=ambassador');
 });
 
 test('an unknown invite code 404s', function () {
@@ -166,24 +166,6 @@ test('the wallet page shows the invite link and balances', function () {
     expect($ambassador->fresh()->referral_code)->not->toBeNull();
 });
 
-test('admins approve and void commissions', function () {
-    $admin = User::factory()->admin()->create();
-    $commission = ReferralCommission::factory()->create();
-
-    $this->actingAs($admin)
-        ->post(route('admin.ambassadors.commissions.approve', $commission))
-        ->assertRedirect();
-
-    expect($commission->fresh()->status)->toBe('approved')
-        ->and($commission->fresh()->approved_by_id)->toBe($admin->id);
-
-    $this->actingAs($admin)
-        ->post(route('admin.ambassadors.commissions.void', $commission))
-        ->assertRedirect();
-
-    expect($commission->fresh()->status)->toBe('void');
-});
-
 test('an ambassador requests a payout for the full approved balance', function () {
     $ambassador = User::factory()->create();
     ReferralCommission::factory()->count(3)->for($ambassador, 'affiliate')->approved()->create();
@@ -232,31 +214,6 @@ test('payout requests require the minimum balance and a single open request', fu
     expect(ReferralPayout::count())->toBe(1);
 });
 
-test('marking a payout paid settles its commissions; rejecting releases them', function () {
-    $admin = User::factory()->admin()->create();
-    $ambassador = User::factory()->create();
-    $payout = ReferralPayout::factory()->for($ambassador)->create();
-    $commissions = ReferralCommission::factory()
-        ->count(2)
-        ->for($ambassador, 'affiliate')
-        ->approved()
-        ->create(['payout_id' => $payout->id]);
-
-    $this->actingAs($admin)->post(route('admin.ambassadors.payouts.reject', $payout));
-
-    expect($payout->fresh()->status)->toBe('rejected')
-        ->and(ReferralCommission::whereNull('payout_id')->count())->toBe(2)
-        ->and($ambassador->fresh()->ambassadorBalance())->toBe(200.0);
-
-    $second = ReferralPayout::factory()->for($ambassador)->create();
-    ReferralCommission::query()->update(['payout_id' => $second->id]);
-
-    $this->actingAs($admin)->post(route('admin.ambassadors.payouts.paid', $second));
-
-    expect($second->fresh()->status)->toBe('paid')
-        ->and(ReferralCommission::where('status', 'paid')->count())->toBe(2);
-});
-
 test('refunding a payment voids unpaid commissions', function () {
     $admin = User::factory()->admin()->create();
     $ambassador = User::factory()->create();
@@ -267,7 +224,7 @@ test('refunding a payment voids unpaid commissions', function () {
     $commission = ReferralCommission::sole();
     $commission->approve($admin);
 
-    $this->actingAs($admin)->post(route('admin.payments.refund', $payment));
+    app(ReferralCommissioner::class)->voidFor($payment->fresh());
 
     expect($commission->fresh()->status)->toBe('void');
 });

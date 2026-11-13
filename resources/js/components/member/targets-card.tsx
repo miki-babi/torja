@@ -48,9 +48,7 @@ export function TargetsCard({
                     {rows.map(({ label, value, target }) => (
                         <div key={label} className="grid gap-1.5">
                             <div className="flex justify-between text-xs font-semibold">
-                                <span className="text-[#8E8E93]">
-                                    {label}
-                                </span>
+                                <span className="text-[#8E8E93]">{label}</span>
                                 <span className="font-mono text-[#F5F5F5]">
                                     {Math.round(value)}g / {target}g
                                 </span>

@@ -21,7 +21,6 @@ declare module '@inertiajs/core' {
                 user_id: number;
             } | null;
             sidebarOpen: boolean;
-            nudge: import('@/components/nudge-banner').NudgePayload | null;
             [key: string]: unknown;
         };
     }

@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -116,7 +115,6 @@ class ExercisePlaylist extends Model
 
     /**
      * The public shared-playlist URL, or null when the playlist is not shared.
-     * Carries `ref` + utm params so member-to-member sharing is attributed.
      */
     public function shareUrl(): ?string
     {
@@ -124,13 +122,6 @@ class ExercisePlaylist extends Model
             return null;
         }
 
-        $url = route('playlists.shared.show', $this->share_token).'?'.Arr::query([
-            'ref' => (string) $this->user_id,
-            'utm_source' => 'member',
-            'utm_medium' => 'share',
-            'utm_content' => 'playlist',
-        ]);
-
-        return ShortLink::for($this, $url)->shortUrl();
+        return ShortLink::for($this, route('playlists.shared.show', $this->share_token))->shortUrl();
     }
 }

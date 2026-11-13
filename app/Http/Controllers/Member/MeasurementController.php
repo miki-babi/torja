@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\BodyMeasurement;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -55,10 +54,6 @@ class MeasurementController extends Controller
                 ...$values,
             ]);
         }
-
-        app(Tracker::class)->record('measurements.logged', subject: $measurement, properties: [
-            'logged_on' => $measurement->logged_on->toDateString(),
-        ]);
 
         return response()->json(['measurement' => $measurement], 201);
     }

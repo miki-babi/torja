@@ -62,7 +62,9 @@ export function HabitsCard({ habits: initial }: { habits: HomeHabit[] }) {
                                             : 'border-[#3E3E3E] bg-[#121212]',
                                     )}
                                 >
-                                    {h.done && <Check className="size-3.5 stroke-[3]" />}
+                                    {h.done && (
+                                        <Check className="size-3.5 stroke-[3]" />
+                                    )}
                                 </span>
                                 <span
                                     className={cn(

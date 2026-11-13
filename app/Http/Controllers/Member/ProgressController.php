@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\Exercise;
 use App\Support\ExerciseCatalog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,8 +35,6 @@ class ProgressController extends Controller
             ->merge($sessions->flatMap->sets->pluck('exercise_id'))
             ->unique()
             ->all();
-
-        app(Tracker::class)->record('progress.viewed');
 
         // Radar axes: training volume (weight_kg × reps) per body part
         // over the last 7 days, zero-filled so the polygon closes evenly.

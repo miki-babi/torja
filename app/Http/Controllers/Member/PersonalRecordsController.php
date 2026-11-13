@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Support\ExerciseCatalog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,8 +27,6 @@ class PersonalRecordsController extends Controller
         $exerciseIds = $sessions->flatMap->sets->pluck('exercise_id')
             ->unique()
             ->all();
-
-        app(Tracker::class)->record('records.viewed');
 
         return Inertia::render('member/records', [
             'sessions' => $sessions->map->toFrontend()->all(),

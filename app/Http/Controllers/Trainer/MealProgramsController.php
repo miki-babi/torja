@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Trainer;
 
 use App\Enums\MealType;
-use App\Http\Controllers\Admin\Concerns\StoresPublicImage;
+use App\Http\Controllers\Concerns\StoresPublicImage;
 use App\Http\Controllers\Controller;
 use App\Models\Food;
 use App\Models\MealProgram;

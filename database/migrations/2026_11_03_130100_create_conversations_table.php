@@ -2,17 +2,14 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
-     * Chat schema: conversations of three types — `dm` (canonical pair
-     * key), `group` (one per squad) and `gym` (one per gym). Participants
-     * track read state, mute and notification throttling on
-     * `conversation_user`. Existing squads and gyms are backfilled with a
-     * room and their current members.
+     * Chat schema: `dm` conversations keyed by a canonical pair key.
+     * Participants track read state, mute and notification throttling on
+     * `conversation_user`.
      */
     public function up(): void
     {
@@ -20,8 +17,6 @@ return new class extends Migration
             $table->id();
             $table->string('type', 8);
             $table->string('dm_key', 32)->nullable()->unique();
-            $table->foreignId('group_id')->nullable()->unique()->constrained('groups')->cascadeOnDelete();
-            $table->foreignId('gym_id')->nullable()->unique()->constrained('gyms')->cascadeOnDelete();
             $table->timestamps();
         });
 
@@ -76,49 +71,6 @@ return new class extends Migration
             $table->unique(['message_id', 'user_id', 'emoji']);
         });
 
-        $now = now();
-
-        DB::table('groups')->orderBy('id')->get(['id'])->each(function ($group) use ($now): void {
-            $conversationId = DB::table('conversations')->insertGetId([
-                'type' => 'group',
-                'group_id' => $group->id,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
-            $members = DB::table('group_user')->where('group_id', $group->id)->pluck('user_id');
-
-            DB::table('conversation_user')->insert(
-                $members->map(fn ($userId): array => [
-                    'conversation_id' => $conversationId,
-                    'user_id' => $userId,
-                    'joined_at' => $now,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ])->all(),
-            );
-        });
-
-        DB::table('gyms')->orderBy('id')->get(['id'])->each(function ($gym) use ($now): void {
-            $conversationId = DB::table('conversations')->insertGetId([
-                'type' => 'gym',
-                'gym_id' => $gym->id,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
-            $members = DB::table('users')->where('gym_id', $gym->id)->pluck('id');
-
-            DB::table('conversation_user')->insert(
-                $members->map(fn ($userId): array => [
-                    'conversation_id' => $conversationId,
-                    'user_id' => $userId,
-                    'joined_at' => $now,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ])->all(),
-            );
-        });
     }
 
     /**

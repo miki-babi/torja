@@ -79,7 +79,7 @@ export default function TrainerBroadcastsIndex({
                                             maxLength={4096}
                                             placeholder="New challenge starting Monday — check your plan! 💪"
                                             required
-                                            className="border-input bg-transparent placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+                                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                         />
                                         <InputError message={errors.body} />
                                         <Button

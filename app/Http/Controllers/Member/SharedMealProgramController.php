@@ -10,7 +10,6 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Services\Payments\CheckoutLauncher;
 use App\Services\Programs\MealProgramAccessGranter;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,11 +34,6 @@ class SharedMealProgramController extends Controller
         $mealProgram->load(['meals.items.food', 'user']);
 
         $user = $request->user();
-
-        app(Tracker::class)->record('shared_meal_program.viewed', subject: $mealProgram, properties: [
-            'owner_id' => $mealProgram->user_id,
-            'is_owner' => $user?->id === $mealProgram->user_id,
-        ]);
 
         $claimedPlan = $user !== null
             ? $this->grants->claimedPlan($user, $mealProgram)
@@ -77,11 +71,7 @@ class SharedMealProgramController extends Controller
             'checkoutUrl' => $mealProgram->isFree()
                 ? null
                 : route('meal-programs.shared.checkout', $mealProgram->share_token),
-            'providers' => [
-                'chapa' => filled(config('services.chapa.secret_key')),
-                'verify_checkout' => filled(config('services.verify_checkout.api_key')),
-                'jami' => filled(config('services.jami.token')),
-            ],
+            'jamiEnabled' => filled(config('services.jami.token')),
             'proUrl' => route('pro.show'),
             'homeUrl' => $user !== null ? route('member.home') : route('explore.index'),
             'editUrl' => $user?->isTrainer() && $mealProgram->user_id === $user->id
@@ -102,12 +92,6 @@ class SharedMealProgramController extends Controller
         $this->authorizeClaim($request->user(), $mealProgram);
 
         $granted = $this->grants->grant($request->user(), $mealProgram);
-
-        if ($granted) {
-            app(Tracker::class)->record('shared_meal_program.saved', subject: $mealProgram, properties: [
-                'owner_id' => $mealProgram->user_id,
-            ]);
-        }
 
         $plan = $this->grants->claimedPlan($request->user(), $mealProgram);
 
@@ -135,14 +119,13 @@ class SharedMealProgramController extends Controller
         }
 
         $validated = $request->validate([
-            'provider' => ['required', 'string', 'in:chapa,verify_checkout,jami'],
             'gateway' => ['nullable', 'string', 'in:telebirr,mpesa,cbe'],
             'customer_phone' => ['required_with:gateway', 'nullable', 'string', 'min:9', 'max:16'],
         ]);
 
         $payment = Payment::create([
             'user_id' => $user->id,
-            'provider' => $validated['provider'],
+            'provider' => 'jami',
             'tx_ref' => "tp-{$user->id}-".Str::uuid(),
             'idempotency_key' => 'checkout_'.Str::uuid(),
             'amount' => $mealProgram->price_etb,
@@ -155,13 +138,6 @@ class SharedMealProgramController extends Controller
             'first_name' => Str::before(trim($user->name).' ', ' '),
             'last_name' => trim(Str::after(trim($user->name).' ', ' ')) ?: null,
         ]);
-
-        app(Tracker::class)->record('checkout.started', $user, [
-            'payment_id' => $payment->id,
-            'amount' => (float) $payment->amount,
-            'currency' => $payment->currency,
-            'provider' => $payment->provider,
-        ], $payment);
 
         $launch = $this->launcher->start(
             $payment,

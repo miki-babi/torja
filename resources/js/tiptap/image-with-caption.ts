@@ -47,8 +47,9 @@ export const ImageWithCaption = Image.extend({
                 getAttrs: (element) => {
                     const img = element.querySelector('img');
                     const figcaption = element.querySelector('figcaption');
-                    const styleWidth = /width:\s*([\d.]+%)/
-                        .exec(element.getAttribute('style') ?? '')?.[1];
+                    const styleWidth = /width:\s*([\d.]+%)/.exec(
+                        element.getAttribute('style') ?? '',
+                    )?.[1];
                     return {
                         src: img?.getAttribute('src'),
                         alt: img?.getAttribute('alt'),

@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
  * An admin-authored exercise program: an ordered set of workouts a member can
  * claim. Claiming copies each workout into the member's account as an
  * ExercisePlaylist ("{program} — {workout}"). Free programs are claimable via
- * the share link; priced ones go through a Chapa payment.
+ * the share link; priced ones go through a Jami payment.
  *
  * @property int $id
  * @property int $user_id
@@ -152,7 +151,6 @@ class ExerciseProgram extends Model
 
     /**
      * The public shared-program URL, or null when the program is not shared.
-     * Carries `ref` + utm params so program distribution is attributed.
      */
     public function shareUrl(): ?string
     {
@@ -160,13 +158,6 @@ class ExerciseProgram extends Model
             return null;
         }
 
-        $url = route('programs.shared.show', $this->share_token).'?'.Arr::query([
-            'ref' => (string) $this->user_id,
-            'utm_source' => 'program',
-            'utm_medium' => 'share',
-            'utm_content' => 'exercise_program',
-        ]);
-
-        return ShortLink::for($this, $url)->shortUrl();
+        return ShortLink::for($this, route('programs.shared.show', $this->share_token))->shortUrl();
     }
 }

@@ -17,12 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { dashboard } from '@/routes/trainer';
-import {
-    destroy,
-    reconnect,
-    store,
-    update,
-} from '@/routes/trainer/bot';
+import { destroy, reconnect, store, update } from '@/routes/trainer/bot';
 
 type WebhookStatus = {
     status: 'ok' | 'mismatch' | 'missing' | 'unreachable';
@@ -49,7 +44,10 @@ type Props = {
 
 const STATUS_META: Record<
     NonNullable<WebhookStatus>['status'],
-    { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+    {
+        label: string;
+        variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    }
 > = {
     ok: { label: 'Webhook live', variant: 'default' },
     missing: { label: 'No webhook set', variant: 'destructive' },
@@ -257,9 +255,7 @@ export default function BotSetup({ trainer, webhook }: Props) {
                                                 size="sm"
                                                 className="w-fit"
                                                 onClick={() =>
-                                                    router.post(
-                                                        reconnect().url,
-                                                    )
+                                                    router.post(reconnect().url)
                                                 }
                                             >
                                                 <RefreshCw className="size-4" />

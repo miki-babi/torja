@@ -68,10 +68,12 @@ class Locales
     }
 
     /**
-     * Drop the cached language list (after admin writes or seeding).
+     * Drop the cached language list (after admin writes or seeding). The
+     * forget must go through the memo repository — its in-memory bag is
+     * what serves reads within the current lifecycle.
      */
     public static function flush(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::memo()->forget(self::CACHE_KEY);
     }
 }

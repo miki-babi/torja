@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Locales;
 use Database\Factories\LanguageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -26,6 +27,16 @@ class Language extends Model
 {
     /** @use HasFactory<LanguageFactory> */
     use HasFactory;
+
+    /**
+     * Writes invalidate the memo-cached active list — otherwise a stale
+     * snapshot keeps serving old locales for the rest of the lifecycle.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => Locales::flush());
+        static::deleted(fn () => Locales::flush());
+    }
 
     /**
      * @return array<string, string>

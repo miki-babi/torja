@@ -43,7 +43,7 @@ test('jami creates a pending payment and redirects to the hosted payment link', 
 
     $this->actingAs($user)
         ->withHeader('X-Inertia', 'true')
-        ->post(route('plan.checkout'), ['provider' => 'jami'])
+        ->post(route('plan.checkout'), [])
         ->assertStatus(409)
         ->assertHeader('X-Inertia-Location', 'https://jami.bio/jamidev/pay/cs_abc123');
 
@@ -75,7 +75,6 @@ test('a direct push sends the gateway and phone and keeps the payment pending', 
 
     $this->actingAs($user)
         ->post(route('plan.checkout'), [
-            'provider' => 'jami',
             'gateway' => 'telebirr',
             'customer_phone' => '251900000001',
         ])
@@ -97,7 +96,6 @@ test('a gateway without a phone is rejected', function () {
 
     $this->actingAs(User::factory()->create())
         ->post(route('plan.checkout'), [
-            'provider' => 'jami',
             'gateway' => 'telebirr',
         ])
         ->assertSessionHasErrors('customer_phone');
@@ -114,7 +112,7 @@ test('a rejected checkout creation marks the payment failed', function () {
     ]);
 
     $this->actingAs(User::factory()->create())
-        ->post(route('plan.checkout'), ['provider' => 'jami'])
+        ->post(route('plan.checkout'), [])
         ->assertRedirect(route('pro.show'));
 
     expect(Payment::sole()->status)->toBe('failed');

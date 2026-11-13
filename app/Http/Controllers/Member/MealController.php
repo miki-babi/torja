@@ -7,7 +7,6 @@ use App\Services\Nutrition\MealPlanPreviewBuilder;
 use App\Services\Nutrition\NutritionTargetCalculator;
 use App\Services\Nutrition\ProfileResolver;
 use App\Support\ProPage;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,11 +34,6 @@ class MealController extends Controller
             ->whereNull('meal_program_id')
             ->latest('id')
             ->first();
-
-        app(Tracker::class)->record('meal.viewed', properties: [
-            'profile_completed' => $profile->isCompleted(),
-            'unlocked' => $unlocked,
-        ]);
 
         $maxDay = $plan === null ? 0 : (int) $plan->meals()->max('day');
 

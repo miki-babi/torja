@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Telegram;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Support\Telegram\BroadcastCallbacks;
 use App\Support\Telegram\InlineQueries;
 use App\Support\Telegram\MenuKeyboard;
 use App\Support\Telegram\TelegramApi;
@@ -40,31 +39,11 @@ class WebhookController extends Controller
             abort(403);
         }
 
-        $callbackQuery = $request->input('callback_query');
-
-        if (is_array($callbackQuery)) {
-            app(BroadcastCallbacks::class)->handle($callbackQuery);
-
-            return response()->json(['ok' => true]);
-        }
-
         $inlineQuery = $request->input('inline_query');
 
         if (is_array($inlineQuery)) {
             try {
                 app(InlineQueries::class)->handle($inlineQuery);
-            } catch (\Throwable $e) {
-                report($e);
-            }
-
-            return response()->json(['ok' => true]);
-        }
-
-        $chosenResult = $request->input('chosen_inline_result');
-
-        if (is_array($chosenResult)) {
-            try {
-                app(InlineQueries::class)->handleChosen($chosenResult);
             } catch (\Throwable $e) {
                 report($e);
             }
@@ -81,12 +60,6 @@ class WebhookController extends Controller
         $chatId = $message['chat']['id'] ?? null;
 
         if ($chatId === null) {
-            return response()->json(['ok' => true]);
-        }
-
-        if (is_array($message['location'] ?? null)) {
-            $this->handleLocation($message, $chatId);
-
             return response()->json(['ok' => true]);
         }
 
@@ -206,51 +179,6 @@ class WebhookController extends Controller
         } else {
             $this->reply($chatId, 'This link has expired. Open your '.config('app.name').' profile and tap "Connect Telegram" again.');
         }
-    }
-
-    /**
-     * A shared location (from the "📍 Share location" reply-keyboard
-     * button or the attachment menu): pins the member's coordinates for
-     * the nearby-people and nearby-gyms features. Only private chats are
-     * honored, and only accounts the Telegram user is already linked to
-     * — a location share never creates an account.
-     *
-     * @param  array<string, mixed>  $message
-     */
-    private function handleLocation(array $message, mixed $chatId): void
-    {
-        if (($message['chat']['type'] ?? null) !== 'private') {
-            return;
-        }
-
-        $location = $message['location'] ?? [];
-        $latitude = is_array($location) ? ($location['latitude'] ?? null) : null;
-        $longitude = is_array($location) ? ($location['longitude'] ?? null) : null;
-
-        if (! is_numeric($latitude) || ! is_numeric($longitude)) {
-            return;
-        }
-
-        $from = is_array($message['from'] ?? null) ? $message['from'] : [];
-        $telegramId = app(UserResolver::class)->telegramId($from);
-
-        $user = $telegramId === null
-            ? null
-            : User::query()->where('telegram_id', $telegramId)->first();
-
-        if ($user === null) {
-            $this->reply($chatId, 'Connect your '.config('app.name').' account first, then share your location again.');
-
-            return;
-        }
-
-        $user->forceFill([
-            'latitude' => (float) $latitude,
-            'longitude' => (float) $longitude,
-            'location_shared_at' => now(),
-        ])->save();
-
-        $this->reply($chatId, 'Location saved — members and gyms near you will now show up in '.config('app.name').'.');
     }
 
     /**

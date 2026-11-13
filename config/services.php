@@ -35,20 +35,6 @@ return [
         ],
     ],
 
-    'chapa' => [
-        'secret_key' => env('CHAPA_SECRET_KEY'),
-        'public_key' => env('CHAPA_PUBLIC_KEY'),
-        'webhook_secret' => env('CHAPA_WEBHOOK_SECRET'),
-        'base_url' => env('CHAPA_BASE_URL', 'https://api.chapa.co/v1'),
-    ],
-
-    'verify_checkout' => [
-        'api_key' => env('VERIFY_CHECKOUT_API_KEY'),
-        'webhook_secret' => env('VERIFY_CHECKOUT_WEBHOOK_SECRET'),
-        'base_url' => env('VERIFY_CHECKOUT_BASE_URL', 'https://checkoutapi.verify.et'),
-        'version' => '2026-06-01',
-    ],
-
     'jami' => [
         'token' => env('JAMI_TOKEN'),
         'webhook_secret' => env('JAMI_WEBHOOK_SECRET'),

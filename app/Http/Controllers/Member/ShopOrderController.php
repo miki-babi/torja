@@ -7,7 +7,6 @@ use App\Models\ShopOrder;
 use App\Models\ShopProduct;
 use App\Models\User;
 use App\Support\PhoneNumber;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -73,14 +72,6 @@ class ShopOrderController extends Controller
             'phone' => $phone,
             'status' => 'pending',
         ]);
-
-        app(Tracker::class)->record('shop_order.placed', $request->user(), [
-            'order_id' => $order->id,
-            'product_id' => $product->id,
-            'category' => $product->category,
-            'quantity' => $order->quantity,
-            'total_etb' => $order->total_etb,
-        ], $order);
 
         // Remember the delivery phone on the account when the member doesn't
         // have one yet — never overwrite an existing login phone, and skip

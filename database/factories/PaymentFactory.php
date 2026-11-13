@@ -21,7 +21,7 @@ class PaymentFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'provider' => 'chapa',
+            'provider' => 'jami',
             'tx_ref' => 'tp-'.Str::uuid(),
             'amount' => config('plans.pro_price_etb', 500),
             'currency' => 'ETB',
@@ -34,18 +34,6 @@ class PaymentFactory extends Factory
             'paid_at' => null,
             'refunded_at' => null,
         ];
-    }
-
-    /**
-     * A Verify Checkout attempt with a persisted deposit and idempotency key.
-     */
-    public function verifyCheckout(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'provider' => 'verify_checkout',
-            'deposit_id' => 'dep_'.Str::random(24),
-            'idempotency_key' => 'checkout_'.Str::uuid(),
-        ]);
     }
 
     /**

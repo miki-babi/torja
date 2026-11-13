@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Models\WorkoutSession;
 use App\Services\Payments\CheckoutLauncher;
 use App\Services\Programs\ProgramAccessGranter;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,11 +37,6 @@ class SharedProgramController extends Controller
         $program->load(['workouts.items', 'user']);
 
         $user = $request->user();
-
-        app(Tracker::class)->record('shared_program.viewed', subject: $program, properties: [
-            'owner_id' => $program->user_id,
-            'is_owner' => $user?->id === $program->user_id,
-        ]);
 
         $exerciseSlugs = $program->workouts
             ->flatMap(fn ($workout) => $workout->items->pluck('exercise_id'))
@@ -107,11 +101,7 @@ class SharedProgramController extends Controller
             'checkoutUrl' => $program->isFree()
                 ? null
                 : route('programs.shared.checkout', $program->share_token),
-            'providers' => [
-                'chapa' => filled(config('services.chapa.secret_key')),
-                'verify_checkout' => filled(config('services.verify_checkout.api_key')),
-                'jami' => filled(config('services.jami.token')),
-            ],
+            'jamiEnabled' => filled(config('services.jami.token')),
             'proUrl' => route('pro.show'),
             'homeUrl' => $user !== null ? route('member.home') : route('explore.index'),
             'editUrl' => $user?->isTrainer() && $program->user_id === $user->id
@@ -129,12 +119,6 @@ class SharedProgramController extends Controller
         $this->authorizeClaim($request->user(), $program);
 
         $granted = $this->grants->grant($request->user(), $program);
-
-        if ($granted) {
-            app(Tracker::class)->record('shared_program.saved', subject: $program, properties: [
-                'owner_id' => $program->user_id,
-            ]);
-        }
 
         return response()->json(['claimed' => true], $granted ? 201 : 200);
     }
@@ -156,11 +140,7 @@ class SharedProgramController extends Controller
 
         $workout = $program->workouts()->whereKey($data['workout_id'])->firstOrFail();
 
-        if ($this->grants->grant($user, $program)) {
-            app(Tracker::class)->record('shared_program.saved', subject: $program, properties: [
-                'owner_id' => $program->user_id,
-            ]);
-        }
+        $this->grants->grant($user, $program);
 
         $playlist = $this->grants->playlistForWorkout($user, $program, $workout);
 
@@ -175,11 +155,6 @@ class SharedProgramController extends Controller
             'user_id' => $user->id,
             'date' => now()->toDateString(),
             'exercise_playlist_id' => $playlist?->id,
-        ]);
-
-        app(Tracker::class)->record('shared_program.workout_started', subject: $program, properties: [
-            'workout_id' => $workout->id,
-            'resumed' => $resumed,
         ]);
 
         return response()->json(
@@ -206,14 +181,13 @@ class SharedProgramController extends Controller
         }
 
         $validated = $request->validate([
-            'provider' => ['required', 'string', 'in:chapa,verify_checkout,jami'],
             'gateway' => ['nullable', 'string', 'in:telebirr,mpesa,cbe'],
             'customer_phone' => ['required_with:gateway', 'nullable', 'string', 'min:9', 'max:16'],
         ]);
 
         $payment = Payment::create([
             'user_id' => $user->id,
-            'provider' => $validated['provider'],
+            'provider' => 'jami',
             'tx_ref' => "tp-{$user->id}-".Str::uuid(),
             'idempotency_key' => 'checkout_'.Str::uuid(),
             'amount' => $program->price_etb,
@@ -226,13 +200,6 @@ class SharedProgramController extends Controller
             'first_name' => Str::before(trim($user->name).' ', ' '),
             'last_name' => trim(Str::after(trim($user->name).' ', ' ')) ?: null,
         ]);
-
-        app(Tracker::class)->record('checkout.started', $user, [
-            'payment_id' => $payment->id,
-            'amount' => (float) $payment->amount,
-            'currency' => $payment->currency,
-            'provider' => $payment->provider,
-        ], $payment);
 
         $launch = $this->launcher->start(
             $payment,

@@ -4,6 +4,7 @@ use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\User;
 use App\Support\ProPage;
+use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('the pro page renders the default copy', function () {
@@ -35,20 +36,24 @@ test('pro members see the pro member state copy', function () {
 });
 
 test('an admin-set price is charged at checkout', function () {
+    Http::fake(['https://jami.bio/*' => Http::response([], 500)]);
+
     Setting::set(ProPage::SETTING_KEY, ['price_etb' => 750]);
 
     $user = User::factory()->create();
 
-    $this->actingAs($user)->post(route('plan.checkout'), ['provider' => 'chapa']);
+    $this->actingAs($user)->post(route('plan.checkout'));
 
     expect((float) Payment::where('user_id', $user->id)->latest('id')->first()?->amount)
         ->toBe(750.0);
 });
 
 test('the env price is used when no override exists', function () {
+    Http::fake(['https://jami.bio/*' => Http::response([], 500)]);
+
     $user = User::factory()->create();
 
-    $this->actingAs($user)->post(route('plan.checkout'), ['provider' => 'chapa']);
+    $this->actingAs($user)->post(route('plan.checkout'));
 
     expect((float) Payment::where('user_id', $user->id)->latest('id')->first()?->amount)
         ->toBe((float) config('plans.pro_price_etb'));

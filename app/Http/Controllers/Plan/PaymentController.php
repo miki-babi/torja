@@ -6,16 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\ExerciseProgram;
 use App\Models\MealProgram;
 use App\Models\Payment;
-use App\Services\Payments\ChapaService;
 use App\Services\Payments\CheckoutLauncher;
 use App\Services\Payments\PaymentSynchronizer;
 use App\Support\ProPage;
-use App\Support\Tracking\Tracker;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -25,18 +22,16 @@ use Symfony\Component\HttpFoundation\Response;
 class PaymentController extends Controller
 {
     public function __construct(
-        private readonly ChapaService $chapa,
         private readonly PaymentSynchronizer $synchronizer,
         private readonly CheckoutLauncher $launcher,
     ) {}
 
     /**
-     * Start a checkout for the lifetime Pro unlock via the chosen provider.
+     * Start a Jami checkout for the lifetime Pro unlock.
      */
     public function store(Request $request): Response|RedirectResponse
     {
         $validated = $request->validate([
-            'provider' => ['required', 'string', 'in:chapa,verify_checkout,jami'],
             'gateway' => ['nullable', 'string', 'in:telebirr,mpesa,cbe'],
             'customer_phone' => ['required_with:gateway', 'nullable', 'string', 'min:9', 'max:16'],
         ]);
@@ -54,7 +49,7 @@ class PaymentController extends Controller
 
         $payment = Payment::create([
             'user_id' => $user->id,
-            'provider' => $validated['provider'],
+            'provider' => 'jami',
             'tx_ref' => "tp-{$user->id}-".Str::uuid(),
             'idempotency_key' => 'checkout_'.Str::uuid(),
             'amount' => ProPage::price(),
@@ -65,13 +60,6 @@ class PaymentController extends Controller
             'first_name' => Str::before(trim($user->name).' ', ' '),
             'last_name' => trim(Str::after(trim($user->name).' ', ' ')) ?: null,
         ]);
-
-        app(Tracker::class)->record('checkout.started', $user, [
-            'payment_id' => $payment->id,
-            'amount' => (float) $payment->amount,
-            'currency' => $payment->currency,
-            'provider' => $payment->provider,
-        ], $payment);
 
         $launch = $this->launcher->start(
             $payment,
@@ -116,24 +104,6 @@ class PaymentController extends Controller
         $this->synchronizer->sync($payment);
 
         return $this->redirectFor($payment);
-    }
-
-    /**
-     * Handle Chapa's server-to-server webhook (signature-verified, idempotent).
-     */
-    public function webhook(Request $request): HttpResponse
-    {
-        abort_unless($this->chapa->verifyWebhookSignature($request), 401);
-
-        $txRef = $request->input('tx_ref') ?? $request->input('data.tx_ref');
-
-        $payment = Payment::query()->where('tx_ref', $txRef)->first();
-
-        if ($payment !== null) {
-            $this->synchronizer->sync($payment);
-        }
-
-        return response()->noContent();
     }
 
     /**

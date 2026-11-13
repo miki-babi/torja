@@ -6,7 +6,6 @@ use App\Enums\MatchConfidence;
 use App\Enums\MealType;
 use App\Http\Controllers\Controller;
 use App\Models\MealPlan;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -98,10 +97,6 @@ class MealPlanStoreController extends Controller
 
             return $plan;
         });
-
-        app(Tracker::class)->record('meal.plan_created', subject: $plan, properties: [
-            'days' => count($data['days']),
-        ]);
 
         return response()->json([
             'plan' => ['id' => $plan->id, 'name' => $plan->name],

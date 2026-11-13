@@ -7,11 +7,7 @@ import {
     JamiPaymentOverlay,
     type PendingJamiPayment,
 } from '@/components/plan/jami-payment-overlay';
-import {
-    iconFor,
-    type ProCopy,
-    ProScreen,
-} from '@/components/pro/pro-screen';
+import { iconFor, type ProCopy, ProScreen } from '@/components/pro/pro-screen';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,14 +27,12 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 
-type Provider = 'chapa' | 'verify_checkout' | 'jami';
-
 type Props = {
     isPro: boolean;
     price: number;
     page: ProCopy;
     homeUrl: string;
-    providers: Record<Provider, boolean>;
+    jamiEnabled: boolean;
     pendingJamiPayment: PendingJamiPayment | null;
     checkoutUrl: string;
 };
@@ -48,7 +42,7 @@ export default function Pro({
     price,
     page,
     homeUrl,
-    providers,
+    jamiEnabled,
     pendingJamiPayment,
     checkoutUrl,
 }: Props) {
@@ -56,17 +50,8 @@ export default function Pro({
     const [gateway, setGateway] = useState('telebirr');
     const [phone, setPhone] = useState('');
 
-    const enabled = (Object.keys(providers) as Provider[]).filter(
-        (provider) => providers[provider],
-    );
-    const primary: Provider | null =
-        enabled.length === 1 ? enabled[0] : null;
-
-    function pay(
-        provider: Provider,
-        extra: { gateway?: string; customer_phone?: string } = {},
-    ) {
-        router.post(checkoutUrl, { provider, ...extra });
+    function pay(extra: { gateway?: string; customer_phone?: string } = {}) {
+        router.post(checkoutUrl, extra);
     }
 
     function close() {
@@ -155,53 +140,22 @@ export default function Pro({
                     )}
 
                     <div className="mt-5 space-y-2">
-                        {primary !== null ? (
+                        {jamiEnabled ? (
                             <Button
-                                onClick={() => pay(primary)}
+                                onClick={() => pay()}
                                 className="h-12 w-full rounded-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] text-sm font-extrabold text-black hover:opacity-90"
                             >
                                 {page.sheet_button}
                                 <ArrowRight className="size-4" />
                             </Button>
                         ) : (
-                            <>
-                                {providers.jami && (
-                                    <Button
-                                        onClick={() => pay('jami')}
-                                        className="h-12 w-full rounded-full bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] text-sm font-extrabold text-black hover:opacity-90"
-                                    >
-                                        Pay with Jami
-                                        <ArrowRight className="size-4" />
-                                    </Button>
-                                )}
-                                {providers.chapa && (
-                                    <Button
-                                        onClick={() => pay('chapa')}
-                                        variant="outline"
-                                        className="h-12 w-full rounded-full"
-                                    >
-                                        Pay with Chapa
-                                    </Button>
-                                )}
-                                {providers.verify_checkout && (
-                                    <Button
-                                        onClick={() => pay('verify_checkout')}
-                                        variant="outline"
-                                        className="h-12 w-full rounded-full"
-                                    >
-                                        Pay with Verify
-                                    </Button>
-                                )}
-                            </>
-                        )}
-                        {enabled.length === 0 && (
                             <p className="text-center text-sm text-[#8E8E93]">
                                 Payments are not available right now.
                             </p>
                         )}
                     </div>
 
-                    {providers.jami && (
+                    {jamiEnabled && (
                         <>
                             <div className="my-4 flex items-center gap-3">
                                 <Separator className="flex-1 bg-[#2E2E2E]" />
@@ -263,7 +217,7 @@ export default function Pro({
                                         phone.replace(/\D/g, '').length < 9
                                     }
                                     onClick={() =>
-                                        pay('jami', {
+                                        pay({
                                             gateway,
                                             customer_phone: phone.replace(
                                                 /\s/g,

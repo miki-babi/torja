@@ -1,7 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
-import { track } from '@/lib/tracking';
 import { cn } from '@/lib/utils';
 
 export type HomeBanner = {
@@ -20,7 +19,7 @@ const RESUME_AFTER_INTERACTION_MS = 12000;
  * edges — a visual cue that the row scrolls. A timer advances the center
  * slide (wrapping around) unless the user recently interacted or prefers
  * reduced motion. Each slide links in-app (`/...`) or externally
- * (`http...`, new tab), and a click is beaconed as `home_banner.clicked`.
+ * (`http...`, new tab).
  * Renders nothing when the admin hasn't configured any banners.
  */
 export function BannerCarousel({ banners }: { banners: HomeBanner[] }) {
@@ -99,7 +98,6 @@ export function BannerCarousel({ banners }: { banners: HomeBanner[] }) {
                     >
                         <BannerSlide
                             banner={banner}
-                            index={index}
                             label={t('member.home.sponsored')}
                             fallbackCta={t('member.home.learn_more')}
                         />
@@ -163,19 +161,13 @@ function scrollToSlide(el: HTMLDivElement, index: number): void {
 
 function BannerSlide({
     banner,
-    index,
     label,
     fallbackCta,
 }: {
     banner: HomeBanner;
-    index: number;
     label: string;
     fallbackCta: string;
 }) {
-    function clicked() {
-        track('home_banner.clicked', { index, url: banner.url });
-    }
-
     const content = (
         <span className="relative block aspect-[2/1] w-full overflow-hidden rounded-[24px] border border-[#2E2E2E] bg-black">
             <img
@@ -196,7 +188,6 @@ function BannerSlide({
                 href={banner.url}
                 target="_blank"
                 rel="noopener noreferrer sponsored"
-                onClick={clicked}
                 className="block"
             >
                 {content}
@@ -205,7 +196,7 @@ function BannerSlide({
     }
 
     return (
-        <Link href={banner.url} onClick={clicked} className="block">
+        <Link href={banner.url} className="block">
             {content}
         </Link>
     );

@@ -1,8 +1,6 @@
 <?php
 
 use App\Models\Exercise;
-use App\Models\TrackedEvent;
-use App\Models\User;
 use App\Models\WorkoutSession;
 use App\Models\WorkoutSet;
 use Illuminate\Support\Facades\Http;
@@ -140,9 +138,8 @@ test('amharic speakers see translated exercise names', function () {
         && $request['results'][0]['title'] === 'የቤንች ፕሬስ');
 });
 
-test('chosen inline results record an exercise.shared event', function () {
-    $user = User::factory()->create(['telegram_id' => '4242']);
-    $exercise = Exercise::factory()->create(['slug' => 'barbell-bench-press']);
+test('chosen inline results are acknowledged', function () {
+    Exercise::factory()->create(['slug' => 'barbell-bench-press']);
 
     $this->postJson(route('telegram.webhook'), [
         'chosen_inline_result' => [
@@ -152,30 +149,4 @@ test('chosen inline results record an exercise.shared event', function () {
             'inline_message_id' => 'msg-abc',
         ],
     ])->assertOk();
-
-    $event = TrackedEvent::query()
-        ->where('user_id', $user->id)
-        ->where('name', 'exercise.shared')
-        ->first();
-
-    expect($event)->not->toBeNull()
-        ->and($event->subject_id)->toBe($exercise->id)
-        ->and($event->properties['query'])->toBe('bench');
-});
-
-test('chosen results from unknown telegram users still track', function () {
-    Exercise::factory()->create(['slug' => 'barbell-bench-press']);
-
-    $this->postJson(route('telegram.webhook'), [
-        'chosen_inline_result' => [
-            'result_id' => 'barbell-bench-press',
-            'from' => ['id' => 999999],
-            'query' => 'bench',
-        ],
-    ])->assertOk();
-
-    expect(TrackedEvent::query()
-        ->where('name', 'exercise.shared')
-        ->whereNull('user_id')
-        ->exists())->toBeTrue();
 });

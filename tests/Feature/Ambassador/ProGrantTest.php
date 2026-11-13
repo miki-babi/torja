@@ -108,9 +108,10 @@ test('a granted member who buys pro becomes paid and earns their referrer commis
 
 test('a granted member can still start a paid checkout', function () {
     Http::fake([
-        'https://api.chapa.co/v1/transaction/initialize' => Http::response([
-            'status' => 'success',
-            'data' => ['checkout_url' => 'https://checkout.chapa.co/test-123'],
+        'https://jami.bio/api/jamidev/checkout' => Http::response([
+            'sessionId' => 'cs_test123',
+            'mode' => 'redirect',
+            'checkoutUrl' => 'https://jami.bio/jamidev/pay/cs_test123',
         ]),
     ]);
 
@@ -119,57 +120,9 @@ test('a granted member can still start a paid checkout', function () {
 
     $response = $this->actingAs($user)
         ->withHeader('X-Inertia', 'true')
-        ->post(route('plan.checkout'), ['provider' => 'chapa']);
+        ->post(route('plan.checkout'));
 
     $response->assertStatus(409);
 
     expect(Payment::sole()->user_id)->toBe($user->id);
-});
-
-test('admins grant and revoke pro manually', function () {
-    $admin = User::factory()->admin()->create();
-    $member = User::factory()->create();
-
-    $this->actingAs($admin)
-        ->post(route('admin.users.pro-grant.store', $member))
-        ->assertRedirect();
-
-    $grant = ProGrant::sole();
-
-    expect($grant->source)->toBe('manual')
-        ->and($grant->granted_by_id)->toBe($admin->id)
-        ->and($member->fresh()->isPro())->toBeTrue();
-
-    $this->actingAs($admin)
-        ->delete(route('admin.users.pro-grant.destroy', $member))
-        ->assertRedirect();
-
-    expect($grant->fresh()->isActive())->toBeFalse()
-        ->and($grant->fresh()->revoked_by_id)->toBe($admin->id)
-        ->and($member->fresh()->isPro())->toBeFalse();
-});
-
-test('admins cannot double-grant or revoke paid pro', function () {
-    $admin = User::factory()->admin()->create();
-    $member = User::factory()->create();
-    ProGrant::factory()->for($member)->create();
-
-    $this->actingAs($admin)->post(route('admin.users.pro-grant.store', $member));
-
-    expect(ProGrant::count())->toBe(1);
-
-    $paid = User::factory()->create();
-    Payment::factory()->for($paid)->successful()->create();
-
-    $this->actingAs($admin)->delete(route('admin.users.pro-grant.destroy', $paid));
-
-    expect($paid->fresh()->isPro())->toBeTrue();
-});
-
-test('members cannot grant themselves pro', function () {
-    $member = User::factory()->create();
-
-    $this->actingAs($member)
-        ->post(route('admin.users.pro-grant.store', $member))
-        ->assertForbidden();
 });

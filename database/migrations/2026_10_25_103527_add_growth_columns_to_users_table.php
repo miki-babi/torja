@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->json('attribution')->nullable()->after('locale');
-            $table->string('telegram_chat_id')->nullable()->after('attribution');
+            $table->string('telegram_chat_id')->nullable()->after('locale');
             $table->string('telegram_link_token')->nullable()->after('telegram_chat_id');
         });
     }
@@ -24,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['attribution', 'telegram_chat_id', 'telegram_link_token']);
+            $table->dropColumn(['telegram_chat_id', 'telegram_link_token']);
         });
     }
 };

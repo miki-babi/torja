@@ -7,7 +7,6 @@ use App\Models\Recap;
 use App\Models\RecapComment;
 use App\Models\User;
 use App\Models\WorkoutSession;
-use App\Support\Tracking\Tracker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -91,11 +90,6 @@ class RecapController extends Controller
             ),
         ]);
 
-        app(Tracker::class)->record('recap.created', subject: $recap, properties: [
-            'has_photo' => $recap->image_path !== null,
-            'has_caption' => $recap->caption !== null,
-        ]);
-
         return response()->json([
             'recap' => $recap
                 ->load(['user', 'session.playlist', 'session.sets'])
@@ -155,10 +149,6 @@ class RecapController extends Controller
             $bravoed = true;
         }
 
-        app(Tracker::class)->record('recap.bravo', subject: $recap, properties: [
-            'bravoed' => $bravoed,
-        ]);
-
         return response()->json([
             'bravos_count' => $recap->bravos()->count(),
             'bravoed' => $bravoed,
@@ -208,8 +198,6 @@ class RecapController extends Controller
             'user_id' => $request->user()->id,
             'body' => trim($data['body']),
         ]);
-
-        app(Tracker::class)->record('recap.comment', subject: $recap);
 
         return response()->json([
             'comment' => $comment->load('user')

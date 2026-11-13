@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\Exercise;
 use App\Support\ExerciseCatalog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -35,16 +34,6 @@ class ExerciseSearchController extends Controller
             ->orderBy('name');
 
         $total = $exercises->count();
-
-        app(Tracker::class)->record('exercise.searched', properties: [
-            'query' => $query === '' ? null : mb_substr($query, 0, 100),
-            'result_count' => $total,
-            'filters' => array_filter([
-                'body_part' => $bodyParts === [] ? null : $bodyParts,
-                'equipment' => $equipment === [] ? null : $equipment,
-                'level' => $level,
-            ]),
-        ]);
 
         return response()->json([
             'exercises' => $exercises->clone()->offset($offset)->limit($limit)->get()->map->toSummary()->all(),

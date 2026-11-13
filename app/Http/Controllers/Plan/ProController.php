@@ -16,10 +16,10 @@ class ProController extends Controller
     ) {}
 
     /**
-     * The upgrade page: Pro benefits, the one-time price and a checkout
-     * button per configured provider. `pendingJamiPayment` drives the
-     * full-screen overlay after a direct push or an abandoned payment
-     * link; the phone is masked before it reaches the browser.
+     * The upgrade page: Pro benefits, the one-time price and the Jami
+     * checkout controls. `pendingJamiPayment` drives the full-screen
+     * overlay after a direct push or an abandoned payment link; the
+     * phone is masked before it reaches the browser.
      */
     public function show(Request $request): Response
     {
@@ -38,11 +38,7 @@ class ProController extends Controller
             'price' => ProPage::price(),
             'page' => ProPage::forMember(),
             'homeUrl' => route('member.home'),
-            'providers' => [
-                'chapa' => filled(config('services.chapa.secret_key')),
-                'verify_checkout' => filled(config('services.verify_checkout.api_key')),
-                'jami' => filled(config('services.jami.token')),
-            ],
+            'jamiEnabled' => filled(config('services.jami.token')),
             'pendingJamiPayment' => $pending?->fresh()->status === 'pending'
                 ? [
                     'id' => $pending->id,

@@ -1,19 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
-import {
-    Dumbbell,
-    House,
-    MessageCircle,
-    TrendingUp,
-    User,
-} from 'lucide-react';
+import { Dumbbell, House, MessageCircle, TrendingUp, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-    exercise,
-    home,
-    messages,
-    profile,
-    progress,
-} from '@/routes/member';
+import { exercise, home, messages, profile, progress } from '@/routes/member';
 
 const TABS = [
     { label: 'home', href: home, paths: ['/'], icon: House },

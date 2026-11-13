@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\TrackedEvent;
 use App\Models\User;
 use App\Models\WeightLog;
 
@@ -13,8 +12,6 @@ test('users can log and delete their weight', function () {
 
     $log = $user->weightLogs()->firstOrFail();
     expect((float) $log->weight_kg)->toBe(82.5);
-
-    expect(TrackedEvent::where('name', 'weight.logged')->where('user_id', $user->id)->count())->toBe(1);
 
     $this->deleteJson(route('member.weight-logs.destroy', $log))->assertOk();
     expect($user->weightLogs()->count())->toBe(0);
@@ -55,8 +52,6 @@ test('diary entries can be listed, added and removed', function () {
     $this->getJson(route('member.diary.index', ['date' => '2026-10-25']))
         ->assertOk()
         ->assertJsonPath('entries.0.id', $entry->id);
-
-    expect(TrackedEvent::where('name', 'food.logged')->where('user_id', $user->id)->count())->toBe(1);
 
     $this->deleteJson(route('member.diary.destroy', $entry))->assertOk();
     expect($user->foodDiaryEntries()->count())->toBe(0);

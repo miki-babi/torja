@@ -50,9 +50,7 @@ export default function MemberOrders({ orders }: { orders: ShopOrder[] }) {
                 {orders.length === 0 ? (
                     <div className="flex flex-col items-center gap-2 rounded-2xl border border-[#2E2E2E] bg-[#141414] px-4 py-10 text-center">
                         <Package className="size-8 text-[#8E8E93]" />
-                        <p className="text-sm text-[#8E8E93]">
-                            No orders yet.
-                        </p>
+                        <p className="text-sm text-[#8E8E93]">No orders yet.</p>
                     </div>
                 ) : (
                     orders.map((order) => (

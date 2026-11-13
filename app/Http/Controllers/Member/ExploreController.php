@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\ShopProduct;
 use App\Support\ProgramCatalog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,13 +35,6 @@ class ExploreController extends Controller
             ))
             ->latest('published_at')
             ->get();
-
-        app(Tracker::class)->record('program_catalog.viewed', $user, [
-            'exercise_programs' => count($exercisePrograms),
-            'meal_programs' => count($mealPrograms),
-            'search' => $search === '' ? null : $search,
-            'chip' => $chip,
-        ]);
 
         return Inertia::render('member/explore', [
             'exercisePrograms' => $exercisePrograms,

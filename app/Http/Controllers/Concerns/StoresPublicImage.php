@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Concerns;
+namespace App\Http\Controllers\Concerns;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;

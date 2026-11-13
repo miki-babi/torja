@@ -9,21 +9,15 @@ use App\Http\Controllers\Plan\NutritionPreviewController;
 use App\Http\Controllers\Plan\NutritionWizardController;
 use App\Http\Controllers\Plan\PaymentController;
 use App\Http\Controllers\Plan\ProController;
-use App\Http\Controllers\Plan\VerifyCheckoutWebhookController;
 use App\Http\Controllers\Settings\LocalizationController;
 use App\Http\Controllers\ShortLinkController;
 use App\Http\Controllers\Telegram\TenantWebhookController;
 use App\Http\Controllers\Telegram\WebhookController;
-use App\Http\Controllers\Tracking\BeaconController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-Route::inertia('welcome', 'welcome')->name('home');
-
-Route::post('t', BeaconController::class)
-    ->middleware('throttle:120,1')
-    ->name('tracking.beacon');
+Route::redirect('welcome', '/')->name('home');
 
 Route::post('telegram/webhook', WebhookController::class)
     ->middleware('throttle:300,1')
@@ -46,9 +40,6 @@ Route::middleware('guest')->group(function () {
     Route::inertia('admin/login', 'auth/admin-login', [
         'canResetPassword' => Features::enabled(Features::resetPasswords()),
     ])->name('admin.login');
-    Route::post('auth/telegram/debug', [TelegramLoginController::class, 'debug'])
-        ->middleware('throttle:60,1')
-        ->name('telegram.login.debug');
 });
 
 // Outside the guest group: already-authenticated Mini App sessions also
@@ -74,13 +65,6 @@ Route::get('plan/review', [NutritionWizardController::class, 'review'])->name('p
 Route::get('plan/preview', [NutritionPreviewController::class, 'show'])
     ->middleware(['auth'])
     ->name('plan.preview');
-
-Route::post('plan/payment/webhook', [PaymentController::class, 'webhook'])
-    ->name('payment.webhook');
-
-Route::post('webhooks/verify-checkout', [VerifyCheckoutWebhookController::class, 'store'])
-    ->middleware('throttle:60,1')
-    ->name('payment.verify-checkout.webhook');
 
 Route::post('webhooks/jami', [JamiWebhookController::class, 'store'])
     ->middleware('throttle:60,1')

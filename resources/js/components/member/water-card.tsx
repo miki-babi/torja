@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { track } from '@/lib/tracking';
 
 const GOAL_ML = 2000;
 
@@ -16,11 +15,6 @@ export function WaterCard({ dateKey }: { dateKey: string }) {
             ...current,
             [dateKey]: (current[dateKey] ?? 0) + amount,
         }));
-        track('water.logged', {
-            ml_added: amount,
-            total_ml: ml + amount,
-            date: dateKey,
-        });
     };
 
     const percentage = Math.min(100, Math.round((ml / GOAL_ML) * 100));
@@ -28,7 +22,9 @@ export function WaterCard({ dateKey }: { dateKey: string }) {
     return (
         <Card>
             <CardHeader className="flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-bold text-[#F5F5F5]">Water</CardTitle>
+                <CardTitle className="text-base font-bold text-[#F5F5F5]">
+                    Water
+                </CardTitle>
                 <span className="text-xs font-semibold text-[#AFFA01]">
                     {ml}ml / {GOAL_ML / 1000}L
                 </span>

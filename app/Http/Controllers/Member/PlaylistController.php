@@ -9,7 +9,6 @@ use App\Models\ExercisePlaylistItem;
 use App\Models\ShortLink;
 use App\Models\WorkoutSession;
 use App\Support\ExerciseCatalog;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -86,12 +85,6 @@ class PlaylistController extends Controller
             ->get()
             ->keyBy('slug');
 
-        app(Tracker::class)->record('session.started', subject: $session, properties: [
-            'playlist_id' => $playlist->id,
-            'resumed' => $resumed,
-            'player' => true,
-        ]);
-
         $back = (string) $request->query('back', '');
 
         return Inertia::render('member/workout-player', [
@@ -131,8 +124,6 @@ class PlaylistController extends Controller
         ]);
 
         $playlist = $request->user()->exercisePlaylists()->create($data);
-
-        app(Tracker::class)->record('playlist.created', subject: $playlist);
 
         return response()->json(['playlist' => $playlist->toFrontend()], 201);
     }
@@ -190,9 +181,6 @@ class PlaylistController extends Controller
                 'position' => ((int) $playlist->items()->max('position')) + 1,
             ]);
 
-            app(Tracker::class)->record('playlist.exercise_added', subject: $playlist, properties: [
-                'exercise_id' => $data['exercise_id'],
-            ]);
         }
 
         return response()->json(['playlist' => $playlist->refresh()->toFrontend()]);
@@ -208,10 +196,6 @@ class PlaylistController extends Controller
         $exerciseId = ExerciseCatalog::resolve($exercise);
 
         $playlist->items()->where('exercise_id', $exerciseId)->firstOrFail()->delete();
-
-        app(Tracker::class)->record('playlist.exercise_removed', subject: $playlist, properties: [
-            'exercise_id' => $exerciseId,
-        ]);
 
         return response()->json(['playlist' => $playlist->refresh()->toFrontend()]);
     }
@@ -230,8 +214,6 @@ class PlaylistController extends Controller
             'share_token' => $playlist->share_token ?? (string) Str::uuid(),
         ]);
 
-        app(Tracker::class)->record('playlist.shared', subject: $playlist);
-
         return response()->json(['share_url' => $playlist->shareUrl()]);
     }
 
@@ -244,8 +226,6 @@ class PlaylistController extends Controller
 
         $playlist->update(['share_token' => null]);
         ShortLink::forget($playlist);
-
-        app(Tracker::class)->record('playlist.unshared', subject: $playlist);
 
         return response()->json(['share_url' => null]);
     }

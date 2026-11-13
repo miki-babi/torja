@@ -1,5 +1,4 @@
 import { createInertiaApp } from '@inertiajs/react';
-import { TrackingScripts } from '@/components/tracking/tracking-scripts';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -37,7 +36,6 @@ void createInertiaApp({
     withApp(app) {
         return (
             <TooltipProvider delayDuration={0}>
-                <TrackingScripts />
                 {app}
                 <Toaster />
             </TooltipProvider>

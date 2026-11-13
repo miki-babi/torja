@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\FoodDiaryEntry;
-use App\Support\Tracking\Tracker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -45,11 +44,6 @@ class FoodDiaryController extends Controller
         ]);
 
         $entry = $request->user()->foodDiaryEntries()->create($data);
-
-        app(Tracker::class)->record('food.logged', subject: $entry, properties: [
-            'source' => $entry->source,
-            'kcal' => $entry->kcal === null ? null : (float) $entry->kcal,
-        ]);
 
         return response()->json(['entry' => $entry], 201);
     }
