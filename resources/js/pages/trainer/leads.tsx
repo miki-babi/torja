@@ -34,7 +34,7 @@ type Props = {
     leads: Lead[];
 };
 
-const GOAL_LABELS: Record<string, string> = {
+const OPTION_LABELS: Record<string, string> = {
     lose_fat: 'Lose fat',
     build_muscle: 'Build muscle',
     get_fitter: 'Get fitter',
@@ -42,7 +42,31 @@ const GOAL_LABELS: Record<string, string> = {
     beginner: 'Beginner',
     intermediate: 'Intermediate',
     advanced: 'Advanced',
+    '1-2': '1–2 days',
+    '3-4': '3–4 days',
+    '5+': '5+ days',
 };
+
+const PRESET_QUESTION_KEYS = new Set([
+    'goal',
+    'experience',
+    'days_per_week',
+    'health',
+]);
+
+function answersSummary(answers: Record<string, string> | null): string {
+    if (!answers) {
+        return '—';
+    }
+
+    return Object.entries(answers)
+        .map(([key, value]) =>
+            PRESET_QUESTION_KEYS.has(key)
+                ? (OPTION_LABELS[value] ?? value)
+                : `${key}: ${value}`,
+        )
+        .join(' · ');
+}
 
 export default function TrainerLeads({ stats, leads }: Props) {
     return (
@@ -116,11 +140,7 @@ export default function TrainerLeads({ stats, leads }: Props) {
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         {lead.program_name ?? 'Program'} ·{' '}
-                                        {lead.answers?.goal
-                                            ? (GOAL_LABELS[
-                                                  lead.answers.goal
-                                              ] ?? lead.answers.goal)
-                                            : '—'}
+                                        {answersSummary(lead.answers)}
                                         {lead.phone ? ` · ${lead.phone}` : ''} ·{' '}
                                         {new Date(
                                             lead.created_at,

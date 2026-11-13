@@ -46,6 +46,65 @@ class ProgramLead extends Model
     ];
 
     /**
+     * Display labels for the preset question keys.
+     *
+     * @var array<string, string>
+     */
+    public const QUESTION_LABELS = [
+        'goal' => "What's your main goal?",
+        'experience' => 'Training experience',
+        'days_per_week' => 'Days you can train per week',
+        'health' => 'Any injuries or health concerns?',
+    ];
+
+    /**
+     * Display labels for the preset option values.
+     *
+     * @var array<string, string>
+     */
+    public const OPTION_LABELS = [
+        'lose_fat' => 'Lose fat',
+        'build_muscle' => 'Build muscle',
+        'get_fitter' => 'Get fitter',
+        'sport' => 'Sport performance',
+        'beginner' => 'Beginner',
+        'intermediate' => 'Intermediate',
+        'advanced' => 'Advanced',
+        '1-2' => '1–2 days',
+        '3-4' => '3–4 days',
+        '5+' => '5+ days',
+        'none' => 'None',
+        'injury' => 'Recovering from injury',
+        'medical' => 'Medical condition',
+    ];
+
+    /**
+     * The default questionnaire as lead-form fields, used when a trainer
+     * hasn't customized their claim form.
+     *
+     * @return list<array{key: string, label: string, type: string, options: list<array{value: string, label: string}>, required: bool}>
+     */
+    public static function presetFields(): array
+    {
+        return collect(self::QUESTIONS)
+            ->map(fn (array $options, string $key): array => [
+                'key' => $key,
+                'label' => self::QUESTION_LABELS[$key] ?? $key,
+                'type' => 'select',
+                'options' => collect($options)
+                    ->map(fn (string $value): array => [
+                        'value' => $value,
+                        'label' => self::OPTION_LABELS[$value] ?? $value,
+                    ])
+                    ->values()
+                    ->all(),
+                'required' => true,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

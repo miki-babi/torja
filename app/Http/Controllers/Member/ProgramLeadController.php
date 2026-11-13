@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\ExerciseProgram;
-use App\Models\ProgramLead;
 use App\Models\Trainer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,7 +28,7 @@ class ProgramLeadController extends Controller
     {
         $trainer = $this->leadableTrainer($program);
 
-        if ($trainer === null) {
+        if ($trainer === null || $trainer->lead_form_mode === 'off') {
             return to_route('programs.shared.show', $program->share_token);
         }
 
@@ -41,7 +40,11 @@ class ProgramLeadController extends Controller
             'trainer' => [
                 'name' => $trainer->display_name,
             ],
-            'questions' => ProgramLead::QUESTIONS,
+            'fields' => $trainer->leadFormFields(),
+            'optional' => $trainer->lead_form_mode === 'optional',
+            'skip_url' => $trainer->lead_form_mode === 'optional'
+                ? route('programs.shared.lead.skip', $program->share_token)
+                : null,
             'program_url' => route('programs.shared.show', $program->share_token),
         ]);
     }
@@ -53,17 +56,26 @@ class ProgramLeadController extends Controller
     public function store(Request $request, ExerciseProgram $program): RedirectResponse
     {
         $trainer = $this->leadableTrainer($program);
-        abort_if($trainer === null, 404);
+        abort_if($trainer === null || $trainer->lead_form_mode === 'off', 404);
 
-        $data = $request->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:120'],
             'phone' => ['nullable', 'string', 'max:30'],
             'answers' => ['required', 'array'],
-            'answers.goal' => ['required', Rule::in(ProgramLead::QUESTIONS['goal'])],
-            'answers.experience' => ['required', Rule::in(ProgramLead::QUESTIONS['experience'])],
-            'answers.days_per_week' => ['required', Rule::in(ProgramLead::QUESTIONS['days_per_week'])],
-            'answers.health' => ['required', Rule::in(ProgramLead::QUESTIONS['health'])],
-        ]);
+        ];
+
+        foreach ($trainer->leadFormFields() as $field) {
+            $rules["answers.{$field['key']}"] = [
+                $field['required'] ? 'required' : 'nullable',
+                'string',
+                'max:500',
+                ...($field['type'] === 'select'
+                    ? [Rule::in(array_column($field['options'], 'value'))]
+                    : []),
+            ];
+        }
+
+        $data = $request->validate($rules);
 
         $lead = $trainer->leads()->create([
             'exercise_program_id' => $program->id,
@@ -80,6 +92,20 @@ class ProgramLeadController extends Controller
         $request->session()->put('program_lead', $lead->id);
 
         return to_route('programs.shared.lead.thanks', $program->share_token);
+    }
+
+    /**
+     * Optional-form escape: the guest continues without leaving answers.
+     * The tenant flag still seeds so their sign-up links to the coach.
+     */
+    public function skip(Request $request, ExerciseProgram $program): RedirectResponse
+    {
+        $trainer = $this->leadableTrainer($program);
+        abort_if($trainer === null || $trainer->lead_form_mode !== 'optional', 404);
+
+        $request->session()->put('tenant', $trainer->slug);
+
+        return to_route('programs.shared.show', $program->share_token);
     }
 
     /**

@@ -38,6 +38,12 @@ class SharedProgramController extends Controller
 
         $user = $request->user();
 
+        // Guests who claim a coach program straight to register still link
+        // to the trainer — the same flag the lead form and tenant page set.
+        if ($user === null && $program->user->isTrainer()) {
+            $request->session()->put('tenant', $program->user->trainer?->slug);
+        }
+
         $exerciseSlugs = $program->workouts
             ->flatMap(fn ($workout) => $workout->items->pluck('exercise_id'))
             ->unique()
@@ -102,6 +108,7 @@ class SharedProgramController extends Controller
                 ? null
                 : route('programs.shared.checkout', $program->share_token),
             'leadUrl' => $user === null && $program->isFree() && $program->user->isTrainer()
+                && $program->user->trainer?->lead_form_mode !== 'off'
                 ? route('programs.shared.lead', $program->share_token)
                 : null,
             'offerText' => $program->user->isTrainer()

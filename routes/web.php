@@ -77,6 +77,8 @@ Route::get('shared/programs/{program:share_token}/lead', [Member\ProgramLeadCont
 Route::post('shared/programs/{program:share_token}/lead', [Member\ProgramLeadController::class, 'store'])
     ->middleware('throttle:20,1')
     ->name('programs.shared.lead.store');
+Route::get('shared/programs/{program:share_token}/lead/skip', [Member\ProgramLeadController::class, 'skip'])
+    ->name('programs.shared.lead.skip');
 Route::get('shared/programs/{program:share_token}/lead/thanks', [Member\ProgramLeadController::class, 'thanks'])
     ->name('programs.shared.lead.thanks');
 

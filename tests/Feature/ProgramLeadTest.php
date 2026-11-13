@@ -22,7 +22,9 @@ test('a guest answers the questionnaire and becomes a lead', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('public/program-lead')
-            ->has('questions'));
+            ->has('fields', 4)
+            ->where('optional', false)
+            ->where('skip_url', null));
 
     $this->post(route('programs.shared.lead.store', $program->share_token), [
         'name' => 'Abebe Bikila',
@@ -130,4 +132,72 @@ test('the trainer leads screen shows stats and conversion', function () {
             ->where('stats.converted', 1)
             ->where('stats.new_this_week', 3)
             ->has('leads', 4));
+});
+
+test('a custom claim form replaces the preset and validates its own fields', function () {
+    $program = freeSharedProgram();
+    $trainer = $program->user->trainer;
+
+    $trainer->leadFields()->createMany([
+        ['label' => 'How old are you?', 'type' => 'text', 'required' => true, 'position' => 0],
+        ['label' => 'Pick a level', 'type' => 'select', 'options' => ['New', 'Returning'], 'required' => true, 'position' => 1],
+    ]);
+
+    $this->get(route('programs.shared.lead', $program->share_token))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('fields', 2)
+            ->where('fields.0.label', 'How old are you?')
+            ->where('fields.1.options.0.value', 'New'));
+
+    // Preset keys no longer satisfy the form.
+    $this->post(route('programs.shared.lead.store', $program->share_token), [
+        'name' => 'Kenenisa',
+        'answers' => ['goal' => 'lose_fat'],
+    ])->assertSessionHasErrors(['answers.How old are you?', 'answers.Pick a level']);
+
+    $this->post(route('programs.shared.lead.store', $program->share_token), [
+        'name' => 'Kenenisa',
+        'answers' => ['How old are you?' => '32', 'Pick a level' => 'Returning'],
+    ])->assertRedirect(route('programs.shared.lead.thanks', $program->share_token));
+
+    expect(ProgramLead::sole()->answers)
+        ->toBe(['How old are you?' => '32', 'Pick a level' => 'Returning']);
+});
+
+test('optional mode lets guests skip the form and still links the coach', function () {
+    $program = freeSharedProgram();
+    $trainer = $program->user->trainer;
+    $trainer->update(['lead_form_mode' => 'optional']);
+
+    $this->get(route('programs.shared.lead', $program->share_token))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('optional', true)
+            ->where('skip_url', route('programs.shared.lead.skip', $program->share_token)));
+
+    $this->get(route('programs.shared.lead.skip', $program->share_token))
+        ->assertRedirect(route('programs.shared.show', $program->share_token))
+        ->assertSessionHas('tenant', $trainer->slug);
+
+    expect(ProgramLead::count())->toBe(0);
+});
+
+test('off mode bypasses the questionnaire entirely', function () {
+    $program = freeSharedProgram();
+    $program->user->trainer->update(['lead_form_mode' => 'off']);
+
+    $this->get(route('programs.shared.lead', $program->share_token))
+        ->assertRedirect(route('programs.shared.show', $program->share_token));
+
+    $this->post(route('programs.shared.lead.store', $program->share_token), [
+        'name' => 'X',
+        'answers' => [],
+    ])->assertNotFound();
+
+    // The shared page stops advertising the form but still seeds the tenant.
+    $this->get(route('programs.shared.show', $program->share_token))
+        ->assertOk()
+        ->assertSessionHas('tenant', $program->user->trainer->slug)
+        ->assertInertia(fn (Assert $page) => $page->where('leadUrl', null));
 });

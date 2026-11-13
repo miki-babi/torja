@@ -7,6 +7,7 @@ use App\Http\Controllers\Trainer\ClientsController;
 use App\Http\Controllers\Trainer\DashboardController;
 use App\Http\Controllers\Trainer\EarningsController;
 use App\Http\Controllers\Trainer\FoodSearchController;
+use App\Http\Controllers\Trainer\LeadFormController;
 use App\Http\Controllers\Trainer\LeadsController;
 use App\Http\Controllers\Trainer\MealProgramsController;
 use App\Http\Controllers\Trainer\PlansController;
@@ -79,6 +80,8 @@ Route::middleware(['auth', 'trainer'])
         Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
         Route::get('leads', [LeadsController::class, 'index'])->name('leads.index');
+        Route::get('lead-form', [LeadFormController::class, 'edit'])->name('lead-form.edit');
+        Route::patch('lead-form', [LeadFormController::class, 'update'])->name('lead-form.update');
         Route::get('check-ins', [CheckInsController::class, 'index'])
             ->name('check-ins.index');
         Route::post('check-ins/{checkIn}/reply', [CheckInsController::class, 'reply'])

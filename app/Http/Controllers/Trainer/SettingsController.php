@@ -53,9 +53,11 @@ class SettingsController extends Controller
             'quiet_hours_end' => $data['quiet_hours_end'] ?? null,
         ]);
 
-        return back()->with('toast', [
+        Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('Settings saved.'),
         ]);
+
+        return back();
     }
 }

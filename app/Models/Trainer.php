@@ -43,7 +43,7 @@ use Illuminate\Support\Str;
  * @property Carbon|null $updated_at
  * @property-read string $display_name
  */
-#[Fillable(['user_id', 'slug', 'brand_name', 'bio', 'specialty', 'languages', 'years_experience', 'certification_path', 'bot_token', 'bot_username', 'mini_app_name', 'webhook_secret', 'webhook_registered_at', 'menu_button_set_at', 'payout_method', 'payout_account', 'offer_text', 'suspended_at', 'reminders_enabled', 'quiet_hours_start', 'quiet_hours_end'])]
+#[Fillable(['user_id', 'slug', 'brand_name', 'bio', 'specialty', 'languages', 'years_experience', 'certification_path', 'bot_token', 'bot_username', 'mini_app_name', 'webhook_secret', 'webhook_registered_at', 'menu_button_set_at', 'payout_method', 'payout_account', 'offer_text', 'suspended_at', 'reminders_enabled', 'quiet_hours_start', 'quiet_hours_end', 'lead_form_mode'])]
 #[Hidden(['bot_token', 'webhook_secret'])]
 class Trainer extends Model
 {
@@ -87,6 +87,51 @@ class Trainer extends Model
         return $this->belongsToMany(User::class, 'trainer_clients')
             ->withPivot('last_opened_at')
             ->withTimestamps();
+    }
+
+    /**
+     * Lead-form modes: `required` = guests must answer before claiming,
+     * `optional` = questionnaire shown but skippable, `off` = no form.
+     *
+     * @var list<string>
+     */
+    public const LEAD_FORM_MODES = ['required', 'optional', 'off'];
+
+    /**
+     * The trainer's custom claim-form questions, in display order.
+     *
+     * @return HasMany<TrainerLeadField, $this>
+     */
+    public function leadFields(): HasMany
+    {
+        return $this->hasMany(TrainerLeadField::class)->orderBy('position');
+    }
+
+    /**
+     * The claim form this trainer's guests fill: custom questions when
+     * configured, the preset questionnaire otherwise. Custom answers are
+     * keyed by question label; preset answers keep their stable keys.
+     *
+     * @return list<array{key: string, label: string, type: string, options: list<array{value: string, label: string}>, required: bool}>
+     */
+    public function leadFormFields(): array
+    {
+        $fields = $this->leadFields()->get();
+
+        if ($fields->isEmpty()) {
+            return ProgramLead::presetFields();
+        }
+
+        return $fields->map(fn (TrainerLeadField $field): array => [
+            'key' => $field->label,
+            'label' => $field->label,
+            'type' => $field->type,
+            'options' => collect($field->options ?? [])
+                ->map(fn (string $option): array => ['value' => $option, 'label' => $option])
+                ->values()
+                ->all(),
+            'required' => $field->required,
+        ])->all();
     }
 
     /**

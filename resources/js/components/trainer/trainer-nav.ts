@@ -22,6 +22,7 @@ import { index as broadcastsIndex } from '@/routes/trainer/broadcasts';
 import { index as checkInsIndex } from '@/routes/trainer/check-ins';
 import { index as clientsIndex } from '@/routes/trainer/clients';
 import { index as leadsIndex } from '@/routes/trainer/leads';
+import { edit as leadFormEdit } from '@/routes/trainer/lead-form';
 import { index as mealProgramsIndex } from '@/routes/trainer/meal-programs';
 import { index as plansIndex } from '@/routes/trainer/plans';
 import { index as programsIndex } from '@/routes/trainer/programs';
@@ -73,6 +74,11 @@ export const trainerNavGroups: TrainerNavGroup[] = [
         label: 'Engagement',
         items: [
             { title: 'Leads', href: leadsIndex(), icon: UserPlus },
+            {
+                title: 'Claim form',
+                href: leadFormEdit(),
+                icon: ClipboardCheck,
+            },
             {
                 title: 'Check-ins',
                 href: checkInsIndex(),

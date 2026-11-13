@@ -15,42 +15,29 @@ import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { store } from '@/routes/programs/shared/lead';
 
-type Questions = Record<string, string[]>;
-
-const QUESTION_LABELS: Record<string, string> = {
-    goal: "What's your main goal?",
-    experience: 'Training experience',
-    days_per_week: 'Days you can train per week',
-    health: 'Any injuries or health concerns?',
-};
-
-const OPTION_LABELS: Record<string, string> = {
-    lose_fat: 'Lose fat',
-    build_muscle: 'Build muscle',
-    get_fitter: 'Get fitter',
-    sport: 'Sport performance',
-    beginner: 'Beginner',
-    intermediate: 'Intermediate',
-    advanced: 'Advanced',
-    '1-2': '1–2 days',
-    '3-4': '3–4 days',
-    '5+': '5+ days',
-    none: 'None',
-    injury: 'Recovering from injury',
-    medical: 'Medical condition',
+type Field = {
+    key: string;
+    label: string;
+    type: 'text' | 'textarea' | 'select';
+    options: { value: string; label: string }[];
+    required: boolean;
 };
 
 type Props = {
     program: { name: string; share_token: string };
     trainer: { name: string };
-    questions: Questions;
+    fields: Field[];
+    optional: boolean;
+    skip_url: string | null;
     program_url: string;
 };
 
 export default function ProgramLead({
     program,
     trainer,
-    questions,
+    fields,
+    optional,
+    skip_url,
     program_url,
 }: Props) {
     const { data, setData, post, processing, errors } = useForm({
@@ -62,8 +49,9 @@ export default function ProgramLead({
     const answer = (key: string, value: string) =>
         setData('answers', { ...data.answers, [key]: value });
 
-    const answeredAll =
-        Object.keys(questions).every((key) => data.answers[key]);
+    const answeredAll = fields.every(
+        (field) => !field.required || data.answers[field.key],
+    );
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
@@ -123,36 +111,80 @@ export default function ProgramLead({
                             </CardContent>
                         </Card>
 
-                        {Object.entries(questions).map(([key, options]) => (
-                            <Card key={key}>
+                        {fields.map((field) => (
+                            <Card key={field.key}>
                                 <CardHeader>
                                     <CardTitle className="text-base">
-                                        {QUESTION_LABELS[key] ?? key}
+                                        {field.label}
+                                        {!field.required && (
+                                            <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                                Optional
+                                            </span>
+                                        )}
                                     </CardTitle>
-                                    <CardDescription>
-                                        Pick one
-                                    </CardDescription>
+                                    {field.type === 'select' && (
+                                        <CardDescription>
+                                            Pick one
+                                        </CardDescription>
+                                    )}
                                 </CardHeader>
-                                <CardContent className="flex flex-wrap gap-2">
-                                    {options.map((option) => (
-                                        <button
-                                            key={option}
-                                            type="button"
-                                            onClick={() => answer(key, option)}
-                                            className={cn(
-                                                'rounded-full border px-4 py-2 text-sm transition-colors',
-                                                data.answers[key] === option
-                                                    ? 'border-primary bg-primary text-primary-foreground'
-                                                    : 'bg-card hover:bg-muted/50',
-                                            )}
-                                        >
-                                            {OPTION_LABELS[option] ?? option}
-                                        </button>
-                                    ))}
+                                <CardContent>
+                                    {field.type === 'select' ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {field.options.map((option) => (
+                                                <button
+                                                    key={option.value}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        answer(
+                                                            field.key,
+                                                            option.value,
+                                                        )
+                                                    }
+                                                    className={cn(
+                                                        'rounded-full border px-4 py-2 text-sm transition-colors',
+                                                        data.answers[
+                                                            field.key
+                                                        ] === option.value
+                                                            ? 'border-primary bg-primary text-primary-foreground'
+                                                            : 'bg-card hover:bg-muted/50',
+                                                    )}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : field.type === 'textarea' ? (
+                                        <textarea
+                                            value={
+                                                data.answers[field.key] ?? ''
+                                            }
+                                            onChange={(event) =>
+                                                answer(
+                                                    field.key,
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={3}
+                                            className="border-input bg-transparent shadow-xs w-full rounded-md border px-3 py-2 text-sm outline-none focus-visible:border-ring"
+                                        />
+                                    ) : (
+                                        <Input
+                                            value={
+                                                data.answers[field.key] ?? ''
+                                            }
+                                            onChange={(event) =>
+                                                answer(
+                                                    field.key,
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                    )}
                                     <InputError
                                         message={
                                             errors[
-                                                `answers.${key}` as keyof typeof errors
+                                                `answers.${field.key}` as keyof typeof errors
                                             ]
                                         }
                                     />
@@ -168,6 +200,15 @@ export default function ProgramLead({
                             {processing && <Spinner />}
                             Get my program
                         </Button>
+
+                        {optional && skip_url !== null && (
+                            <Link
+                                href={skip_url}
+                                className="text-center text-sm font-medium text-muted-foreground underline-offset-4 hover:underline"
+                            >
+                                Skip — take me to the program
+                            </Link>
+                        )}
 
                         <Link
                             href={program_url}
