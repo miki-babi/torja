@@ -102,6 +102,8 @@ class CoachingController extends Controller
 
         $user = $request->user();
 
+        abort_if($plan->trainer->user_id === $user->id, 403);
+
         $payment = Payment::create([
             'user_id' => $user->id,
             'provider' => 'jami',

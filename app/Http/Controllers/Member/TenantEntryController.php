@@ -39,7 +39,7 @@ class TenantEntryController extends Controller
 
         $linked = ! $user->isClientOf($trainer->user);
 
-        $trainer->clients()->syncWithoutDetaching([$user->id]);
+        $trainer->addClient($user);
         $trainer->markClientOpened($user);
 
         if ($linked) {

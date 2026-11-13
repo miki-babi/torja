@@ -49,7 +49,7 @@ trait RedirectsUsersByRole
             return;
         }
 
-        $trainer->clients()->syncWithoutDetaching([$user->id]);
+        $trainer->addClient($user);
         $trainer->markClientOpened($user);
     }
 

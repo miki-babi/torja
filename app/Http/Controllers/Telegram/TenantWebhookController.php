@@ -68,7 +68,7 @@ class TenantWebhookController extends Controller
 
         $user = app(UserResolver::class)->resolve($from, (string) $chatId);
 
-        $trainer->clients()->syncWithoutDetaching([$user->id]);
+        $trainer->addClient($user);
         $trainer->markClientOpened($user);
 
         $name = e($trainer->display_name);

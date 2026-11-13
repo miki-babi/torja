@@ -5,6 +5,7 @@ use App\Models\ExerciseProgram;
 use App\Models\ExerciseProgramAccess;
 use App\Models\ExerciseProgramWorkout;
 use App\Models\Trainer;
+use App\Models\TrainerPlan;
 use App\Models\User;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
@@ -417,4 +418,54 @@ test('a staff user can promote a member to trainer by email', function () {
 
     expect($member->fresh()->role)->toBe('trainer');
     expect($member->fresh()->trainer)->not->toBeNull();
+});
+
+test('a trainer cannot become their own client', function () {
+    $trainer = Trainer::factory()->create();
+    $user = User::factory()->create();
+
+    expect($trainer->addClient($trainer->user))->toBeFalse()
+        ->and($trainer->addClient($user))->toBeTrue()
+        ->and($trainer->clients()->count())->toBe(1);
+});
+
+test('the tenant webhook does not link the trainer as their own client', function () {
+    $trainer = Trainer::factory()->withBot()->create();
+    $trainer->user->update(['telegram_id' => 555001]);
+
+    Http::fake([
+        'https://api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]]),
+    ]);
+
+    $this->postJson("/telegram/webhook/t/{$trainer->slug}", [
+        'message' => [
+            'chat' => ['id' => 777, 'type' => 'private'],
+            'text' => '/start',
+            'from' => ['id' => 555001, 'first_name' => 'Coach'],
+        ],
+    ], ['X-Telegram-Bot-Api-Secret-Token' => $trainer->webhook_secret])
+        ->assertOk();
+
+    expect($trainer->clients()->where('users.id', $trainer->user_id)->exists())->toBeFalse();
+});
+
+test('mini app sign-in through their own tenant does not link the trainer', function () {
+    $trainer = Trainer::factory()->withBot()->create();
+    $trainer->user->update(['telegram_id' => 555001]);
+
+    $this->postJson('/auth/telegram/webapp', [
+        'init_data' => tenantInitData($trainer->bot_token),
+        'tenant' => $trainer->slug,
+    ])->assertOk();
+
+    expect($trainer->clients()->where('users.id', $trainer->user_id)->exists())->toBeFalse();
+});
+
+test('a trainer cannot check out their own plan', function () {
+    $trainer = Trainer::factory()->create();
+    $plan = TrainerPlan::factory()->for($trainer)->create(['is_active' => true]);
+
+    $this->actingAs($trainer->user)
+        ->post(route('member.plans.checkout', $plan))
+        ->assertForbidden();
 });

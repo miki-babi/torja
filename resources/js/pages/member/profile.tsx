@@ -3,10 +3,8 @@ import {
     Bell,
     ClipboardCheck,
     Dumbbell,
-    Gift,
     Languages,
     LogOut,
-    Package,
     Palette,
     Send,
     Settings,
@@ -82,18 +80,9 @@ export default function MemberProfile({
     activity,
     pace,
     weightLogs,
-    ordersUrl,
-    ambassador,
     streak,
     activityWeek,
 }: {
-    ordersUrl: string;
-    ambassador: {
-        enabled: boolean;
-        url: string;
-        balance: number;
-        commission_etb: number;
-    };
     account: {
         name: string | null;
         avatar: string | null;
@@ -282,35 +271,6 @@ export default function MemberProfile({
             </div>
 
             <div className="mt-6 space-y-4">
-                {ambassador.enabled && (
-                    <Link href={ambassador.url} className="block">
-                        <Card className="transition-colors hover:border-[#AFFA01]/40">
-                            <CardContent className="flex items-center gap-3 pt-4">
-                                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#1F1F1F] text-[#AFFA01]">
-                                    <Gift className="size-5" />
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-bold text-[#F5F5F5]">
-                                        {t('ambassador.card_title')}
-                                    </p>
-                                    <p className="text-xs text-[#8E8E93]">
-                                        {t('ambassador.card_body', {
-                                            amount: ambassador.commission_etb,
-                                        })}
-                                    </p>
-                                </div>
-                                <div className="shrink-0 text-right">
-                                    <p className="text-sm font-bold text-[#AFFA01]">
-                                        {ambassador.balance.toLocaleString()}
-                                    </p>
-                                    <p className="text-[10px] text-[#8E8E93]">
-                                        ETB
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </Link>
-                )}
 
                 <Card>
                     <CardHeader>
@@ -383,13 +343,6 @@ export default function MemberProfile({
                         >
                             <Shield className="size-4 text-muted-foreground" />
                             Security
-                        </Link>
-                        <Link
-                            href={ordersUrl}
-                            className="flex items-center gap-3 px-6 py-3 text-sm hover:bg-accent"
-                        >
-                            <Package className="size-4 text-muted-foreground" />
-                            My orders
                         </Link>
                         <Link
                             href={checkInsIndex()}

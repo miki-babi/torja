@@ -90,6 +90,21 @@ class Trainer extends Model
     }
 
     /**
+     * Link a user as this trainer's client. A trainer can never be their
+     * own client — the pivot row is skipped and `false` returned.
+     */
+    public function addClient(User $user): bool
+    {
+        if ($user->id === $this->user_id) {
+            return false;
+        }
+
+        $this->clients()->syncWithoutDetaching([$user->id]);
+
+        return true;
+    }
+
+    /**
      * Stamp the client's link as having just opened the app through this
      * trainer's surface — feeds `User::activeCoach()` so the member app
      * shows the coach whose bot or invite launched it.

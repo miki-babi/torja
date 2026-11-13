@@ -115,7 +115,7 @@ class SharedMealProgramController extends Controller
         $author = $mealProgram->user;
 
         if ($author->isTrainer()) {
-            $author->trainer?->clients()->syncWithoutDetaching([$user->id]);
+            $author->trainer?->addClient($user);
         }
 
         $validated = $request->validate([

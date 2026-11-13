@@ -186,7 +186,7 @@ class SharedProgramController extends Controller
         $author = $program->user;
 
         if ($author->isTrainer()) {
-            $author->trainer?->clients()->syncWithoutDetaching([$user->id]);
+            $author->trainer?->addClient($user);
         }
 
         $validated = $request->validate([
