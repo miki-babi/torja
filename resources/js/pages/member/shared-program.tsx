@@ -38,8 +38,7 @@ import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { login } from '@/routes';
 import { set as setLocale } from '@/routes/locale';
-import { exercise } from '@/routes/member';
-import { show as exerciseShow } from '@/routes/member/exercises';
+import { home as memberHome } from '@/routes/member';
 import { play } from '@/routes/member/program-workouts';
 
 type ProgramWorkout = PlayerWorkout;
@@ -463,17 +462,15 @@ export default function MemberSharedProgram({
                                         <Lock className="size-4 shrink-0 text-muted-foreground" />
                                     </div>
                                 ) : (
-                                    <Link
+                                    <div
                                         key={ex.slug}
-                                        href={exerciseShow(ex.slug).url}
-                                        className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50"
+                                        className="flex items-center gap-3 px-4 py-3"
                                     >
                                         <ExerciseRow
                                             ex={ex}
                                             detail={exerciseDetailText(ex)}
                                         />
-                                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                                    </Link>
+                                    </div>
                                 ),
                             )}
                         </CollapsibleContent>
@@ -531,7 +528,7 @@ export default function MemberSharedProgram({
                                 </p>
                             </div>
                             <Button variant="outline" asChild>
-                                <Link href={exercise()}>
+                                <Link href={memberHome()}>
                                     {t('shared_program.open_my_workouts')}
                                 </Link>
                             </Button>

@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { MEAL_TYPE_LABELS } from '@/lib/plan-options';
-import { meal } from '@/routes/member';
 import { wizard } from '@/routes/plan';
 import { show as pro } from '@/routes/pro';
 import { Head, Link } from '@inertiajs/react';
@@ -46,6 +45,7 @@ type Props = {
     warnings: TargetWarning[];
     sampleDay: SampleDay | null;
     unlocked: boolean;
+    mealPlanUrl: string | null;
     price: number;
 };
 
@@ -62,6 +62,7 @@ export default function PlanPreview({
     warnings,
     sampleDay,
     unlocked,
+    mealPlanUrl,
     price,
 }: Props) {
     return (
@@ -219,14 +220,16 @@ export default function PlanPreview({
                                     All 7 days of your meal plan are unlocked —
                                     find them on the Nutrition tab, day by day.
                                 </p>
-                                <Button
-                                    asChild
-                                    className="bg-lime-400 text-lime-950 hover:bg-lime-500"
-                                >
-                                    <Link href={meal()}>
-                                        Open your full plan
-                                    </Link>
-                                </Button>
+                                {mealPlanUrl !== null && (
+                                    <Button
+                                        asChild
+                                        className="bg-lime-400 text-lime-950 hover:bg-lime-500"
+                                    >
+                                        <Link href={mealPlanUrl}>
+                                            Open your full plan
+                                        </Link>
+                                    </Button>
+                                )}
                             </CardContent>
                         </Card>
                     ) : (

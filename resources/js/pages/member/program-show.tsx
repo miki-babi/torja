@@ -1,5 +1,5 @@
-import { Head, Link } from '@inertiajs/react';
-import { ChevronRight, Play } from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import { Play } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { ExerciseSummaries } from '@/components/member/exercise-data';
@@ -13,7 +13,6 @@ import type {
 import { WorkoutSessionCard } from '@/components/member/workout-session';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { show as playlistShow } from '@/routes/member/playlists';
 import { store as storeSession } from '@/routes/member/sessions';
 
 export default function MemberProgramShow({
@@ -133,16 +132,10 @@ export default function MemberProgramShow({
                                             {index + 1}
                                         </span>
                                         <div className="min-w-0 flex-1">
-                                            <Link
-                                                href={
-                                                    playlistShow(playlist.id)
-                                                        .url
-                                                }
-                                                className="block truncate text-sm font-semibold text-[#F5F5F5] transition-colors hover:text-[#AFFA01]"
-                                            >
+                                            <p className="block truncate text-sm font-semibold text-[#F5F5F5]">
                                                 {playlist.workout_title ??
                                                     playlist.name}
-                                            </Link>
+                                            </p>
                                             <p className="text-xs text-[#A1A1AA]">
                                                 {playlist.exercise_ids.length}{' '}
                                                 exercise
@@ -170,13 +163,6 @@ export default function MemberProgramShow({
                                                 ? 'Start'
                                                 : `Continue · ${existing.sets.length}`}
                                         </Button>
-                                        <Link
-                                            href={playlistShow(playlist.id).url}
-                                            aria-label={`View ${playlist.workout_title ?? playlist.name}`}
-                                            className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#2E2E2E] bg-[#1F1F1F] text-[#A1A1AA] transition-colors hover:text-[#AFFA01]"
-                                        >
-                                            <ChevronRight className="size-4" />
-                                        </Link>
                                     </div>
                                 );
                             })}

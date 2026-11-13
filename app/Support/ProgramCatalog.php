@@ -52,7 +52,7 @@ class ProgramCatalog
                 'claimed' => $claimed['exercise']->contains($program->id),
                 'member_url' => $claimed['exercise']->contains($program->id)
                     ? route('member.programs.show', $program)
-                    : route('member.exercise'),
+                    : route('member.home'),
             ])
             ->all();
     }

@@ -70,13 +70,6 @@ Route::post('webhooks/jami', [JamiWebhookController::class, 'store'])
     ->middleware('throttle:60,1')
     ->name('payment.jami.webhook');
 
-Route::get('explore', Member\ExploreController::class)->name('explore.index');
-Route::get('shop/products/{product}', [Member\ExploreController::class, 'product'])
-    ->name('shop.products.show');
-
-Route::get('shared/playlists/{playlist:share_token}', [Member\SharedPlaylistController::class, 'show'])
-    ->name('playlists.shared.show');
-
 Route::get('shared/programs/{program:share_token}', [Member\SharedProgramController::class, 'show'])
     ->name('programs.shared.show');
 Route::get('shared/programs/{program:share_token}/lead', [Member\ProgramLeadController::class, 'create'])
@@ -121,38 +114,19 @@ Route::middleware(['auth', 'member.coach'])->group(function () {
             : to_route('member.home'))
     )->name('dashboard');
 
-    Route::get('/', Member\HomeController::class)->name('member.home');
+    Route::get('/', Member\TodayController::class)->name('member.home');
     Route::redirect('home', '/');
-    Route::get('today', Member\TodayController::class)->name('member.today');
-    Route::post('member/workouts/build', Member\WorkoutBuilderController::class)
-        ->name('member.workouts.build');
-    Route::get('exercise', Member\ExerciseController::class)->name('member.exercise');
+    Route::redirect('today', '/')->name('member.today');
     Route::get('progress', Member\ProgressController::class)->name('member.progress');
-    Route::get('progress/records', Member\PersonalRecordsController::class)->name('member.records');
     Route::get('progress/history', Member\WorkoutHistoryController::class)->name('member.history');
     Route::get('member/exercises/search', Member\ExerciseSearchController::class)
         ->name('member.exercises.search');
-    Route::get('exercise/{exercise}', Member\ExerciseShowController::class)
-        ->name('member.exercises.show');
-    Route::get('meal', Member\MealController::class)->name('member.meal');
-    Route::get('meal-plans/create', Member\MealPlanBuilderController::class)
-        ->name('member.meal-plans.create');
-    Route::post('meal-plans', Member\MealPlanStoreController::class)
-        ->name('member.meal-plans.store');
-    Route::get('meal/{mealPlanMeal}', Member\MealShowController::class)
-        ->name('member.meals.show');
-    Route::get('playlists/{playlist}', [Member\PlaylistController::class, 'show'])
-        ->name('member.playlists.show');
-    Route::get('member/playlists/{playlist}/play', [Member\PlaylistController::class, 'play'])
-        ->name('member.playlists.play');
     Route::get('profile', Member\ProfileController::class)->name('member.profile');
     Route::post('member/telegram/link', [Member\TelegramController::class, 'link'])
         ->name('member.telegram.link');
     Route::delete('member/telegram', [Member\TelegramController::class, 'disconnect'])
         ->name('member.telegram.disconnect');
 
-    Route::post('shared/playlists/{playlist:share_token}/save', [Member\SharedPlaylistController::class, 'save'])
-        ->name('playlists.shared.save');
     Route::post('shared/programs/{program:share_token}/save', [Member\SharedProgramController::class, 'save'])
         ->name('programs.shared.save');
     Route::post('shared/programs/{program:share_token}/start', [Member\SharedProgramController::class, 'start'])
@@ -169,20 +143,6 @@ Route::middleware(['auth', 'member.coach'])->group(function () {
         ->name('member.programs.show');
     Route::get('member/program-workouts/{workout}/play', [Member\ExerciseProgramController::class, 'play'])
         ->name('member.program-workouts.play');
-    Route::post('member/playlists', [Member\PlaylistController::class, 'store'])
-        ->name('member.playlists.store');
-    Route::post('member/playlists/{playlist}/share', [Member\PlaylistController::class, 'share'])
-        ->name('member.playlists.share');
-    Route::delete('member/playlists/{playlist}/share', [Member\PlaylistController::class, 'unshare'])
-        ->name('member.playlists.share.destroy');
-    Route::patch('member/playlists/{playlist}', [Member\PlaylistController::class, 'update'])
-        ->name('member.playlists.update');
-    Route::delete('member/playlists/{playlist}', [Member\PlaylistController::class, 'destroy'])
-        ->name('member.playlists.destroy');
-    Route::post('member/playlists/{playlist}/exercises', [Member\PlaylistController::class, 'addExercise'])
-        ->name('member.playlists.exercises.store');
-    Route::delete('member/playlists/{playlist}/exercises/{exercise}', [Member\PlaylistController::class, 'removeExercise'])
-        ->name('member.playlists.exercises.destroy');
     Route::post('member/sessions', [Member\SessionController::class, 'store'])
         ->name('member.sessions.store');
     Route::post('member/sessions/{session}/finish', [Member\SessionController::class, 'finish'])
@@ -199,17 +159,6 @@ Route::middleware(['auth', 'member.coach'])->group(function () {
         ->name('member.sessions.sets.upsert');
     Route::delete('member/sessions/{session}/sets/{set}', [Member\SessionController::class, 'destroySet'])
         ->name('member.sessions.sets.destroy');
-
-    Route::get('habits', [Member\HabitController::class, 'index'])
-        ->name('member.habits');
-    Route::post('member/habits', [Member\HabitController::class, 'store'])
-        ->name('member.habits.store');
-    Route::patch('member/habits/{habit}', [Member\HabitController::class, 'update'])
-        ->name('member.habits.update');
-    Route::delete('member/habits/{habit}', [Member\HabitController::class, 'destroy'])
-        ->name('member.habits.destroy');
-    Route::post('member/habits/{habit}/toggle', [Member\HabitController::class, 'toggle'])
-        ->name('member.habits.toggle');
 
     Route::post('member/weight-logs', [Member\WeightLogController::class, 'store'])
         ->name('member.weight-logs.store');
@@ -250,22 +199,6 @@ Route::middleware(['auth', 'member.coach'])->group(function () {
         Route::post('member/messages/{conversation}/messages/{message}/reactions', [Member\MessageController::class, 'react'])
             ->name('member.messages.react');
     });
-    Route::get('member/orders', [Member\ShopOrderController::class, 'index'])
-        ->name('member.orders.index');
-    Route::post('member/orders', [Member\ShopOrderController::class, 'store'])
-        ->name('member.orders.store');
-    Route::post('member/orders/{order}/cancel', [Member\ShopOrderController::class, 'cancel'])
-        ->name('member.orders.cancel');
-    Route::get('member/diary', [Member\FoodDiaryController::class, 'index'])
-        ->name('member.diary.index');
-    Route::post('member/diary', [Member\FoodDiaryController::class, 'store'])
-        ->name('member.diary.store');
-    Route::delete('member/diary/{foodDiaryEntry}', [Member\FoodDiaryController::class, 'destroy'])
-        ->name('member.diary.destroy');
-    Route::get('ambassador', [Member\AmbassadorController::class, 'show'])
-        ->name('member.ambassador');
-    Route::post('ambassador/payouts', [Member\AmbassadorController::class, 'storePayout'])
-        ->name('member.ambassador.payouts.store');
     Route::get('coaching', [Member\CoachingController::class, 'index'])
         ->name('member.coaching');
     Route::get('member/check-ins', [Member\CheckInController::class, 'index'])

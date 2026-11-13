@@ -102,7 +102,7 @@ test('a guest completes the wizard, registers, pays and unlocks the full plan', 
 
     expect($user->fresh()->isPro())->toBeTrue();
 
-    // A member-owned plan spanning the week — the member meal screen only
+    // A member-owned plan spanning the week — the meal-program viewer only
     // serves plans the user built or claimed, never the global PDF plans.
     $plan = MealPlan::factory()->for($user)->create();
 
@@ -114,13 +114,12 @@ test('a guest completes the wizard, registers, pays and unlocks the full plan', 
         MealPlanItem::factory()->for($meal, 'meal')->create(['food_id' => null]);
     }
 
-    // The full week is now unlocked on the meal screen.
-    $this->get(route('member.meal'))
+    // The full week is now unlocked on the member meal-program screen.
+    $this->get(route('member.meal-programs.show', $plan))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('unlocked', true)
-            ->has('planDays.1.meals')
-            ->has('planDays.7.meals'));
+            ->has('days.1.meals')
+            ->has('days.7.meals'));
 });
 
 test('guests who already paid land on an unlocked preview', function () {

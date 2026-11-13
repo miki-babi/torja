@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Services\Nutrition\ProfileResolver;
-use App\Support\AmbassadorProgram;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,13 +24,6 @@ class ProfileController extends Controller
         $user = $request->user();
 
         return Inertia::render('member/profile', [
-            'ordersUrl' => route('member.orders.index'),
-            'ambassador' => [
-                'enabled' => AmbassadorProgram::isEnabled(),
-                'url' => route('member.ambassador'),
-                'balance' => $user?->ambassadorBalance() ?? 0,
-                'commission_etb' => AmbassadorProgram::commissionEtb(),
-            ],
             'account' => [
                 'name' => $user?->name,
                 'avatar' => $user?->avatar,

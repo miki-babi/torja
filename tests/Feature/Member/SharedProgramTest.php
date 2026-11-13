@@ -183,7 +183,7 @@ test('the shared page exposes the pro state and upgrade url', function () {
     $this->get(route('programs.shared.show', $program->share_token))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('homeUrl', route('explore.index')));
+            ->where('homeUrl', route('login')));
 
     $this->actingAs(User::factory()->create())
         ->get(route('programs.shared.show', $program->share_token))

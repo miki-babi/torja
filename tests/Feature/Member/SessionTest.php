@@ -255,7 +255,7 @@ test('playing a free session opens the workout player with the logged exercises'
             ->where('session.id', $session->id));
 });
 
-test('playing a playlist session redirects to the playlist player', function () {
+test('playing a playlist session renders the workout player', function () {
     $user = User::factory()->create();
     $playlist = ExercisePlaylist::factory()->for($user)->create();
     $playlist->items()->create(['exercise_id' => 'squat', 'position' => 1]);
@@ -266,7 +266,10 @@ test('playing a playlist session redirects to the playlist player', function () 
 
     $this->actingAs($user)
         ->get(route('member.sessions.play', $session->id))
-        ->assertRedirect(route('member.playlists.play', $playlist->id));
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('member/workout-player')
+            ->where('session.id', $session->id));
 });
 
 test('playing a session whose playlist has no items falls back to the logged exercises', function () {

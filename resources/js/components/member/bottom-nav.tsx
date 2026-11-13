@@ -1,16 +1,23 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Dumbbell, House, MessageCircle, TrendingUp, User } from 'lucide-react';
+import {
+    CalendarCheck,
+    ClipboardList,
+    MessageCircle,
+    Settings,
+    TrendingUp,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { exercise, home, messages, profile, progress } from '@/routes/member';
+import {
+    history,
+    home,
+    messages,
+    profile,
+    progress,
+} from '@/routes/member';
 
 const TABS = [
-    { label: 'home', href: home, paths: ['/'], icon: House },
-    {
-        label: 'exercise',
-        href: exercise,
-        paths: ['/exercise', '/today', '/playlists'],
-        icon: Dumbbell,
-    },
+    { label: 'today', href: home, paths: ['/'], icon: ClipboardList },
+    { label: 'log', href: history, paths: ['/progress/history'], icon: CalendarCheck },
     {
         label: 'progress',
         href: progress,
@@ -23,7 +30,7 @@ const TABS = [
         paths: ['/member/messages'],
         icon: MessageCircle,
     },
-    { label: 'profile', href: profile, paths: ['/profile'], icon: User },
+    { label: 'settings', href: profile, paths: ['/profile'], icon: Settings },
 ] as const;
 
 export function BottomNav() {
@@ -35,7 +42,11 @@ export function BottomNav() {
     }
 
     const activeIndex = TABS.findIndex(({ paths }) =>
-        paths.some((path) => url === path || url.startsWith(`${path}/`)),
+        paths.some((path) =>
+            path === '/'
+                ? url === '/'
+                : url === path || url.startsWith(`${path}/`),
+        ),
     );
 
     return (
@@ -59,7 +70,10 @@ export function BottomNav() {
                 )}
                 {TABS.map(({ label, href, paths, icon: Icon }) => {
                     const active = paths.some(
-                        (path) => url === path || url.startsWith(`${path}/`),
+                        (path) =>
+                            path === '/'
+                                ? url === '/'
+                                : url === path || url.startsWith(`${path}/`),
                     );
                     return (
                         <Link

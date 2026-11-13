@@ -26,7 +26,7 @@ test('coachless members get 403 on member api calls', function () {
     $this->autoLinkActingMemberToCoach = false;
 
     $this->actingAs(User::factory()->create())
-        ->postJson(route('member.habits.store'), ['name' => 'Water'])
+        ->postJson(route('member.sessions.store'))
         ->assertForbidden();
 });
 

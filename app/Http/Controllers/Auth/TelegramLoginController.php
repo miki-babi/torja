@@ -7,7 +7,6 @@ use App\Http\Responses\Concerns\RedirectsUsersByRole;
 use App\Listeners\BindReferrer;
 use App\Models\Trainer;
 use App\Models\User;
-use App\Support\ExerciseCatalog;
 use App\Support\Telegram\InitData;
 use App\Support\Telegram\UserResolver;
 use Illuminate\Http\JsonResponse;
@@ -183,8 +182,7 @@ class TelegramLoginController extends Controller
             $request->session()->regenerate();
         }
 
-        $redirect = $this->exerciseRedirect($initData)
-            ?? redirect()->intended($this->homeFor($user))->getTargetUrl();
+        $redirect = redirect()->intended($this->homeFor($user))->getTargetUrl();
 
         if (isset($coach) && $coach !== null) {
             $redirect = $coach->hasConnectedBot()
@@ -193,26 +191,6 @@ class TelegramLoginController extends Controller
         }
 
         return response()->json(['redirect' => $redirect]);
-    }
-
-    /**
-     * Map an `ex_<slug>` Mini App start param — the deep link attached to
-     * exercises shared via inline mode — to the exercise detail page, or
-     * null for other params and unknown exercises.
-     */
-    private function exerciseRedirect(InitData $initData): ?string
-    {
-        $param = $initData->startParam();
-
-        if ($param === null || preg_match('/^ex_([\w-]{1,512})$/', $param, $matches) !== 1) {
-            return null;
-        }
-
-        $slug = ExerciseCatalog::resolve($matches[1]);
-
-        return ExerciseCatalog::has($slug)
-            ? route('member.exercises.show', $slug)
-            : null;
     }
 
     /**

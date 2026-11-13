@@ -112,7 +112,7 @@ class SharedProgramController extends Controller
                 : null,
             'jamiEnabled' => filled(config('services.jami.token')),
             'proUrl' => route('pro.show'),
-            'homeUrl' => $user !== null ? route('member.home') : route('explore.index'),
+            'homeUrl' => $user !== null ? route('member.home') : route('login'),
             'editUrl' => $user?->isTrainer() && $program->user_id === $user->id
                 ? route('trainer.programs.edit', $program)
                 : null,

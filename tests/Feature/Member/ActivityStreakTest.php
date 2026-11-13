@@ -75,7 +75,7 @@ test('home and profile pages include the streak prop', function () {
     $this->get(route('member.home'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('member/home')
+            ->component('member/today')
             ->where('streak', 1));
 
     $this->get(route('member.profile'))

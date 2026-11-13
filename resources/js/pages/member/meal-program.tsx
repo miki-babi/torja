@@ -1,17 +1,21 @@
 import { Head } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
-import { logDiaryEntry } from '@/components/member/diary';
 import { MobileShell } from '@/components/member/mobile-shell';
-import { PlanMealsCard } from '@/components/member/plan-meals-card';
 import {
+    MEAL_TYPE_TIMES,
     mealItemSummary,
     mealTypeLabel,
     type PlanDay,
-    type PlanMeal,
 } from '@/components/member/types';
 import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -30,33 +34,8 @@ export default function MemberMealProgram({ plan, days }: Props) {
         .map(Number)
         .sort((a, b) => a - b);
     const [selectedDay, setSelectedDay] = useState<number>(dayNumbers[0] ?? 1);
-    const [logging, setLogging] = useState(false);
 
     const planDay = days[String(selectedDay)] ?? null;
-
-    async function logMeal(meal: PlanMeal) {
-        if (logging) {
-            return;
-        }
-        setLogging(true);
-        try {
-            await logDiaryEntry({
-                logged_on: new Date().toISOString().slice(0, 10),
-                name: mealTypeLabel(meal.type),
-                detail: mealItemSummary(meal),
-                kcal: 0,
-                protein_g: 0,
-                carbs_g: 0,
-                fat_g: 0,
-                source: 'plan_meal',
-            });
-            toast.success(t('meal_program.logged_toast'));
-        } catch {
-            toast.error(t('meal_program.log_failed_toast'));
-        } finally {
-            setLogging(false);
-        }
-    }
 
     return (
         <MobileShell>
@@ -140,13 +119,33 @@ export default function MemberMealProgram({ plan, days }: Props) {
             </div>
 
             {planDay !== null && (
-                <div className="mt-4">
-                    <PlanMealsCard
-                        planName={planDay.plan_name}
-                        meals={planDay.meals}
-                        onAdd={logMeal}
-                    />
-                </div>
+                <Card className="mt-4">
+                    <CardHeader>
+                        <CardTitle className="text-base">Your plan</CardTitle>
+                        <CardDescription>{planDay.plan_name}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="divide-y divide-[#2E2E2E] p-0">
+                        {planDay.meals.map((m, index) => (
+                            <div
+                                key={`${m.type}-${index}`}
+                                className="flex items-start gap-3 px-6 py-3"
+                            >
+                                <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[#AFFA01]" />
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold text-[#F5F5F5]">
+                                        {mealTypeLabel(m.type)}{' '}
+                                        <span className="font-normal text-[#A1A1AA]">
+                                            {MEAL_TYPE_TIMES[m.type] ?? ''}
+                                        </span>
+                                    </p>
+                                    <p className="truncate text-xs text-[#A1A1AA]">
+                                        {mealItemSummary(m)}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
             )}
         </MobileShell>
     );

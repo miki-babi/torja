@@ -114,14 +114,11 @@ class ExercisePlaylist extends Model
     }
 
     /**
-     * The public shared-playlist URL, or null when the playlist is not shared.
+     * Playlist sharing was removed with the member playlist UI — kept as a
+     * stub so `toFrontend` serializations stay stable.
      */
     public function shareUrl(): ?string
     {
-        if ($this->share_token === null) {
-            return null;
-        }
-
-        return ShortLink::for($this, route('playlists.shared.show', $this->share_token))->shortUrl();
+        return null;
     }
 }

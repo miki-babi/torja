@@ -148,7 +148,7 @@ test('the shared meal program page exposes a home url for leaving the screen', f
     $this->get(route('meal-programs.shared.show', $program->share_token))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('homeUrl', route('explore.index')));
+            ->where('homeUrl', route('login')));
 
     $this->actingAs(User::factory()->create())
         ->get(route('meal-programs.shared.show', $program->share_token))

@@ -73,7 +73,7 @@ class SharedMealProgramController extends Controller
                 : route('meal-programs.shared.checkout', $mealProgram->share_token),
             'jamiEnabled' => filled(config('services.jami.token')),
             'proUrl' => route('pro.show'),
-            'homeUrl' => $user !== null ? route('member.home') : route('explore.index'),
+            'homeUrl' => $user !== null ? route('member.home') : route('login'),
             'editUrl' => $user?->isTrainer() && $mealProgram->user_id === $user->id
                 ? route('trainer.meal-programs.edit', $mealProgram)
                 : null,

@@ -22,7 +22,7 @@ test('members can switch their locale and it is applied', function () {
     expect($user->refresh()->locale)->toBe('am');
 
     $this->actingAs($user)
-        ->get(route('member.exercise'))
+        ->get(route('member.home'))
         ->assertInertia(fn (Assert $page) => $page->where('locale', 'am'));
 });
 

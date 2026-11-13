@@ -229,15 +229,46 @@ class SessionController extends Controller
     {
         abort_unless($session->user_id === $request->user()->id, 403);
 
-        $session->load(['sets', 'playlist.items']);
+        $session->load(['sets', 'playlist.items', 'playlist.program', 'playlist.programWorkout.items']);
 
         $back = (string) $request->query('back', '');
 
         if ($session->playlist !== null && $session->playlist->items->isNotEmpty()) {
-            return to_route('member.playlists.play', array_filter([
-                'playlist' => $session->playlist->id,
-                'back' => $back !== '' ? $back : null,
-            ]));
+            $playlist = $session->playlist;
+            $targets = $playlist->programWorkout?->items->keyBy('exercise_id') ?? collect();
+
+            $exerciseModels = Exercise::query()
+                ->whereIn('slug', $playlist->items->pluck('exercise_id'))
+                ->get()
+                ->keyBy('slug');
+
+            $exercises = $playlist->items
+                ->map(function ($item) use ($exerciseModels, $targets): ?array {
+                    $exercise = $exerciseModels->get($item->exercise_id);
+
+                    return $exercise === null ? null : [
+                        ...$exercise->toSummary(),
+                        'gif_url' => $exercise->gif_url,
+                        'sets' => $targets->get($item->exercise_id)?->sets,
+                        'reps' => $targets->get($item->exercise_id)?->reps,
+                    ];
+                })
+                ->filter()
+                ->values()
+                ->all();
+
+            return Inertia::render('member/workout-player', [
+                'program' => [
+                    'name' => $playlist->program?->localizedName() ?? 'Today',
+                ],
+                'workout' => [
+                    'id' => $playlist->id,
+                    'title' => $playlist->programWorkout?->title ?? $playlist->name,
+                    'exercises' => $exercises,
+                ],
+                'session' => $session->toFrontend(),
+                'backUrl' => str_starts_with($back, '/') ? $back : route('member.home'),
+            ]);
         }
 
         $slugs = $session->sets->sortBy('id')->pluck('exercise_id')->unique()->values();

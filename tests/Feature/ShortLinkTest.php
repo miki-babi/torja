@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\ExercisePlaylist;
 use App\Models\ExerciseProgram;
 use App\Models\ShortLink;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -37,16 +36,6 @@ test('sharing twice returns the same short link', function () {
 
     expect($program->shareUrl())->toBe($program->shareUrl())
         ->and(ShortLink::query()->where('linkable_type', ExerciseProgram::class)->count())->toBe(1);
-});
-
-test('playlist share links are shortened too', function () {
-    $playlist = ExercisePlaylist::factory()->create(['share_token' => 'pl-token-456']);
-
-    $url = $playlist->shareUrl();
-
-    expect($url)->toStartWith(url('/s/'));
-
-    $this->get($url)->assertRedirectContains('shared/playlists/pl-token-456');
 });
 
 test('unknown codes 404', function () {

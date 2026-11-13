@@ -28,11 +28,16 @@ class NutritionPreviewController extends Controller
 
         $targets = $this->targets->for($profile);
 
+        $mealPlan = $request->user()->mealPlans()->latest('id')->first();
+
         return Inertia::render('plan/preview', [
             'targets' => $targets,
             'warnings' => $targets['warnings'] ?? [],
             'sampleDay' => $this->preview->for($profile),
             'unlocked' => $request->user()->isPro(),
+            'mealPlanUrl' => $mealPlan !== null
+                ? route('member.meal-programs.show', $mealPlan)
+                : null,
             'price' => ProPage::price(),
         ]);
     }

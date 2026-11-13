@@ -38,7 +38,7 @@ test('visiting /t/{slug} marks the client as opened through that coach', functio
     expect($pivot?->last_opened_at)->not->toBeNull();
 });
 
-test('home exposes the coach programs the member holds', function () {
+test('today exposes the coach program the member holds', function () {
     $member = User::factory()->create();
     $trainer = Trainer::factory()->create();
     $trainer->clients()->attach($member->id);
@@ -52,11 +52,11 @@ test('home exposes the coach programs the member holds', function () {
     $this->actingAs($member)
         ->get(route('member.home'))
         ->assertInertia(fn (Assert $page) => $page
-            ->has('coachPrograms', 1)
-            ->where('coachPrograms.0.name', 'Coach Shred'));
+            ->where('program.name', 'Coach Shred')
+            ->where('programs', []));
 });
 
-test('home hides coach programs from other authors', function () {
+test('today hides programs from other authors', function () {
     $member = User::factory()->create();
     $trainer = Trainer::factory()->create();
     $trainer->clients()->attach($member->id);
@@ -67,23 +67,6 @@ test('home hides coach programs from other authors', function () {
     $this->actingAs($member)
         ->get(route('member.home'))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('coachPrograms', []));
-});
-
-test('explore exposes the coach published programs', function () {
-    $member = User::factory()->create();
-    $trainer = Trainer::factory()->create();
-    $trainer->clients()->attach($member->id);
-
-    ExerciseProgram::factory()->published()->create([
-        'user_id' => $trainer->user_id,
-        'name' => 'Coach Cut',
-    ]);
-    ExerciseProgram::factory()->published()->create(['name' => 'Global Plan']);
-
-    $this->actingAs($member)
-        ->get(route('explore.index'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->has('coachPrograms', 1)
-            ->where('coachPrograms.0.name', 'Coach Cut'));
+            ->where('program', null)
+            ->where('programs', []));
 });
