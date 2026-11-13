@@ -115,7 +115,7 @@ class SharedProgramController extends Controller
                 ? $program->user->trainer?->offer_text
                 : null,
             'trainerUrl' => $program->user->isTrainer()
-                ? $program->user->trainer?->miniAppUrl()
+                ? $program->user->trainer?->inviteUrl()
                 : null,
             'jamiEnabled' => filled(config('services.jami.token')),
             'proUrl' => route('pro.show'),

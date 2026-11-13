@@ -278,6 +278,21 @@ class Trainer extends Model
     }
 
     /**
+     * The shareable invite link trainers hand to clients: the Mini App
+     * direct link (`t.me/<bot>/<app>`) when a short name is registered,
+     * the bot chat (`t.me/<bot>` — its menu button opens the app) when
+     * only a bot is connected, or the web page as last resort.
+     */
+    public function inviteUrl(): string
+    {
+        if ($this->bot_username !== null && $this->mini_app_name !== null) {
+            return "https://t.me/{$this->bot_username}/{$this->mini_app_name}";
+        }
+
+        return $this->botUrl() ?? $this->miniAppUrl();
+    }
+
+    /**
      * The Telegram webhook URL this trainer's bot should post updates to.
      */
     public function webhookUrl(): string

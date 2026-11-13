@@ -469,3 +469,20 @@ test('a trainer cannot check out their own plan', function () {
         ->post(route('member.plans.checkout', $plan))
         ->assertForbidden();
 });
+
+test('the invite link prefers telegram, then the bot chat, then the web page', function () {
+    $trainer = Trainer::factory()->create([
+        'slug' => 'coach-abc123',
+        'bot_token' => null,
+        'bot_username' => null,
+        'mini_app_name' => null,
+    ]);
+
+    expect($trainer->inviteUrl())->toBe(url('/t/coach-abc123'));
+
+    $trainer->update(['bot_token' => '123:abc', 'bot_username' => 'coachbot']);
+    expect($trainer->inviteUrl())->toBe('https://t.me/coachbot');
+
+    $trainer->update(['mini_app_name' => 'coachapp']);
+    expect($trainer->inviteUrl())->toBe('https://t.me/coachbot/coachapp');
+});

@@ -105,7 +105,7 @@ class TrainersController extends Controller
             'trainer' => [
                 'id' => $trainer->id,
                 'slug' => $trainer->slug,
-                'invite_url' => $trainer->miniAppUrl(),
+                'invite_url' => $trainer->inviteUrl(),
                 'bot_connected' => $trainer->hasConnectedBot(),
                 'bot_username' => $trainer->bot_username,
                 'webhook_registered' => $trainer->webhook_registered_at !== null,

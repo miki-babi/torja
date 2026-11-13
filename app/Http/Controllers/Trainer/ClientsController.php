@@ -51,7 +51,7 @@ class ClientsController extends Controller
         return Inertia::render('trainer/clients/index', [
             'clients' => $clients,
             'filters' => ['search' => $search],
-            'invite_url' => $trainer->miniAppUrl(),
+            'invite_url' => $trainer->inviteUrl(),
         ]);
     }
 

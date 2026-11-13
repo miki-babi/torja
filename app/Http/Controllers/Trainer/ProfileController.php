@@ -30,7 +30,7 @@ class ProfileController extends Controller
                 'payout_method' => $trainer->payout_method,
                 'payout_account' => $trainer->payout_account,
                 'offer_text' => $trainer->offer_text,
-                'page_url' => $trainer->miniAppUrl(),
+                'page_url' => $trainer->inviteUrl(),
             ],
         ]);
     }

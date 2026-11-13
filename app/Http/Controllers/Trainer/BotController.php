@@ -36,7 +36,7 @@ class BotController extends Controller
                 'mini_app_name' => $trainer->mini_app_name,
                 'bot_username' => $trainer->bot_username,
                 'connected' => $trainer->hasConnectedBot(),
-                'invite_url' => $trainer->miniAppUrl(),
+                'invite_url' => $trainer->inviteUrl(),
                 'expected_webhook' => $trainer->webhookUrl(),
                 'webhook_registered' => $trainer->webhook_registered_at !== null,
                 'menu_button_set' => $trainer->menu_button_set_at !== null,
