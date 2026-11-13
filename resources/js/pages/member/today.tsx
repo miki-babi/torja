@@ -58,15 +58,15 @@ export default function MemberToday({
 
     return (
         <MobileShell>
-            <Head title={t('member.today.title', "Today's workout")} />
+            <Head title={t('member.today.title')} />
 
             <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm text-muted-foreground">
-                        {t('member.today.hello', 'Hello')}, {userName}
+                        {t('member.today.hello')}, {userName}
                     </p>
                     <h1 className="text-xl font-semibold tracking-tight">
-                        {t('member.today.title', "Today's workout")}
+                        {t('member.today.title')}
                     </h1>
                 </div>
                 {streak > 0 && (
@@ -90,7 +90,7 @@ export default function MemberToday({
                             {coach.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            {t('member.today.your_coach', 'Your coach')}
+                            {t('member.today.your_coach')}
                         </p>
                     </div>
                 </div>
@@ -100,16 +100,10 @@ export default function MemberToday({
                 <div className="mt-4 rounded-2xl border border-dashed border-[#2E2E2E] p-6 text-center">
                     <Dumbbell className="mx-auto size-8 text-muted-foreground" />
                     <p className="mt-3 text-sm font-medium">
-                        {t(
-                            'member.today.no_program',
-                            'No workout program yet',
-                        )}
+                        {t('member.today.no_program')}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                        {t(
-                            'member.today.no_program_hint',
-                            'Your coach will assign one — or open a shared program link they sent you.',
-                        )}
+                        {t('member.today.no_program_hint')}
                     </p>
                 </div>
             ) : (
@@ -131,7 +125,7 @@ export default function MemberToday({
                             </Link>
                             <p className="mt-0.5 text-xs text-muted-foreground">
                                 {program.workouts_count}{' '}
-                                {t('member.today.workouts', 'workouts')}
+                                {t('member.today.workouts')}
                             </p>
 
                             {nextWorkout !== null &&
@@ -143,14 +137,8 @@ export default function MemberToday({
                                         <Link href={nextWorkoutUrl}>
                                             <Play className="size-4 fill-current" />
                                             {allDone
-                                                ? t(
-                                                      'member.today.restart',
-                                                      'Restart',
-                                                  )
-                                                : t(
-                                                      'member.today.start',
-                                                      'Start',
-                                                  )}{' '}
+                                                ? t('member.today.restart')
+                                                : t('member.today.start')}{' '}
                                             · {nextWorkout.title}
                                         </Link>
                                     </Button>
@@ -161,7 +149,7 @@ export default function MemberToday({
                     {workouts.length > 0 && (
                         <div className="mt-4 rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A]">
                             <p className="border-b border-[#2E2E2E] px-4 py-3 text-sm font-semibold">
-                                {t('member.today.this_week', 'This week')}
+                                {t('member.today.this_week')}
                             </p>
                             <div className="divide-y divide-[#2E2E2E]">
                                 {workouts.map((workout) => (
@@ -180,10 +168,7 @@ export default function MemberToday({
                                             </p>
                                             <p className="text-xs text-muted-foreground">
                                                 {workout.exercises_count}{' '}
-                                                {t(
-                                                    'member.today.exercises',
-                                                    'exercises',
-                                                )}
+                                                {t('member.today.exercises')}
                                             </p>
                                         </div>
                                         {!workout.done &&
@@ -215,16 +200,10 @@ export default function MemberToday({
                     <CalendarCheck className="size-5 shrink-0 text-[#AFFA01]" />
                     <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-[#AFFA01]">
-                            {t(
-                                'member.today.checkin_due',
-                                'Weekly check-in is due',
-                            )}
+                            {t('member.today.checkin_due')}
                         </p>
                         <p className="text-xs text-[#AFFA01]/70">
-                            {t(
-                                'member.today.checkin_hint',
-                                'Send your weight and a quick update to your coach.',
-                            )}
+                            {t('member.today.checkin_hint')}
                         </p>
                     </div>
                     <ChevronRight className="size-4 text-[#AFFA01]" />
@@ -248,9 +227,7 @@ export default function MemberToday({
 
             {weekStats.sessions > 0 && (
                 <p className="mt-4 text-center text-xs text-muted-foreground">
-                    {t('member.today.week_stats', ':count session(s) this week', {
-                        count: weekStats.sessions,
-                    })}
+                    {t('member.today.week_stats', { count: weekStats.sessions })}
                 </p>
             )}
         </MobileShell>
