@@ -4,6 +4,8 @@ import {
     Bot,
     Dumbbell,
     Megaphone,
+    PauseCircle,
+    PlayCircle,
     Trash2,
     Unplug,
     Users,
@@ -27,7 +29,9 @@ import {
     demote,
     destroy,
     index as trainersIndex,
+    suspend,
     suspendBot,
+    unsuspend,
 } from '@/routes/admin/trainers';
 
 type Client = {
@@ -60,6 +64,7 @@ type Props = {
         bot_connected: boolean;
         bot_username: string | null;
         webhook_registered: boolean;
+        suspended: boolean;
         user: {
             id: number;
             name: string;
@@ -100,6 +105,39 @@ export default function AdminTrainerShow({
                     description={`${trainer.slug} · joined ${trainer.user.joined}`}
                     actions={
                         <>
+                            {trainer.suspended ? (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        router.post(unsuspend(trainer.id).url)
+                                    }
+                                >
+                                    <PlayCircle className="mr-1 size-4" />
+                                    Reinstate
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        confirm({
+                                            title: `Suspend ${trainer.user.name}?`,
+                                            description:
+                                                'They lose trainer-area access and their public page is hidden. Data is preserved.',
+                                            confirmLabel: 'Suspend trainer',
+                                            destructive: true,
+                                            onConfirm: () =>
+                                                router.post(
+                                                    suspend(trainer.id).url,
+                                                ),
+                                        })
+                                    }
+                                >
+                                    <PauseCircle className="mr-1 size-4" />
+                                    Suspend
+                                </Button>
+                            )}
                             {trainer.bot_connected && (
                                 <Button
                                     variant="outline"

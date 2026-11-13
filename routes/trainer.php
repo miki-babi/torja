@@ -2,10 +2,15 @@
 
 use App\Http\Controllers\Trainer\BotController;
 use App\Http\Controllers\Trainer\BroadcastsController;
+use App\Http\Controllers\Trainer\CheckInsController;
 use App\Http\Controllers\Trainer\ClientsController;
 use App\Http\Controllers\Trainer\DashboardController;
+use App\Http\Controllers\Trainer\EarningsController;
 use App\Http\Controllers\Trainer\FoodSearchController;
+use App\Http\Controllers\Trainer\LeadsController;
 use App\Http\Controllers\Trainer\MealProgramsController;
+use App\Http\Controllers\Trainer\PlansController;
+use App\Http\Controllers\Trainer\ProfileController;
 use App\Http\Controllers\Trainer\ProgramsController;
 use App\Http\Controllers\Trainer\RegisterController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +28,9 @@ Route::middleware(['auth', 'trainer'])
     ->name('trainer.')
     ->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
+
+        Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
 
         Route::get('bot', [BotController::class, 'edit'])->name('bot.edit');
         Route::post('bot', [BotController::class, 'store'])->name('bot.store');
@@ -45,6 +53,8 @@ Route::middleware(['auth', 'trainer'])
             ->name('programs.unshare');
         Route::post('programs/{program}/assign', [ProgramsController::class, 'assign'])
             ->name('programs.assign');
+        Route::post('programs/{program}/copy-template', [ProgramsController::class, 'copyTemplate'])
+            ->name('programs.copy-template');
 
         Route::get('foods/search', FoodSearchController::class)
             ->name('foods.search');
@@ -58,6 +68,17 @@ Route::middleware(['auth', 'trainer'])
             ->name('meal-programs.unshare');
         Route::post('meal-programs/{mealProgram}/assign', [MealProgramsController::class, 'assign'])
             ->name('meal-programs.assign');
+
+        Route::resource('plans', PlansController::class)->except(['show']);
+        Route::post('plans/{plan}/toggle', [PlansController::class, 'toggle'])
+            ->name('plans.toggle');
+
+        Route::get('earnings', EarningsController::class)->name('earnings');
+        Route::get('leads', [LeadsController::class, 'index'])->name('leads.index');
+        Route::get('check-ins', [CheckInsController::class, 'index'])
+            ->name('check-ins.index');
+        Route::post('check-ins/{checkIn}/reply', [CheckInsController::class, 'reply'])
+            ->name('check-ins.reply');
 
         Route::get('broadcasts', [BroadcastsController::class, 'index'])
             ->name('broadcasts.index');

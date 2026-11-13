@@ -31,6 +31,5 @@ test('history page renders the member sessions', function () {
             ->component('member/history')
             ->has('sessions', 1)
             ->where('sessions.0.id', $session->id)
-            ->where('sessions.0.has_recap', false)
             ->has('exerciseSummaries.squat'));
 });

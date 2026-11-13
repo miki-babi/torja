@@ -41,7 +41,7 @@ class ReferralCommissionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'approved',
-            'approved_by_id' => User::factory()->admin(),
+            'approved_by_id' => User::factory()->staff(),
             'approved_at' => now(),
         ]);
     }

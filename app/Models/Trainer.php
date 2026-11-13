@@ -24,17 +24,26 @@ use Illuminate\Support\Str;
  * @property int $user_id
  * @property string $slug
  * @property string|null $brand_name
+ * @property string|null $bio
+ * @property string|null $specialty
+ * @property array<int, string>|null $languages
+ * @property int|null $years_experience
+ * @property string|null $certification_path
  * @property string|null $bot_token
  * @property string|null $bot_username
  * @property string|null $mini_app_name
  * @property string|null $webhook_secret
  * @property Carbon|null $webhook_registered_at
+ * @property Carbon|null $suspended_at
  * @property Carbon|null $menu_button_set_at
+ * @property string|null $payout_method
+ * @property string|null $payout_account
+ * @property string|null $offer_text
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read string $display_name
  */
-#[Fillable(['user_id', 'slug', 'brand_name', 'bot_token', 'bot_username', 'mini_app_name', 'webhook_secret', 'webhook_registered_at', 'menu_button_set_at'])]
+#[Fillable(['user_id', 'slug', 'brand_name', 'bio', 'specialty', 'languages', 'years_experience', 'certification_path', 'bot_token', 'bot_username', 'mini_app_name', 'webhook_secret', 'webhook_registered_at', 'menu_button_set_at', 'payout_method', 'payout_account', 'offer_text', 'suspended_at'])]
 #[Hidden(['bot_token', 'webhook_secret'])]
 class Trainer extends Model
 {
@@ -50,7 +59,9 @@ class Trainer extends Model
     {
         return [
             'bot_token' => 'encrypted',
+            'languages' => 'array',
             'webhook_registered_at' => 'datetime',
+            'suspended_at' => 'datetime',
             'menu_button_set_at' => 'datetime',
         ];
     }
@@ -100,6 +111,46 @@ class Trainer extends Model
     }
 
     /**
+     * Prospective clients captured through this trainer's free programs.
+     *
+     * @return HasMany<ProgramLead, $this>
+     */
+    public function leads(): HasMany
+    {
+        return $this->hasMany(ProgramLead::class);
+    }
+
+    /**
+     * Coaching plans this trainer sells on their public page.
+     *
+     * @return HasMany<TrainerPlan, $this>
+     */
+    public function plans(): HasMany
+    {
+        return $this->hasMany(TrainerPlan::class);
+    }
+
+    /**
+     * Earnings ledger entries accrued from plan sales.
+     *
+     * @return HasMany<TrainerEarning, $this>
+     */
+    public function earnings(): HasMany
+    {
+        return $this->hasMany(TrainerEarning::class);
+    }
+
+    /**
+     * Payout batches staff have created/sent to this trainer.
+     *
+     * @return HasMany<TrainerPayout, $this>
+     */
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(TrainerPayout::class);
+    }
+
+    /**
      * Exercise programs authored by the trainer's account.
      *
      * @return HasMany<ExerciseProgram, $this>
@@ -134,6 +185,15 @@ class Trainer extends Model
     /**
      * Whether a Telegram bot token has been connected.
      */
+    /**
+     * The trainer is suspended by staff — locked out of the trainer
+     * area and their public page is hidden.
+     */
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
+    }
+
     public function hasConnectedBot(): bool
     {
         return $this->bot_token !== null;

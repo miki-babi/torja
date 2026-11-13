@@ -37,7 +37,7 @@ class ProGrantFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'source' => 'manual',
             'referral_count' => null,
-            'granted_by_id' => User::factory()->admin(),
+            'granted_by_id' => User::factory()->staff(),
         ]);
     }
 
@@ -48,7 +48,7 @@ class ProGrantFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'revoked_at' => now(),
-            'revoked_by_id' => User::factory()->admin(),
+            'revoked_by_id' => User::factory()->staff(),
             'revoke_reason' => 'Revoked',
         ]);
     }

@@ -49,7 +49,7 @@ class NotifyChatMessage implements ShouldQueue
         }
 
         // Members only hear about their coach's thread.
-        if (! $recipient->isAdmin() && ! $recipient->isTrainer() && ! $conversation->isCoachThreadFor($recipient)) {
+        if (! $recipient->isStaff() && ! $recipient->isTrainer() && ! $conversation->isCoachThreadFor($recipient)) {
             return;
         }
 

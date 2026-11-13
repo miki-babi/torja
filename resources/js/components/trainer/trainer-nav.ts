@@ -1,21 +1,30 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     Bot,
+    ClipboardCheck,
     Dumbbell,
     LayoutDashboard,
     Megaphone,
     MessageCircle,
+    Tag,
+    UserPlus,
+    UserRound,
     Users,
     UtensilsCrossed,
+    Wallet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { messages } from '@/routes/member';
-import { dashboard } from '@/routes/trainer';
+import { dashboard, earnings } from '@/routes/trainer';
 import { edit as botEdit } from '@/routes/trainer/bot';
 import { index as broadcastsIndex } from '@/routes/trainer/broadcasts';
+import { index as checkInsIndex } from '@/routes/trainer/check-ins';
 import { index as clientsIndex } from '@/routes/trainer/clients';
+import { index as leadsIndex } from '@/routes/trainer/leads';
 import { index as mealProgramsIndex } from '@/routes/trainer/meal-programs';
+import { index as plansIndex } from '@/routes/trainer/plans';
 import { index as programsIndex } from '@/routes/trainer/programs';
+import { edit as profileEdit } from '@/routes/trainer/profile';
 
 export type TrainerNavItem = {
     title: string;
@@ -51,17 +60,31 @@ export const trainerNavGroups: TrainerNavGroup[] = [
                 href: mealProgramsIndex(),
                 icon: UtensilsCrossed,
             },
+            { title: 'Coaching plans', href: plansIndex(), icon: Tag },
         ],
+    },
+    {
+        label: 'Money',
+        items: [{ title: 'Earnings', href: earnings(), icon: Wallet }],
     },
     {
         label: 'Engagement',
         items: [
+            { title: 'Leads', href: leadsIndex(), icon: UserPlus },
+            {
+                title: 'Check-ins',
+                href: checkInsIndex(),
+                icon: ClipboardCheck,
+            },
             { title: 'Broadcasts', href: broadcastsIndex(), icon: Megaphone },
             { title: 'Messages', href: messages(), icon: MessageCircle },
         ],
     },
     {
         label: 'Setup',
-        items: [{ title: 'Bot setup', href: botEdit(), icon: Bot }],
+        items: [
+            { title: 'Profile', href: profileEdit(), icon: UserRound },
+            { title: 'Bot setup', href: botEdit(), icon: Bot },
+        ],
     },
 ];

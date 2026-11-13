@@ -31,7 +31,6 @@ class PlaylistController extends Controller
 
         $sessions = $user->workoutSessions()
             ->with('sets')
-            ->withExists('recap')
             ->orderByDesc('date')
             ->limit(20)
             ->get();

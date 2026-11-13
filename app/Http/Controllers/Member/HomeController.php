@@ -24,15 +24,6 @@ class HomeController extends Controller
             ->whereDate('date', '>=', now()->startOfWeek())
             ->get();
 
-        $recaps = RecapController::feedQuery($user)
-            ->latest('id')
-            ->limit(11)
-            ->get();
-
-        $hasMore = $recaps->count() > 10;
-        $recaps = $recaps->take(10);
-        RecapController::hydrateComments($recaps);
-
         $coach = $user->activeCoach();
 
         return Inertia::render('member/home', [
@@ -63,8 +54,6 @@ class HomeController extends Controller
                 ])
                 ->all(),
             'banners' => HomeBanners::forMember(),
-            'recaps' => $recaps->map(fn ($recap) => $recap->toFeed($user))->all(),
-            'recapsNextCursor' => $hasMore ? $recaps->last()->id : null,
             'weekStats' => [
                 'sessions' => $weekSessions->filter(
                     fn ($session) => $session->sets->isNotEmpty(),

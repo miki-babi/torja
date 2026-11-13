@@ -37,7 +37,7 @@ test('users can authenticate using the login screen', function () {
 });
 
 test('admin users are redirected to the admin area after login', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
 
     $response = $this->post(route('login.store'), [
         'login' => $admin->email,
@@ -49,7 +49,7 @@ test('admin users are redirected to the admin area after login', function () {
 });
 
 test('the intended url still wins over the admin redirect', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
 
     $response = $this->withSession(['url.intended' => route('plan.preview', absolute: false)])
         ->post(route('login.store'), [

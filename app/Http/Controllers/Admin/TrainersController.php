@@ -43,7 +43,7 @@ class TrainersController extends Controller
         $trainers = $query->paginate(15, ['*'], 'trainers')->withQueryString();
 
         $members = User::query()
-            ->whereNotIn('role', ['trainer', 'admin'])
+            ->whereNotIn('role', ['trainer', 'staff'])
             ->when($search !== '', fn ($users) => $users
                 ->where(fn ($inner) => $inner
                     ->where('name', 'like', "%{$search}%")
@@ -62,6 +62,7 @@ class TrainersController extends Controller
                 'email' => $trainer->user?->email,
                 'bot_username' => $trainer->bot_username,
                 'bot_connected' => $trainer->hasConnectedBot(),
+                'suspended' => $trainer->isSuspended(),
                 'clients_count' => $trainer->clients_count,
                 'programs_count' => $trainer->programs_count,
                 'meal_programs_count' => $trainer->meal_programs_count,
@@ -108,6 +109,7 @@ class TrainersController extends Controller
                 'bot_connected' => $trainer->hasConnectedBot(),
                 'bot_username' => $trainer->bot_username,
                 'webhook_registered' => $trainer->webhook_registered_at !== null,
+                'suspended' => $trainer->isSuspended(),
                 'user' => [
                     'id' => $trainer->user->id,
                     'name' => $trainer->user->name,
@@ -193,12 +195,37 @@ class TrainersController extends Controller
      */
     public function demote(Trainer $trainer): RedirectResponse
     {
-        $trainer->user->forceFill(['role' => 'member'])->save();
+        $trainer->user->forceFill(['role' => 'client'])->save();
 
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __(':name demoted — they keep their coach data but lose trainer access.', ['name' => $trainer->display_name]),
         ]);
+
+        return back();
+    }
+
+    /**
+     * Suspend the trainer — locks them out of the trainer area and
+     * hides their public page. A suspended tenant keeps its data.
+     */
+    public function suspend(Trainer $trainer): RedirectResponse
+    {
+        $trainer->forceFill(['suspended_at' => now()])->save();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __(':name suspended.', ['name' => $trainer->display_name])]);
+
+        return back();
+    }
+
+    /**
+     * Lift a suspension.
+     */
+    public function unsuspend(Trainer $trainer): RedirectResponse
+    {
+        $trainer->forceFill(['suspended_at' => null])->save();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __(':name reinstated.', ['name' => $trainer->display_name])]);
 
         return back();
     }

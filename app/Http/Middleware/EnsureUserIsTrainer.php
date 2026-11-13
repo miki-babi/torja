@@ -16,6 +16,7 @@ class EnsureUserIsTrainer
     public function handle(Request $request, Closure $next): Response
     {
         abort_unless($request->user()?->isTrainer(), 403);
+        abort_if($request->user()->trainer?->isSuspended(), 403, 'This trainer account is suspended.');
 
         return $next($request);
     }

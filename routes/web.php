@@ -79,6 +79,13 @@ Route::get('shared/playlists/{playlist:share_token}', [Member\SharedPlaylistCont
 
 Route::get('shared/programs/{program:share_token}', [Member\SharedProgramController::class, 'show'])
     ->name('programs.shared.show');
+Route::get('shared/programs/{program:share_token}/lead', [Member\ProgramLeadController::class, 'create'])
+    ->name('programs.shared.lead');
+Route::post('shared/programs/{program:share_token}/lead', [Member\ProgramLeadController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('programs.shared.lead.store');
+Route::get('shared/programs/{program:share_token}/lead/thanks', [Member\ProgramLeadController::class, 'thanks'])
+    ->name('programs.shared.lead.thanks');
 
 Route::get('shared/meal-programs/{mealProgram:share_token}', [Member\SharedMealProgramController::class, 'show'])
     ->name('meal-programs.shared.show');
@@ -107,7 +114,7 @@ Route::middleware(['auth', 'member.coach'])->group(function () {
     Route::post('plan/payment/{payment}/cancel', [PaymentController::class, 'cancel'])
         ->name('payment.cancel');
 
-    Route::get('dashboard', fn (Request $request) => $request->user()->isAdmin()
+    Route::get('dashboard', fn (Request $request) => $request->user()->isStaff()
         ? to_route('admin.dashboard')
         : ($request->user()->isTrainer()
             ? to_route('trainer.dashboard')
@@ -193,24 +200,6 @@ Route::middleware(['auth', 'member.coach'])->group(function () {
     Route::delete('member/sessions/{session}/sets/{set}', [Member\SessionController::class, 'destroySet'])
         ->name('member.sessions.sets.destroy');
 
-    Route::get('member/recaps', [Member\RecapController::class, 'index'])
-        ->name('member.recaps.index');
-    Route::post('member/recaps', [Member\RecapController::class, 'store'])
-        ->name('member.recaps.store');
-    Route::patch('member/recaps/{recap}', [Member\RecapController::class, 'update'])
-        ->name('member.recaps.update');
-    Route::delete('member/recaps/{recap}', [Member\RecapController::class, 'destroy'])
-        ->name('member.recaps.destroy');
-    Route::post('member/recaps/{recap}/bravo', [Member\RecapController::class, 'bravo'])
-        ->middleware('throttle:60,1')
-        ->name('member.recaps.bravo');
-    Route::get('member/recaps/{recap}/comments', [Member\RecapController::class, 'comments'])
-        ->name('member.recaps.comments.index');
-    Route::post('member/recaps/{recap}/comments', [Member\RecapController::class, 'storeComment'])
-        ->middleware('throttle:30,1')
-        ->name('member.recaps.comments.store');
-    Route::delete('member/recaps/{recap}/comments/{comment}', [Member\RecapController::class, 'destroyComment'])
-        ->name('member.recaps.comments.destroy');
     Route::get('habits', [Member\HabitController::class, 'index'])
         ->name('member.habits');
     Route::post('member/habits', [Member\HabitController::class, 'store'])
@@ -277,6 +266,18 @@ Route::middleware(['auth', 'member.coach'])->group(function () {
         ->name('member.ambassador');
     Route::post('ambassador/payouts', [Member\AmbassadorController::class, 'storePayout'])
         ->name('member.ambassador.payouts.store');
+    Route::get('coaching', [Member\CoachingController::class, 'index'])
+        ->name('member.coaching');
+    Route::get('member/check-ins', [Member\CheckInController::class, 'index'])
+        ->name('member.check-ins.index');
+    Route::post('member/check-ins', [Member\CheckInController::class, 'store'])
+        ->name('member.check-ins.store');
+    Route::patch('member/reminders', [Member\RemindersController::class, 'update'])
+        ->name('member.reminders.update');
+    Route::get('member/plans/{plan}', [Member\CoachingController::class, 'show'])
+        ->name('member.plans.show');
+    Route::post('member/plans/{plan}/checkout', [Member\CoachingController::class, 'checkout'])
+        ->name('member.plans.checkout');
 });
 
 require __DIR__.'/settings.php';

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Coaching\ClientPlanGranter;
 use App\Services\Programs\MealProgramAccessGranter;
 use App\Services\Programs\ProgramAccessGranter;
 use App\Services\Referrals\ReferralCommissioner;
@@ -130,6 +131,8 @@ class Payment extends Model
             app(ProgramAccessGranter::class)->grant($this->user, $payable, $this);
         } elseif ($payable instanceof MealProgram) {
             app(MealProgramAccessGranter::class)->grant($this->user, $payable, $this);
+        } elseif ($payable instanceof TrainerPlan) {
+            app(ClientPlanGranter::class)->grant($this->user, $payable, $this);
         }
 
         app(ReferralCommissioner::class)->grant($this);

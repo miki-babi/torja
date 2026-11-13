@@ -3,6 +3,7 @@ import {
     Copy,
     Eye,
     EyeOff,
+    LayoutTemplate,
     Link2,
     Link2Off,
     MoreHorizontal,
@@ -43,6 +44,7 @@ import {
 import { useClipboard } from '@/hooks/use-clipboard';
 import { dashboard } from '@/routes/trainer';
 import {
+    copyTemplate,
     create,
     destroy,
     edit,
@@ -51,11 +53,19 @@ import {
 } from '@/routes/trainer/programs';
 import type { AdminProgram, Paginated } from '@/types';
 
-type Props = {
-    programs: Paginated<AdminProgram>;
+type Template = {
+    id: number;
+    name: string;
+    workouts_count: number;
+    is_free: boolean;
 };
 
-export default function TrainerProgramsIndex({ programs }: Props) {
+type Props = {
+    programs: Paginated<AdminProgram>;
+    templates: Template[];
+};
+
+export default function TrainerProgramsIndex({ programs, templates }: Props) {
     const [, copy] = useClipboard();
     const { confirm, confirmDialog } = useConfirm();
     const [busyId, setBusyId] = useState<number | null>(null);
@@ -285,6 +295,52 @@ export default function TrainerProgramsIndex({ programs }: Props) {
                         </div>
                     </CardContent>
                 </Card>
+
+                {templates.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">
+                                Platform templates
+                            </CardTitle>
+                            <CardDescription>
+                                Ready-made programs from the TrainPro team —
+                                copy one into your library to edit and share.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {templates.map((template) => (
+                                <div
+                                    key={template.id}
+                                    className="flex items-start justify-between gap-3 rounded-lg border p-4"
+                                >
+                                    <div>
+                                        <p className="text-sm font-medium">
+                                            {template.name}
+                                        </p>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            {template.workouts_count} workouts ·{' '}
+                                            {template.is_free
+                                                ? 'free'
+                                                : 'paid'}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                            router.post(
+                                                copyTemplate(template.id).url,
+                                            )
+                                        }
+                                    >
+                                        <LayoutTemplate className="size-4" />
+                                        Copy
+                                    </Button>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
             </div>
             {confirmDialog}
         </>

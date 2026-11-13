@@ -30,7 +30,7 @@ class UserFactory extends Factory
             'username' => fake()->unique()->userName(),
             'phone' => '+2519'.fake()->unique()->numerify('########'),
             'email' => fake()->unique()->safeEmail(),
-            'role' => 'user',
+            'role' => 'client',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -41,12 +41,12 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the user is an admin.
+     * Indicate that the user is a staff member.
      */
-    public function admin(): static
+    public function staff(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => 'admin',
+            'role' => 'staff',
         ]);
     }
 

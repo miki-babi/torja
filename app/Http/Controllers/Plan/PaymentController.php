@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ExerciseProgram;
 use App\Models\MealProgram;
 use App\Models\Payment;
+use App\Models\TrainerPlan;
 use App\Services\Payments\CheckoutLauncher;
 use App\Services\Payments\PaymentSynchronizer;
 use App\Support\ProPage;
@@ -184,6 +185,20 @@ class PaymentController extends Controller
                         : __('Payment was not completed. You can try again.')]);
 
                 return to_route('meal-programs.shared.show', $program->share_token);
+            }
+        }
+
+        if ($payment->purpose === 'plan_purchase') {
+            $plan = $payment->payable;
+
+            if ($plan instanceof TrainerPlan) {
+                Inertia::flash('toast', $payment->isSuccessful()
+                    ? ['type' => 'success', 'message' => __('Payment confirmed — your coaching plan is active.')]
+                    : ['type' => $pending ? 'info' : 'error', 'message' => $pending
+                        ? __('Payment is not confirmed yet. Please try again shortly.')
+                        : __('Payment was not completed. You can try again.')]);
+
+                return to_route('member.coaching');
             }
         }
 

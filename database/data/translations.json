@@ -550,6 +550,10 @@
             "en": "Log in to buy",
             "am": "ለመግዛት ይግቡ"
         },
+        "get_program": {
+            "en": "Get this program",
+            "am": "ፕሮግራሙን ይውሰዱ"
+        },
         "in_playlists": {
             "en": "In your playlists",
             "am": "በዝርዝሮችዎ ውስጥ ነው"

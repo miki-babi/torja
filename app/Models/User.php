@@ -21,9 +21,12 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Contracts\Role;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
@@ -45,17 +48,18 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $telegram_link_token
  * @property int|null $telegram_id
  * @property string|null $telegram_username
+ * @property bool $reminders_enabled
  * @property string|null $referral_code
  * @property int|null $referred_by_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'referral_code', 'referred_by_id'])]
+#[Fillable(['name', 'username', 'phone', 'email', 'password', 'locale', 'telegram_chat_id', 'telegram_link_token', 'telegram_id', 'telegram_username', 'reminders_enabled', 'referral_code', 'referred_by_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'telegram_link_token'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
      * The accessors to append to the model's array form.
@@ -77,6 +81,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'telegram_id' => 'integer',
+            'reminders_enabled' => 'boolean',
         ];
     }
 
@@ -242,16 +247,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Recap posts this member shared to the home feed.
-     *
-     * @return HasMany<Recap, $this>
-     */
-    public function recaps(): HasMany
-    {
-        return $this->hasMany(Recap::class);
-    }
-
-    /**
      * Exercise programs authored by this user (admins).
      *
      * @return HasMany<ExerciseProgram, $this>
@@ -323,6 +318,26 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Coaching-plan subscriptions this user bought from trainers.
+     *
+     * @return HasMany<ClientPlan, $this>
+     */
+    public function clientPlans(): HasMany
+    {
+        return $this->hasMany(ClientPlan::class);
+    }
+
+    /**
+     * The user's weekly coach check-ins, newest first.
+     *
+     * @return HasMany<CheckIn, $this>
+     */
+    public function checkIns(): HasMany
+    {
+        return $this->hasMany(CheckIn::class)->latest('week_of');
+    }
+
+    /**
      * The user's body-weight check-ins.
      *
      * @return HasMany<WeightLog, $this>
@@ -380,7 +395,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             ->where('messages.user_id', '!=', $this->id)
             ->whereRaw('messages.id > COALESCE(conversation_user.last_read_message_id, 0)');
 
-        if (! $this->isAdmin() && ! $this->isTrainer()) {
+        if (! $this->isStaff() && ! $this->isTrainer()) {
             $coach = $this->activeCoach();
 
             if ($coach === null) {
@@ -537,11 +552,35 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Whether the user has admin-area access.
+     * Whether the user has staff-area access.
      */
-    public function isAdmin(): bool
+    public function isStaff(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === 'staff';
+    }
+
+    /**
+     * Whether the user is a regular member account.
+     */
+    public function isClient(): bool
+    {
+        return $this->role === 'client';
+    }
+
+    /**
+     * Sync the granular staff roles on this account. Only staff users can
+     * hold staff roles — clients and trainers keep `users.role` as their
+     * only type marker.
+     *
+     * @param  array<int, string|Role>  $roles
+     */
+    public function syncStaffRoles(array $roles): void
+    {
+        if (! $this->isStaff()) {
+            throw new InvalidArgumentException('Only staff users can hold staff roles.');
+        }
+
+        $this->syncRoles($roles);
     }
 
     /**

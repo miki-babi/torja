@@ -13,11 +13,9 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
     tracksWeight,
-    type ExerciseSummaries,
     type ExerciseSummary,
 } from '@/components/member/exercise-data';
 import { memberApi } from '@/components/member/member-api';
-import { RecapComposer } from '@/components/member/recap-composer';
 import type { WorkoutSession } from '@/components/member/types';
 import { WorkoutShareCard } from '@/components/member/workout-share-card';
 import { cn } from '@/lib/utils';
@@ -90,8 +88,6 @@ export function WorkoutPlayer({
     const [setJustCompleted, setSetJustCompleted] = useState(false);
     const [completed, setCompleted] = useState(false);
     const [durationMinutes, setDurationMinutes] = useState(0);
-    const [showRecapComposer, setShowRecapComposer] = useState(false);
-    const [recapShared, setRecapShared] = useState(false);
     const startedAt = useRef(Date.now());
     const { name: appName } = usePage<{ name: string }>().props;
     const [showHowTo, setShowHowTo] = useState(false);
@@ -103,11 +99,6 @@ export function WorkoutPlayer({
     const [customValue, setCustomValue] = useState('');
 
     const current = workout.exercises[exerciseIndex] ?? null;
-
-    // Player exercises carry every field ExerciseSummaries needs.
-    const exerciseSummaries: ExerciseSummaries = Object.fromEntries(
-        workout.exercises.map((exercise) => [exercise.slug, exercise]),
-    );
 
     // Logged sets for current exercise
     const loggedSets = current
@@ -297,27 +288,6 @@ export function WorkoutPlayer({
                 >
                     <X className="size-5" />
                 </button>
-
-                {!session.has_recap && !recapShared && (
-                    <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center px-6 pb-8">
-                        <button
-                            type="button"
-                            onClick={() => setShowRecapComposer(true)}
-                            className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-[#C5FF4D] to-[#AFFA01] py-3.5 text-sm font-black tracking-wider text-black uppercase shadow-lg transition-transform active:scale-95"
-                        >
-                            {t('member.recap.share_cta')}
-                        </button>
-                    </div>
-                )}
-
-                <RecapComposer
-                    open={showRecapComposer}
-                    onOpenChange={setShowRecapComposer}
-                    session={session}
-                    title={workout.title}
-                    exerciseSummaries={exerciseSummaries}
-                    onPosted={() => setRecapShared(true)}
-                />
             </div>
         );
     }

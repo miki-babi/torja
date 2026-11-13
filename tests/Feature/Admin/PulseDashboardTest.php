@@ -7,7 +7,7 @@ beforeEach(function () {
 });
 
 test('admins can view the pulse dashboard', function () {
-    $this->actingAs(User::factory()->admin()->create())
+    $this->actingAs(User::factory()->staff()->create())
         ->get(route('pulse'))
         ->assertOk();
 });

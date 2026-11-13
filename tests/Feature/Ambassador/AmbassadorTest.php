@@ -215,7 +215,7 @@ test('payout requests require the minimum balance and a single open request', fu
 });
 
 test('refunding a payment voids unpaid commissions', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
     $ambassador = User::factory()->create();
     $buyer = User::factory()->create(['referred_by_id' => $ambassador->id]);
     $payment = Payment::factory()->for($buyer)->jami()->create();

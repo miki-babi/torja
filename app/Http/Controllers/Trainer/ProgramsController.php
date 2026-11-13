@@ -50,7 +50,59 @@ class ProgramsController extends Controller
                     'claims_count' => $program->access_grants_count,
                     'share_url' => $program->shareUrl(),
                 ]),
+            'templates' => ExerciseProgram::query()
+                ->whereNotNull('published_at')
+                ->whereHas('user', fn ($users) => $users->where('role', 'staff'))
+                ->withCount('workouts')
+                ->latest()
+                ->limit(6)
+                ->get()
+                ->map(fn (ExerciseProgram $program): array => [
+                    'id' => $program->id,
+                    'name' => $program->localizedName(),
+                    'workouts_count' => $program->workouts_count,
+                    'is_free' => $program->isFree(),
+                ])
+                ->all(),
         ]);
+    }
+
+    /**
+     * Clone a platform template (staff-authored, published) into the
+     * trainer's own library — workouts and items come along. The copy
+     * starts unpublished so the trainer can review it.
+     */
+    public function copyTemplate(Request $request, ExerciseProgram $program): RedirectResponse
+    {
+        abort_unless($program->isPublished() && $program->user?->isStaff(), 404);
+
+        $copy = DB::transaction(function () use ($request, $program): ExerciseProgram {
+            $copy = $request->user()->exercisePrograms()->create([
+                'name' => $program->name,
+                'name_am' => $program->name_am,
+                'description' => $program->description,
+                'description_am' => $program->description_am,
+                'image_path' => $program->image_path,
+                'highlights' => $program->highlights,
+                'highlights_am' => $program->highlights_am,
+                'price_etb' => $program->price_etb,
+            ]);
+
+            $program->load('workouts.items');
+
+            foreach ($program->workouts as $workout) {
+                $workoutCopy = $copy->workouts()->create($workout->only(['title', 'position']));
+                $workoutCopy->items()->createMany(
+                    $workout->items->map->only(['exercise_id', 'position', 'sets', 'reps'])->all(),
+                );
+            }
+
+            return $copy;
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Template copied — review and publish when ready.')]);
+
+        return to_route('trainer.programs.edit', $copy);
     }
 
     /**

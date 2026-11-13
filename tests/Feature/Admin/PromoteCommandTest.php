@@ -2,13 +2,13 @@
 
 use App\Models\User;
 
-test('user:promote promotes a user to admin', function () {
+test('user:promote promotes a user to staff', function () {
     $user = User::factory()->create();
 
     $this->artisan('user:promote', ['identifier' => $user->email])
         ->assertSuccessful();
 
-    expect($user->fresh()->isAdmin())->toBeTrue();
+    expect($user->fresh()->isStaff())->toBeTrue();
 });
 
 test('user:promote promotes a user found by username', function () {
@@ -17,7 +17,7 @@ test('user:promote promotes a user found by username', function () {
     $this->artisan('user:promote', ['identifier' => 'futureadmin'])
         ->assertSuccessful();
 
-    expect($user->fresh()->isAdmin())->toBeTrue();
+    expect($user->fresh()->isStaff())->toBeTrue();
 });
 
 test('user:promote promotes a user found by phone', function () {
@@ -26,7 +26,7 @@ test('user:promote promotes a user found by phone', function () {
     $this->artisan('user:promote', ['identifier' => '0911 234 567'])
         ->assertSuccessful();
 
-    expect($user->fresh()->isAdmin())->toBeTrue();
+    expect($user->fresh()->isStaff())->toBeTrue();
 });
 
 test('user:promote fails for an unknown identifier', function () {

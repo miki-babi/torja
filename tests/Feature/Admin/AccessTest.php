@@ -13,13 +13,13 @@ test('non-admin users get a 403 from the admin area', function () {
 });
 
 test('unverified admins can reach the admin area', function () {
-    $this->actingAs(User::factory()->admin()->unverified()->create())
+    $this->actingAs(User::factory()->staff()->unverified()->create())
         ->get(route('admin.trainers.index'))
         ->assertOk();
 });
 
 test('admins land on the trainers list', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
 
     $this->actingAs($admin)
         ->get(route('admin.dashboard'))

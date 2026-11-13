@@ -20,9 +20,7 @@ import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { Button } from '@/components/ui/button';
 import { dm } from '@/routes/member/messages';
-import { RecapFeed } from '@/components/member/recap-feed';
 import { TodaysWorkoutCard } from '@/components/member/todays-workout-card';
-import type { Recap } from '@/components/member/types';
 import { useTranslation } from '@/lib/i18n';
 import { exercise, progress, today } from '@/routes/member';
 import { index as exploreIndex } from '@/routes/explore';
@@ -46,8 +44,6 @@ export default function MemberHome({
     weekStats,
     banners,
     streak,
-    recaps,
-    recapsNextCursor,
     coachPrograms,
     coachMealPrograms,
 }: {
@@ -55,8 +51,6 @@ export default function MemberHome({
     weekStats: { sessions: number; volume: number };
     banners: HomeBanner[];
     streak: number;
-    recaps: Recap[];
-    recapsNextCursor: number | null;
     coachPrograms: CoachPlan[];
     coachMealPrograms: CoachPlan[];
 }) {
@@ -232,14 +226,6 @@ export default function MemberHome({
                     )}
                 </section>
             )}
-
-            {/* Community recap feed */}
-            <section className="mt-6">
-                <RecapFeed
-                    initialRecaps={recaps}
-                    initialNextCursor={recapsNextCursor}
-                />
-            </section>
         </MobileShell>
     );
 }

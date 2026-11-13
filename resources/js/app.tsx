@@ -5,6 +5,7 @@ import { initializeTheme } from '@/hooks/use-appearance';
 import AdminLayout from '@/layouts/admin-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import TrainerLayout from '@/layouts/trainer-layout';
 import { MobileShell } from '@/components/member/mobile-shell';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Torja';
@@ -28,6 +29,8 @@ void createInertiaApp({
                 return [MobileShell, SettingsLayout];
             case name.startsWith('admin/'):
                 return AdminLayout;
+            case name.startsWith('trainer/'):
+                return TrainerLayout;
             default:
                 return null;
         }

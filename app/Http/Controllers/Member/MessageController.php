@@ -30,7 +30,7 @@ class MessageController extends Controller
         $membership = $conversation->membershipFor($user);
 
         abort_unless($membership !== null, 403);
-        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
+        abort_unless($user->isStaff() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $data = $request->validate([
             'body' => ['nullable', 'string', 'max:4000'],
@@ -79,7 +79,7 @@ class MessageController extends Controller
         $user = $request->user();
 
         abort_unless($conversation->isParticipant($user), 403);
-        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
+        abort_unless($user->isStaff() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
         abort_unless($message->user_id === $user->id, 403);
         abort_if($message->trashed(), 404);
 
@@ -102,7 +102,7 @@ class MessageController extends Controller
     {
         $user = $request->user();
 
-        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
+        abort_unless($user->isStaff() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
         abort_unless(
             $message->user_id === $user->id || $conversation->canModerate($user),
             403,
@@ -124,7 +124,7 @@ class MessageController extends Controller
         $user = $request->user();
 
         abort_unless($conversation->isParticipant($user), 403);
-        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
+        abort_unless($user->isStaff() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
         abort_if($message->trashed(), 404);
 
         $data = $request->validate(['emoji' => ['required', 'string', 'max:16']]);

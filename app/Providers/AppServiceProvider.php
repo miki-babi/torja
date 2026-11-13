@@ -63,6 +63,6 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configurePulse(): void
     {
-        Gate::define('viewPulse', fn (User $user): bool => $user->isAdmin());
+        Gate::define('viewPulse', fn (User $user): bool => $user->isStaff());
     }
 }

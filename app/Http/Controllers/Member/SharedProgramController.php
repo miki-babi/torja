@@ -101,6 +101,15 @@ class SharedProgramController extends Controller
             'checkoutUrl' => $program->isFree()
                 ? null
                 : route('programs.shared.checkout', $program->share_token),
+            'leadUrl' => $user === null && $program->isFree() && $program->user->isTrainer()
+                ? route('programs.shared.lead', $program->share_token)
+                : null,
+            'offerText' => $program->user->isTrainer()
+                ? $program->user->trainer?->offer_text
+                : null,
+            'trainerUrl' => $program->user->isTrainer()
+                ? $program->user->trainer?->miniAppUrl()
+                : null,
             'jamiEnabled' => filled(config('services.jami.token')),
             'proUrl' => route('pro.show'),
             'homeUrl' => $user !== null ? route('member.home') : route('explore.index'),

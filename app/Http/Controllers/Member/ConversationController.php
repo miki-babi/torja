@@ -29,7 +29,7 @@ class ConversationController extends Controller
 
         // Members get exactly one thread — the DM with their coach — so the
         // chat tab lands inside it instead of an inbox.
-        if (! $user->isAdmin() && ! $user->isTrainer()) {
+        if (! $user->isStaff() && ! $user->isTrainer()) {
             $coach = $user->activeCoach();
 
             abort_if($coach === null, 403);
@@ -156,7 +156,7 @@ class ConversationController extends Controller
         $membership = $conversation->membershipFor($user);
 
         abort_unless($membership !== null, 403);
-        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
+        abort_unless($user->isStaff() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $messages = $conversation->messages()
             ->withTrashed()
@@ -174,7 +174,7 @@ class ConversationController extends Controller
                 'type' => $conversation->type->value,
                 'title' => $other !== null ? ($other->username ?: $other->name) : 'Chat',
                 'avatar' => $other?->avatar,
-                'back_url' => $user->isAdmin() || $user->isTrainer()
+                'back_url' => $user->isStaff() || $user->isTrainer()
                     ? route('member.messages')
                     : route('member.home'),
                 'can_moderate' => $conversation->canModerate($user),
@@ -203,7 +203,7 @@ class ConversationController extends Controller
         $user = $request->user();
 
         abort_unless($conversation->isParticipant($user), 403);
-        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
+        abort_unless($user->isStaff() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $before = (int) $request->query('before_id', PHP_INT_MAX);
 
@@ -232,7 +232,7 @@ class ConversationController extends Controller
         $membership = $conversation->membershipFor($user);
 
         abort_unless($membership !== null, 403);
-        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
+        abort_unless($user->isStaff() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $data = $request->validate(['message_id' => ['required', 'integer']]);
         $latest = (int) $conversation->messages()->withTrashed()->max('id');
@@ -255,7 +255,7 @@ class ConversationController extends Controller
         $membership = $conversation->membershipFor($user);
 
         abort_unless($membership !== null, 403);
-        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
+        abort_unless($user->isStaff() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $membership->update(['muted_at' => now()]);
 
@@ -271,7 +271,7 @@ class ConversationController extends Controller
         $membership = $conversation->membershipFor($user);
 
         abort_unless($membership !== null, 403);
-        abort_unless($user->isAdmin() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
+        abort_unless($user->isStaff() || $user->isTrainer() || $conversation->isCoachThreadFor($user), 403);
 
         $membership->update(['muted_at' => null]);
 

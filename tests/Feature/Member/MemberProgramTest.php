@@ -58,7 +58,7 @@ test('members without a claim cannot open the program page', function () {
 test('admins can open the program page without a claim', function () {
     $program = memberProgram();
 
-    $this->actingAs(User::factory()->admin()->create())
+    $this->actingAs(User::factory()->staff()->create())
         ->get(route('member.programs.show', $program))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page

@@ -177,7 +177,7 @@ test('messages can be edited by the sender and deleted by sender or admin', func
         ->deleteJson(route('member.messages.destroy', [$conversation, $message]))
         ->assertForbidden();
 
-    $this->actingAs(User::factory()->admin()->create())
+    $this->actingAs(User::factory()->staff()->create())
         ->deleteJson(route('member.messages.destroy', [$conversation, $message]))
         ->assertOk();
 

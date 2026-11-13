@@ -1,5 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
+    Bell,
+    ClipboardCheck,
+    Dumbbell,
     Gift,
     Languages,
     LogOut,
@@ -16,6 +19,7 @@ import { memberApi } from '@/components/member/member-api';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -30,6 +34,9 @@ import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as appearanceEdit } from '@/routes/appearance';
 import { update as localeUpdate } from '@/routes/locale';
+import { coaching } from '@/routes/member';
+import { index as checkInsIndex } from '@/routes/member/check-ins';
+import { update as remindersUpdate } from '@/routes/member/reminders';
 
 import {
     disconnect as telegramDisconnect,
@@ -94,6 +101,7 @@ export default function MemberProfile({
         phone: string | null;
         email: string | null;
         member_since: string | null;
+        reminders_enabled: boolean;
     };
     telegram: {
         connected: boolean;
@@ -116,6 +124,23 @@ export default function MemberProfile({
     const [telegramBusy, setTelegramBusy] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(account.avatar);
     const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+    const [remindersEnabled, setRemindersEnabled] = useState(
+        account.reminders_enabled,
+    );
+    const [remindersSaving, setRemindersSaving] = useState(false);
+
+    async function toggleReminders(checked: boolean | 'indeterminate') {
+        const enabled = checked === true;
+        setRemindersEnabled(enabled);
+        setRemindersSaving(true);
+        try {
+            await memberApi(remindersUpdate().url, 'PATCH', { enabled });
+        } catch {
+            setRemindersEnabled(!enabled);
+        } finally {
+            setRemindersSaving(false);
+        }
+    }
 
     async function connectTelegram() {
         setTelegramBusy(true);
@@ -367,12 +392,40 @@ export default function MemberProfile({
                             My orders
                         </Link>
                         <Link
+                            href={checkInsIndex()}
+                            className="flex items-center gap-3 px-6 py-3 text-sm hover:bg-accent"
+                        >
+                            <ClipboardCheck className="size-4 text-muted-foreground" />
+                            Weekly check-in
+                        </Link>
+                        <Link
+                            href={coaching()}
+                            className="flex items-center gap-3 px-6 py-3 text-sm hover:bg-accent"
+                        >
+                            <Dumbbell className="size-4 text-muted-foreground" />
+                            My coaching
+                        </Link>
+                        <Link
                             href={appearanceEdit()}
                             className="flex items-center gap-3 px-6 py-3 text-sm hover:bg-accent"
                         >
                             <Palette className="size-4 text-muted-foreground" />
                             Appearance
                         </Link>
+
+                        <label
+                            htmlFor="reminders"
+                            className="flex cursor-pointer items-center gap-3 px-6 py-3 text-sm hover:bg-accent"
+                        >
+                            <Bell className="size-4 text-muted-foreground" />
+                            <span className="flex-1">Coach reminders</span>
+                            <Checkbox
+                                id="reminders"
+                                checked={remindersEnabled}
+                                disabled={remindersSaving}
+                                onCheckedChange={toggleReminders}
+                            />
+                        </label>
 
                         <div className="flex items-center gap-3 px-6 py-3">
                             <Languages className="size-4 text-muted-foreground" />

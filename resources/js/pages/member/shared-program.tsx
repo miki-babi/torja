@@ -9,6 +9,7 @@ import {
     Lock,
     Play,
     Share2,
+    Sparkles,
     Weight,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -78,6 +79,9 @@ export default function MemberSharedProgram({
     saveUrl,
     checkoutUrl,
     jamiEnabled,
+    leadUrl,
+    offerText,
+    trainerUrl,
     homeUrl,
     editUrl,
     todaysSessions: initialTodaysSessions,
@@ -90,6 +94,9 @@ export default function MemberSharedProgram({
     saveUrl: string;
     checkoutUrl: string | null;
     jamiEnabled: boolean;
+    leadUrl: string | null;
+    offerText: string | null;
+    trainerUrl: string | null;
     homeUrl: string;
     editUrl: string | null;
     todaysSessions: Record<string, WorkoutSession>;
@@ -480,6 +487,17 @@ export default function MemberSharedProgram({
                 </p>
             )}
 
+            {offerText !== null && trainerUrl !== null && (
+                <Link
+                    href={trainerUrl}
+                    className="mt-4 flex items-center gap-3 rounded-xl border bg-card p-4 transition-colors hover:bg-muted/50"
+                >
+                    <Sparkles className="size-5 shrink-0 text-primary" />
+                    <p className="min-w-0 flex-1 text-sm">{offerText}</p>
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </Link>
+            )}
+
             <div className="h-40" />
 
             <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur">
@@ -542,8 +560,10 @@ export default function MemberSharedProgram({
                             </p>
                             {isGuest ? (
                                 <Button className="w-full rounded-full" asChild>
-                                    <Link href={login()}>
-                                        {t('shared_program.login_to_save')}
+                                    <Link href={leadUrl ?? login()}>
+                                        {leadUrl !== null
+                                            ? t('shared_program.get_program')
+                                            : t('shared_program.login_to_save')}
                                     </Link>
                                 </Button>
                             ) : canClaim ? (

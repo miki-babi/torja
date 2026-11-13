@@ -24,6 +24,9 @@ class EnsureMemberHasCoach
     private const EXEMPT = [
         'member.no-coach',
         'dashboard',
+        'member.coaching',
+        'member.plans.show',
+        'member.plans.checkout',
         'payment.callback',
         'payment.status',
         'payment.verify',
@@ -40,7 +43,7 @@ class EnsureMemberHasCoach
         $user = $request->user();
 
         if ($user === null
-            || $user->isAdmin()
+            || $user->isStaff()
             || $user->isTrainer()
             || $request->routeIs(self::EXEMPT)
             || $user->activeCoach() !== null) {

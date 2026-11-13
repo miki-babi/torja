@@ -106,7 +106,7 @@ class Conversation extends Model
      */
     public function canModerate(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isStaff();
     }
 
     /**

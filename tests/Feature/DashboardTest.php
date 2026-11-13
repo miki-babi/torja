@@ -16,7 +16,7 @@ test('members are redirected to their member home', function () {
 });
 
 test('admins are redirected to the admin dashboard', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
     $this->actingAs($admin);
 
     $this->get(route('dashboard'))

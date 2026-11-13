@@ -36,6 +36,7 @@ type Trainer = {
     email: string | null;
     bot_username: string | null;
     bot_connected: boolean;
+    suspended: boolean;
     clients_count: number;
     programs_count: number;
     meal_programs_count: number;
@@ -179,6 +180,14 @@ export default function AdminTrainersIndex({
                                                     <div>
                                                         <p className="text-sm font-medium">
                                                             {trainer.name}
+                                                            {trainer.suspended && (
+                                                                <Badge
+                                                                    variant="destructive"
+                                                                    className="ml-2"
+                                                                >
+                                                                    suspended
+                                                                </Badge>
+                                                            )}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
                                                             {trainer.email ??

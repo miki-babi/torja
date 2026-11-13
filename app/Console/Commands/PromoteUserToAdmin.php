@@ -9,7 +9,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('user:promote {identifier : The email, phone number or username of the user to promote}')]
-#[Description('Promote a user to the admin role')]
+#[Description('Promote a user to the staff role')]
 class PromoteUserToAdmin extends Command
 {
     /**
@@ -33,16 +33,16 @@ class PromoteUserToAdmin extends Command
 
         $label = $user->email ?? $user->phone ?? $user->username ?? "user #{$user->id}";
 
-        if ($user->isAdmin()) {
-            $this->components->info("{$label} is already an admin.");
+        if ($user->isStaff()) {
+            $this->components->info("{$label} is already a staff member.");
 
             return self::SUCCESS;
         }
 
-        $user->role = 'admin';
+        $user->role = 'staff';
         $user->save();
 
-        $this->components->info("{$label} has been promoted to admin.");
+        $this->components->info("{$label} has been promoted to staff.");
 
         return self::SUCCESS;
     }

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('admins see the trainers list with stats', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
     $trainer = Trainer::factory()->withBot()->create();
 
     $this->actingAs($admin)
@@ -21,7 +21,7 @@ test('admins see the trainers list with stats', function () {
 });
 
 test('admins see a trainer detail page', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
     $trainer = Trainer::factory()->create();
 
     $this->actingAs($admin)
@@ -33,7 +33,7 @@ test('admins see a trainer detail page', function () {
 });
 
 test('admins can promote a member by email', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
     $member = User::factory()->create(['email' => 'newbie@example.com']);
 
     $this->actingAs($admin)
@@ -45,7 +45,7 @@ test('admins can promote a member by email', function () {
 });
 
 test('promoting an unknown email does not create anything', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
 
     $this->actingAs($admin)
         ->post(route('admin.trainers.promote'), ['email' => 'nobody@example.com'])
@@ -55,14 +55,14 @@ test('promoting an unknown email does not create anything', function () {
 });
 
 test('admins can demote a trainer back to member', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
     $trainer = Trainer::factory()->create();
 
     $this->actingAs($admin)
         ->post(route('admin.trainers.demote', $trainer))
         ->assertRedirect();
 
-    expect($trainer->user->fresh()->role)->toBe('member');
+    expect($trainer->user->fresh()->role)->toBe('client');
     expect(Trainer::find($trainer->id))->not->toBeNull();
 });
 
@@ -71,7 +71,7 @@ test('admins can suspend a trainer bot', function () {
         'https://api.telegram.org/*' => Http::response(['ok' => true, 'result' => true]),
     ]);
 
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
     $trainer = Trainer::factory()->withBot()->create();
 
     $this->actingAs($admin)
@@ -84,7 +84,7 @@ test('admins can suspend a trainer bot', function () {
 });
 
 test('deleting a trainer removes the tenant but keeps the user', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
     $trainer = Trainer::factory()->create();
     $client = User::factory()->create();
     $trainer->clients()->attach($client->id);

@@ -33,7 +33,7 @@ class ExerciseProgramController extends Controller
     {
         $user = $request->user();
 
-        abort_unless($user->isAdmin() || $this->grants->hasAccess($user, $program), 404);
+        abort_unless($user->isStaff() || $this->grants->hasAccess($user, $program), 404);
 
         $playlists = $user->exercisePlaylists()
             ->where('exercise_program_id', $program->id)
@@ -44,7 +44,6 @@ class ExerciseProgramController extends Controller
 
         $sessions = $user->workoutSessions()
             ->with('sets')
-            ->withExists('recap')
             ->orderByDesc('date')
             ->limit(20)
             ->get();

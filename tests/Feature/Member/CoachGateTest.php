@@ -40,7 +40,7 @@ test('members linked to a coach reach member pages', function () {
 
 test('trainers and admins bypass the gate', function () {
     $trainer = Trainer::factory()->create();
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->staff()->create();
 
     $this->actingAs($trainer->user)
         ->get(route('member.home'))

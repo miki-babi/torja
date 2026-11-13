@@ -393,8 +393,8 @@ test('a trainer cannot see another trainer’s programs or clients', function ()
         ->assertNotFound();
 });
 
-test('an admin can promote a member to trainer by email', function () {
-    $admin = User::factory()->admin()->create();
+test('a staff user can promote a member to trainer by email', function () {
+    $admin = User::factory()->staff()->create();
     $member = User::factory()->create(['email' => 'promote@example.com']);
 
     $this->actingAs($admin)

@@ -37,7 +37,7 @@ class ReferralPayoutFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'paid',
-            'processed_by_id' => User::factory()->admin(),
+            'processed_by_id' => User::factory()->staff(),
             'processed_at' => now(),
         ]);
     }
@@ -49,7 +49,7 @@ class ReferralPayoutFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'rejected',
-            'processed_by_id' => User::factory()->admin(),
+            'processed_by_id' => User::factory()->staff(),
             'processed_at' => now(),
         ]);
     }

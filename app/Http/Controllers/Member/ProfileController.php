@@ -39,6 +39,7 @@ class ProfileController extends Controller
                 'phone' => $user?->phone,
                 'email' => $user?->email,
                 'member_since' => $user?->created_at?->toFormattedDateString(),
+                'reminders_enabled' => $user?->reminders_enabled ?? true,
             ],
             'telegram' => [
                 'connected' => ! empty($user?->telegram_chat_id),

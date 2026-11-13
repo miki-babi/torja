@@ -21,7 +21,7 @@ abstract class TestCase extends BaseTestCase
     {
         if ($this->autoLinkActingMemberToCoach
             && $user instanceof User
-            && ! $user->isAdmin()
+            && ! $user->isStaff()
             && ! $user->isTrainer()
             && ! $user->trainers()->exists()) {
             Trainer::factory()->create()->clients()->attach($user->id);
