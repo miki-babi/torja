@@ -1,5 +1,6 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import {
+    Apple,
     BicepsFlexed,
     Bot,
     ClipboardCheck,
@@ -23,6 +24,7 @@ import { index as broadcastsIndex } from '@/routes/trainer/broadcasts';
 import { index as checkInsIndex } from '@/routes/trainer/check-ins';
 import { index as clientsIndex } from '@/routes/trainer/clients';
 import { index as exercisesIndex } from '@/routes/trainer/exercises';
+import { index as foodsIndex } from '@/routes/trainer/foods';
 import { index as leadsIndex } from '@/routes/trainer/leads';
 import { edit as leadFormEdit } from '@/routes/trainer/lead-form';
 import { index as mealProgramsIndex } from '@/routes/trainer/meal-programs';
@@ -70,6 +72,7 @@ export const trainerNavGroups: TrainerNavGroup[] = [
                 href: mealProgramsIndex(),
                 icon: UtensilsCrossed,
             },
+            { title: 'Foods', href: foodsIndex(), icon: Apple },
             { title: 'Coaching plans', href: plansIndex(), icon: Tag },
         ],
     },

@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Database\Factories\FoodFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
@@ -19,6 +21,7 @@ use Illuminate\Support\Facades\Storage;
  * denormalized copy of meal-plan membership kept in sync by FoodDatabaseSeeder.
  *
  * @property int $id
+ * @property int|null $user_id
  * @property string|null $efct_code
  * @property string $name_en
  * @property string|null $name_am
@@ -47,7 +50,7 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $updated_at
  * @property-read string|null $image_url
  */
-#[Fillable(['efct_code', 'name_en', 'name_am', 'category', 'kcal_per_100g', 'protein_g', 'carbs_g', 'fat_g', 'fibre_g', 'image_path', 'allergens', 'meal_types', 'is_fasting_friendly', 'fish_ok_fasting', 'is_vegetarian', 'is_vegan', 'contains_meat', 'goal_fat_loss', 'goal_muscle_gain', 'goal_tag_basis', 'used_in_plans', 'source', 'review_needed', 'data_fix_note'])]
+#[Fillable(['user_id', 'efct_code', 'name_en', 'name_am', 'category', 'kcal_per_100g', 'protein_g', 'carbs_g', 'fat_g', 'fibre_g', 'image_path', 'allergens', 'meal_types', 'is_fasting_friendly', 'fish_ok_fasting', 'is_vegetarian', 'is_vegan', 'contains_meat', 'goal_fat_loss', 'goal_muscle_gain', 'goal_tag_basis', 'used_in_plans', 'source', 'review_needed', 'data_fix_note'])]
 class Food extends Model
 {
     /** @use HasFactory<FoodFactory> */
@@ -104,6 +107,36 @@ class Food extends Model
             'used_in_plans' => 'array',
             'review_needed' => 'boolean',
         ];
+    }
+
+    /**
+     * Whether this is a coach-authored food (vs the hidden legacy dataset
+     * rows, where `user_id` is null).
+     */
+    public function isCustom(): bool
+    {
+        return $this->user_id !== null;
+    }
+
+    /**
+     * The coach who authored this food (null for dataset rows).
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Scope to one coach's own food library.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeOwnedBy(Builder $query, User $user): Builder
+    {
+        return $query->where('user_id', $user->id);
     }
 
     /**

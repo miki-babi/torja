@@ -268,6 +268,17 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Foods this coach authored — their private food library for meal
+     * programs (the seeded dataset is hidden from authoring surfaces).
+     *
+     * @return HasMany<Food, $this>
+     */
+    public function foods(): HasMany
+    {
+        return $this->hasMany(Food::class);
+    }
+
+    /**
      * Programs this user has claimed (saved or bought).
      *
      * @return HasMany<ExerciseProgramAccess, $this>

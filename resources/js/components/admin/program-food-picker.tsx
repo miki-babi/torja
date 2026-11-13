@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { Check, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { search } from '@/routes/trainer/foods';
+import { create, search } from '@/routes/trainer/foods';
 
 export type FoodSearchResult = {
     id: number;
@@ -109,8 +110,8 @@ export function ProgramFoodPicker({
                 <DialogHeader>
                     <DialogTitle>Add foods</DialogTitle>
                     <DialogDescription>
-                        Search the food database, tap to select, then add them
-                        to the meal.
+                        Search your food library, tap to select, then add
+                        them to the meal.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -128,7 +129,14 @@ export function ProgramFoodPicker({
                 <div className="-mx-1 min-h-40 flex-1 divide-y overflow-y-auto px-1">
                     {results.length === 0 && !loading && (
                         <p className="py-8 text-center text-sm text-muted-foreground">
-                            No foods match that search.
+                            No foods in your library match that search —{' '}
+                            <Link
+                                href={create().url}
+                                className="font-medium text-lime-700 underline dark:text-lime-400"
+                            >
+                                create your own food
+                            </Link>
+                            .
                         </p>
                     )}
                     {results.map((food) => {
@@ -169,7 +177,10 @@ export function ProgramFoodPicker({
                     })}
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="sm:justify-between">
+                    <Button asChild variant="ghost" type="button">
+                        <Link href={create().url}>Create your own food</Link>
+                    </Button>
                     <Button
                         type="button"
                         disabled={selectedCount === 0}

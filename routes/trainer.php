@@ -7,6 +7,7 @@ use App\Http\Controllers\Trainer\ClientsController;
 use App\Http\Controllers\Trainer\DashboardController;
 use App\Http\Controllers\Trainer\EarningsController;
 use App\Http\Controllers\Trainer\ExercisesController;
+use App\Http\Controllers\Trainer\FoodsController;
 use App\Http\Controllers\Trainer\FoodSearchController;
 use App\Http\Controllers\Trainer\LeadFormController;
 use App\Http\Controllers\Trainer\LeadsController;
@@ -63,6 +64,8 @@ Route::middleware(['auth', 'trainer'])
 
         Route::get('foods/search', FoodSearchController::class)
             ->name('foods.search');
+
+        Route::resource('foods', FoodsController::class)->except(['show']);
 
         Route::resource('meal-programs', MealProgramsController::class)
             ->except(['show'])

@@ -334,7 +334,13 @@ class MealProgramsController extends Controller
             'days.*.meals.*.id' => ['nullable', 'integer'],
             'days.*.meals.*.meal_type' => ['required', 'string', Rule::in(array_column(MealType::cases(), 'value'))],
             'days.*.meals.*.items' => ['nullable', 'array', 'max:20'],
-            'days.*.meals.*.items.*.food_id' => ['required', 'integer', Rule::exists('foods', 'id')],
+            'days.*.meals.*.items.*.food_id' => [
+                'required', 'integer',
+                // Only the coach's own foods may go into their programs.
+                Rule::exists('foods', 'id')->where(
+                    fn ($query) => $query->where('user_id', $request->user()->id),
+                ),
+            ],
             'days.*.meals.*.items.*.portion_note' => ['nullable', 'string', 'max:120'],
         ]);
     }

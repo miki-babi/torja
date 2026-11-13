@@ -23,7 +23,7 @@ class FoodSearchController extends Controller
     {
         $query = trim((string) $request->query('q', ''));
 
-        $foods = Food::query()
+        $foods = Food::ownedBy($request->user())
             ->when($query !== '', fn ($q) => $q->where(function ($w) use ($query) {
                 foreach ($this->queryTerms($query) as $term) {
                     $w->orWhere('name_en', 'like', "%{$term}%")
