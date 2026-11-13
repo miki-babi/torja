@@ -25,9 +25,14 @@ class SendClientReminders extends Command
 
         Trainer::query()
             ->whereNotNull('bot_token')
+            ->where('reminders_enabled', true)
             ->with(['clients' => fn ($query) => $query->where('reminders_enabled', true)])
             ->chunkById(50, function ($trainers) use ($notifier, &$sent): void {
                 foreach ($trainers as $trainer) {
+                    if ($this->inQuietHours($trainer)) {
+                        continue;
+                    }
+
                     foreach ($trainer->clients as $client) {
                         $sent += $this->remind($notifier, $trainer, $client);
                     }
@@ -77,6 +82,25 @@ class SendClientReminders extends Command
         }
 
         return $sent;
+    }
+
+    /**
+     * The trainer's quiet-hours window in local time — no DMs while it's
+     * active. Windows can wrap midnight (e.g. 21:00 → 07:00).
+     */
+    private function inQuietHours(Trainer $trainer): bool
+    {
+        if ($trainer->quiet_hours_start === null || $trainer->quiet_hours_end === null) {
+            return false;
+        }
+
+        $now = now()->format('H:i:s');
+        $start = substr((string) $trainer->quiet_hours_start, 0, 8);
+        $end = substr((string) $trainer->quiet_hours_end, 0, 8);
+
+        return $start <= $end
+            ? ($now >= $start && $now < $end)
+            : ($now >= $start || $now < $end);
     }
 
     /**

@@ -43,7 +43,7 @@ use Illuminate\Support\Str;
  * @property Carbon|null $updated_at
  * @property-read string $display_name
  */
-#[Fillable(['user_id', 'slug', 'brand_name', 'bio', 'specialty', 'languages', 'years_experience', 'certification_path', 'bot_token', 'bot_username', 'mini_app_name', 'webhook_secret', 'webhook_registered_at', 'menu_button_set_at', 'payout_method', 'payout_account', 'offer_text', 'suspended_at'])]
+#[Fillable(['user_id', 'slug', 'brand_name', 'bio', 'specialty', 'languages', 'years_experience', 'certification_path', 'bot_token', 'bot_username', 'mini_app_name', 'webhook_secret', 'webhook_registered_at', 'menu_button_set_at', 'payout_method', 'payout_account', 'offer_text', 'suspended_at', 'reminders_enabled', 'quiet_hours_start', 'quiet_hours_end'])]
 #[Hidden(['bot_token', 'webhook_secret'])]
 class Trainer extends Model
 {
@@ -63,6 +63,7 @@ class Trainer extends Model
             'webhook_registered_at' => 'datetime',
             'suspended_at' => 'datetime',
             'menu_button_set_at' => 'datetime',
+            'reminders_enabled' => 'boolean',
         ];
     }
 

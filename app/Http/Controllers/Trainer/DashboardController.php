@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Trainer;
 
 use App\Http\Controllers\Controller;
+use App\Models\CheckIn;
+use App\Models\ClientPlan;
 use App\Models\ExerciseProgram;
 use App\Models\MealProgram;
 use App\Models\Payment;
@@ -36,6 +38,13 @@ class DashboardController extends Controller
                     ->whereIn('payable_id', $user->mealPrograms()->select('id'))))
             ->sum('amount');
 
+        $clientIds = $trainer->clients()->select('users.id');
+
+        $weekCheckIns = CheckIn::query()
+            ->whereIn('user_id', $clientIds)
+            ->whereDate('week_of', CheckIn::currentWeek())
+            ->get();
+
         return Inertia::render('trainer/dashboard', [
             'trainer' => [
                 'display_name' => $trainer->display_name,
@@ -44,6 +53,15 @@ class DashboardController extends Controller
                 'bot_connected' => $trainer->hasConnectedBot(),
                 'bot_username' => $trainer->bot_username,
                 'webhook_registered' => $trainer->webhook_registered_at !== null,
+            ],
+            'needsAttention' => [
+                'missing_check_ins' => max(0, $trainer->clients()->count() - $weekCheckIns->count()),
+                'awaiting_replies' => $weekCheckIns->filter->needsReply()->count(),
+                'expiring_plans' => ClientPlan::query()
+                    ->where('status', 'active')
+                    ->where('ends_at', '<=', now()->addDays(7))
+                    ->whereHas('plan', fn ($query) => $query->where('trainer_id', $trainer->id))
+                    ->count(),
             ],
             'stats' => [
                 'clients' => $trainer->clients()->count(),

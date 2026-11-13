@@ -1,11 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRight,
+    BellRing,
     Bot,
     CheckCircle2,
     Circle,
+    ClipboardCheck,
     Copy,
     Dumbbell,
+    Hourglass,
     Megaphone,
     Users,
     UtensilsCrossed,
@@ -26,6 +29,7 @@ import {
 } from '@/components/ui/card';
 import { dashboard } from '@/routes/trainer';
 import { edit as botEdit } from '@/routes/trainer/bot';
+import { index as checkInsIndex } from '@/routes/trainer/check-ins';
 import {
     index as clientsIndex,
     show as clientShow,
@@ -58,12 +62,18 @@ type Props = {
         revenue: number;
     };
     recentClients: Client[];
+    needsAttention: {
+        missing_check_ins: number;
+        awaiting_replies: number;
+        expiring_plans: number;
+    };
 };
 
 export default function TrainerDashboard({
     trainer,
     stats,
     recentClients,
+    needsAttention,
 }: Props) {
     const [, copy] = useClipboard();
 
@@ -163,6 +173,63 @@ export default function TrainerDashboard({
                         icon={Wallet}
                     />
                 </div>
+
+                <Card>
+                    <CardHeader className="flex-row items-center justify-between space-y-0">
+                        <div>
+                            <CardTitle className="text-base">
+                                Needs attention
+                            </CardTitle>
+                            <CardDescription>
+                                Clients waiting on you this week.
+                            </CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="grid gap-2 sm:grid-cols-3">
+                        <Link
+                            href={checkInsIndex()}
+                            className="flex items-center gap-3 rounded-lg border px-3 py-2.5 hover:bg-muted"
+                        >
+                            <ClipboardCheck className="size-5 shrink-0 text-amber-500" />
+                            <div>
+                                <p className="text-lg leading-none font-semibold">
+                                    {needsAttention.awaiting_replies}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    check-ins awaiting reply
+                                </p>
+                            </div>
+                        </Link>
+                        <Link
+                            href={checkInsIndex()}
+                            className="flex items-center gap-3 rounded-lg border px-3 py-2.5 hover:bg-muted"
+                        >
+                            <BellRing className="size-5 shrink-0 text-red-500" />
+                            <div>
+                                <p className="text-lg leading-none font-semibold">
+                                    {needsAttention.missing_check_ins}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    missing this week's check-in
+                                </p>
+                            </div>
+                        </Link>
+                        <Link
+                            href={clientsIndex()}
+                            className="flex items-center gap-3 rounded-lg border px-3 py-2.5 hover:bg-muted"
+                        >
+                            <Hourglass className="size-5 shrink-0 text-sky-500" />
+                            <div>
+                                <p className="text-lg leading-none font-semibold">
+                                    {needsAttention.expiring_plans}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    plans ending within 7 days
+                                </p>
+                            </div>
+                        </Link>
+                    </CardContent>
+                </Card>
 
                 <div className="grid gap-4 lg:grid-cols-2">
                     <Card>

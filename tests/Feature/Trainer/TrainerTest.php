@@ -61,15 +61,29 @@ test('trainer registration creates a trainer user and tenant', function () {
     $this->post('/trainer/register', [
         'name' => 'Coach Mike',
         'email' => 'mike@example.com',
+        'phone' => '0911 234 567',
         'password' => 'password',
         'password_confirmation' => 'password',
     ])->assertRedirect(route('trainer.bot.edit'));
 
     $user = User::where('email', 'mike@example.com')->first();
 
-    expect($user->isTrainer())->toBeTrue();
+    expect($user->isTrainer())->toBeTrue()
+        ->and($user->phone)->toBe('+251911234567');
     expect($user->trainer)->not->toBeNull();
     expect($user->trainer->slug)->toStartWith('coach-mike-');
+});
+
+test('trainer registration requires a unique phone number', function () {
+    User::factory()->create(['phone' => '+251911234567']);
+
+    $this->post('/trainer/register', [
+        'name' => 'Coach Dup',
+        'email' => 'dup@example.com',
+        'phone' => '0911234567',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertSessionHasErrors('phone');
 });
 
 test('connecting a bot validates the token and registers webhook + menu button', function () {

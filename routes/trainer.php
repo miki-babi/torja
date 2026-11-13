@@ -13,6 +13,7 @@ use App\Http\Controllers\Trainer\PlansController;
 use App\Http\Controllers\Trainer\ProfileController;
 use App\Http\Controllers\Trainer\ProgramsController;
 use App\Http\Controllers\Trainer\RegisterController;
+use App\Http\Controllers\Trainer\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -74,6 +75,9 @@ Route::middleware(['auth', 'trainer'])
             ->name('plans.toggle');
 
         Route::get('earnings', EarningsController::class)->name('earnings');
+
+        Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
+        Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
         Route::get('leads', [LeadsController::class, 'index'])->name('leads.index');
         Route::get('check-ins', [CheckInsController::class, 'index'])
             ->name('check-ins.index');

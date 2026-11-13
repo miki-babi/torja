@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Trainer;
 use App\Http\Controllers\Controller;
 use App\Models\Trainer;
 use App\Models\User;
+use App\Support\PhoneNumber;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,9 +37,12 @@ class RegisterController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $request->merge(['phone' => PhoneNumber::normalize($request->input('phone'))]);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['required', 'string', 'regex:/^\+\d{7,15}$/', 'unique:users,phone'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
@@ -46,6 +50,7 @@ class RegisterController extends Controller
             $user = new User([
                 'name' => $data['name'],
                 'email' => $data['email'],
+                'phone' => $data['phone'],
                 'password' => $data['password'],
             ]);
             $user->role = 'trainer';

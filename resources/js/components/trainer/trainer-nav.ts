@@ -6,6 +6,7 @@ import {
     LayoutDashboard,
     Megaphone,
     MessageCircle,
+    Settings,
     Tag,
     UserPlus,
     UserRound,
@@ -25,6 +26,7 @@ import { index as mealProgramsIndex } from '@/routes/trainer/meal-programs';
 import { index as plansIndex } from '@/routes/trainer/plans';
 import { index as programsIndex } from '@/routes/trainer/programs';
 import { edit as profileEdit } from '@/routes/trainer/profile';
+import { edit as settingsEdit } from '@/routes/trainer/settings';
 
 export type TrainerNavItem = {
     title: string;
@@ -85,6 +87,7 @@ export const trainerNavGroups: TrainerNavGroup[] = [
         items: [
             { title: 'Profile', href: profileEdit(), icon: UserRound },
             { title: 'Bot setup', href: botEdit(), icon: Bot },
+            { title: 'Settings', href: settingsEdit(), icon: Settings },
         ],
     },
 ];
