@@ -5,17 +5,21 @@ namespace App\Models;
 use App\Support\ExerciseCatalog;
 use Database\Factories\ExerciseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * One catalog exercise imported from the exercises dataset (1,324 rows).
  * Referenced by playlists and logged sets via its `slug`.
  *
  * @property int $id
+ * @property int|null $user_id
  * @property string $source_id
  * @property string $slug
  * @property string $name
@@ -52,7 +56,7 @@ use Illuminate\Support\Facades\Storage;
  * @property-read string $image_url
  * @property-read string $gif_url
  */
-#[Fillable(['source_id', 'slug', 'name', 'name_am', 'category', 'body_part', 'equipment', 'target', 'muscle_group', 'secondary_muscles', 'instructions', 'instruction_steps', 'instructions_am', 'instruction_steps_am', 'translation_status', 'media_id', 'image_path', 'gif_path', 'exercise_type', 'level', 'location', 'movement_pattern', 'compound', 'isolation', 'full_body', 'women_home_friendly', 'goal_fat_loss', 'goal_muscle_gain', 'review_needed', 'review_reasons', 'source_created_at'])]
+#[Fillable(['user_id', 'source_id', 'slug', 'name', 'name_am', 'category', 'body_part', 'equipment', 'target', 'muscle_group', 'secondary_muscles', 'instructions', 'instruction_steps', 'instructions_am', 'instruction_steps_am', 'translation_status', 'media_id', 'image_path', 'gif_path', 'exercise_type', 'level', 'location', 'movement_pattern', 'compound', 'isolation', 'full_body', 'women_home_friendly', 'goal_fat_loss', 'goal_muscle_gain', 'review_needed', 'review_reasons', 'source_created_at'])]
 class Exercise extends Model
 {
     /** @use HasFactory<ExerciseFactory> */
@@ -99,13 +103,54 @@ class Exercise extends Model
     }
 
     /**
+     * Whether this is a trainer-owned custom exercise (vs the shared
+     * platform catalog, where `user_id` is null).
+     */
+    public function isCustom(): bool
+    {
+        return $this->user_id !== null;
+    }
+
+    /**
+     * Whether the demo media is a video file (trainer uploads) rather
+     * than the dataset's animated GIFs.
+     */
+    public function isVideoDemo(): bool
+    {
+        return Str::endsWith(strtolower($this->gif_path), ['.mp4', '.webm', '.mov', '.m4v']);
+    }
+
+    /**
+     * The trainer who authored this exercise (null for catalog rows).
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Scope to the shared platform catalog — excludes trainer-owned rows.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopePlatform(Builder $query): Builder
+    {
+        return $query->whereNull('user_id');
+    }
+
+    /**
      * Public URL for the still thumbnail on the public disk.
      *
      * @return Attribute<string, never>
      */
     protected function imageUrl(): Attribute
     {
-        return Attribute::get(fn (): string => Storage::disk('public')->url($this->image_path));
+        return Attribute::get(fn (): string => $this->image_path === ''
+            ? asset('images/exercise-placeholder.svg')
+            : Storage::disk('public')->url($this->image_path));
     }
 
     /**
@@ -115,7 +160,9 @@ class Exercise extends Model
      */
     protected function gifUrl(): Attribute
     {
-        return Attribute::get(fn (): string => Storage::disk('public')->url($this->gif_path));
+        return Attribute::get(fn (): string => $this->gif_path === ''
+            ? asset('images/exercise-placeholder.svg')
+            : Storage::disk('public')->url($this->gif_path));
     }
 
     /**
@@ -165,6 +212,8 @@ class Exercise extends Model
             'target' => $this->target,
             'level' => $this->level,
             'image_url' => $this->image_url,
+            'is_custom' => $this->isCustom(),
+            'is_video' => $this->isVideoDemo(),
         ];
     }
 

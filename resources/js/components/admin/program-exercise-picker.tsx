@@ -1,4 +1,5 @@
-import { Check, Search } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { Check, Plus, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { EquipmentPicker } from '@/components/member/equipment-picker';
 import {
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { create as exercisesCreate } from '@/routes/trainer/exercises';
 
 type BodyPartOption = { id: string; label: string; count: number };
 
@@ -210,6 +212,11 @@ export function ProgramExercisePicker({
                                 <div className="min-w-0 flex-1">
                                     <p className="text-sm font-medium capitalize">
                                         {ex.name}
+                                        {ex.is_custom && (
+                                            <span className="ml-1.5 rounded-full bg-lime-400/20 px-1.5 py-0.5 align-middle text-[10px] font-semibold text-lime-700 normal-case dark:text-lime-400">
+                                                Yours
+                                            </span>
+                                        )}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         {ex.detail}
@@ -229,7 +236,14 @@ export function ProgramExercisePicker({
                     })}
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <Link
+                        href={exercisesCreate()}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                    >
+                        <Plus className="size-3.5" />
+                        Create your own exercise
+                    </Link>
                     <Button
                         type="button"
                         disabled={selectedCount === 0}

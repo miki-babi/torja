@@ -257,6 +257,17 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Custom exercises this trainer authored — merged with the shared
+     * catalog when they build programs.
+     *
+     * @return HasMany<Exercise, $this>
+     */
+    public function customExercises(): HasMany
+    {
+        return $this->hasMany(Exercise::class);
+    }
+
+    /**
      * Programs this user has claimed (saved or bought).
      *
      * @return HasMany<ExerciseProgramAccess, $this>

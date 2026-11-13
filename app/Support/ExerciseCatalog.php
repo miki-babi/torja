@@ -121,7 +121,7 @@ class ExerciseCatalog
             ->prepend([
                 'id' => '',
                 'label' => 'Full body',
-                'count' => Exercise::count(),
+                'count' => Exercise::platform()->count(),
             ])
             ->values()
             ->all();
@@ -231,7 +231,7 @@ class ExerciseCatalog
     {
         return self::$slugToPartCache ??= Cache::memo()->rememberForever(
             self::CACHE_KEY_SLUG_PART,
-            fn (): array => Exercise::query()->pluck('body_part', 'slug')->all(),
+            fn (): array => Exercise::platform()->pluck('body_part', 'slug')->all(),
         );
     }
 
@@ -248,7 +248,7 @@ class ExerciseCatalog
                 $parts = [];
 
                 foreach (self::BODY_PARTS as $part) {
-                    $parts[$part] = Exercise::query()
+                    $parts[$part] = Exercise::platform()
                         ->where('body_part', $part)
                         ->orderBy('name')
                         ->pluck('slug')

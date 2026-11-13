@@ -27,6 +27,8 @@ class ExerciseSearchController extends Controller
         $limit = min(50, max(1, (int) $request->query('limit', 30)));
 
         $exercises = Exercise::query()
+            // The shared catalog plus the searcher's own custom exercises.
+            ->where(fn ($q) => $q->whereNull('user_id')->orWhere('user_id', $request->user()->id))
             ->when($query !== '', fn ($q) => $q->where('name', 'like', "%{$query}%"))
             ->when($bodyParts !== [], fn ($q) => $q->whereIn('body_part', $bodyParts))
             ->when($equipment !== [], fn ($q) => $q->whereIn('equipment', $equipment))

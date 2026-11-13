@@ -21,7 +21,7 @@ class ExercisesController extends Controller
         $search = trim($request->string('search')->toString());
         $category = $request->string('category')->toString();
 
-        $exercises = Exercise::query()
+        $exercises = Exercise::platform()
             ->when($search !== '', fn ($query) => $query
                 ->where(fn ($inner) => $inner
                     ->where('name', 'like', "%{$search}%")
@@ -43,7 +43,7 @@ class ExercisesController extends Controller
                 'gif_url' => $exercise->gif_url,
                 'review_needed' => $exercise->review_needed,
             ]),
-            'categories' => Exercise::query()->select('category')->distinct()->orderBy('category')->pluck('category'),
+            'categories' => Exercise::platform()->select('category')->distinct()->orderBy('category')->pluck('category'),
             'filters' => ['search' => $search, 'category' => $category],
         ]);
     }

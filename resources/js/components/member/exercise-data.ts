@@ -23,6 +23,8 @@ export type ExerciseSummary = {
     target: string;
     level: string;
     image_url: string;
+    is_custom?: boolean;
+    is_video?: boolean;
 };
 
 export type ExerciseDetail = ExerciseSummary & {

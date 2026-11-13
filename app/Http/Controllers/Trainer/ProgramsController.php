@@ -345,11 +345,11 @@ class ProgramsController extends Controller
                 ->prepend([
                     'id' => '',
                     'label' => 'Full body',
-                    'count' => Exercise::count(),
+                    'count' => Exercise::platform()->count(),
                 ])
                 ->values()
                 ->all(),
-            'equipment' => Exercise::query()->distinct()->orderBy('equipment')->pluck('equipment')->all(),
+            'equipment' => Exercise::platform()->distinct()->orderBy('equipment')->pluck('equipment')->all(),
             'levels' => ['beginner', 'intermediate', 'advanced'],
         ];
     }
@@ -376,7 +376,13 @@ class ProgramsController extends Controller
             'workouts.*.id' => ['nullable', 'integer'],
             'workouts.*.title' => ['required', 'string', 'max:60'],
             'workouts.*.exercises' => ['nullable', 'array', 'max:30'],
-            'workouts.*.exercises.*.slug' => ['required', 'string', 'max:100', Rule::exists('exercises', 'slug')],
+            'workouts.*.exercises.*.slug' => [
+                'required', 'string', 'max:100',
+                // Platform catalog plus the trainer's own custom exercises.
+                Rule::exists('exercises', 'slug')->where(
+                    fn ($query) => $query->whereNull('user_id')->orWhere('user_id', $request->user()->id),
+                ),
+            ],
             'workouts.*.exercises.*.sets' => ['nullable', 'integer', 'min:1', 'max:20'],
             'workouts.*.exercises.*.reps' => ['nullable', 'integer', 'min:1', 'max:200'],
         ]);

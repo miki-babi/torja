@@ -15,6 +15,7 @@ import {
     tracksWeight,
     type ExerciseSummary,
 } from '@/components/member/exercise-data';
+import { ExerciseDemo } from '@/components/member/exercise-demo';
 import { memberApi } from '@/components/member/member-api';
 import type { WorkoutSession } from '@/components/member/types';
 import { WorkoutShareCard } from '@/components/member/workout-share-card';
@@ -27,6 +28,7 @@ export const DEFAULT_REPS = 10;
 
 export type PlayerExercise = ExerciseSummary & {
     gif_url: string;
+    is_video?: boolean;
     sets: number | null;
     reps: number | null;
     instructions?: string[] | null;
@@ -344,11 +346,12 @@ export function WorkoutPlayer({
             <div className="my-auto flex flex-col items-center py-4">
                 {/* Exercise Visual Container */}
                 <div className="group relative w-full max-w-[280px] overflow-hidden rounded-[22px] border border-[#E4E4E7] bg-white shadow-lg">
-                    <img
+                    <ExerciseDemo
                         key={current.slug}
-                        src={current.gif_url || current.image_url}
+                        gifUrl={current.gif_url}
+                        imageUrl={current.image_url}
+                        isVideo={current.is_video}
                         alt={current.name}
-                        onClick={() => setShowHowTo(true)}
                         className="aspect-[4/3] w-full cursor-pointer object-cover transition-transform duration-300 group-hover:scale-105"
                     />
 
@@ -638,8 +641,10 @@ export function WorkoutPlayer({
 
                         {/* Media Visual */}
                         <div className="mt-4 overflow-hidden rounded-2xl border border-[#E4E4E7] bg-white">
-                            <img
-                                src={current.gif_url || current.image_url}
+                            <ExerciseDemo
+                                gifUrl={current.gif_url}
+                                imageUrl={current.image_url}
+                                isVideo={current.is_video}
                                 alt={current.name}
                                 className="aspect-video w-full object-contain"
                             />
@@ -720,8 +725,10 @@ export function WorkoutPlayer({
                     >
                         <X className="size-5" />
                     </button>
-                    <img
-                        src={current.gif_url || current.image_url}
+                    <ExerciseDemo
+                        gifUrl={current.gif_url}
+                        imageUrl={current.image_url}
+                        isVideo={current.is_video}
                         alt={current.name}
                         className="max-h-[85vh] max-w-full rounded-2xl bg-white object-contain shadow-2xl"
                     />

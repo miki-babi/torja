@@ -6,6 +6,7 @@ use App\Http\Controllers\Trainer\CheckInsController;
 use App\Http\Controllers\Trainer\ClientsController;
 use App\Http\Controllers\Trainer\DashboardController;
 use App\Http\Controllers\Trainer\EarningsController;
+use App\Http\Controllers\Trainer\ExercisesController;
 use App\Http\Controllers\Trainer\FoodSearchController;
 use App\Http\Controllers\Trainer\LeadFormController;
 use App\Http\Controllers\Trainer\LeadsController;
@@ -57,6 +58,8 @@ Route::middleware(['auth', 'trainer'])
             ->name('programs.assign');
         Route::post('programs/{program}/copy-template', [ProgramsController::class, 'copyTemplate'])
             ->name('programs.copy-template');
+
+        Route::resource('exercises', ExercisesController::class)->except(['show']);
 
         Route::get('foods/search', FoodSearchController::class)
             ->name('foods.search');
