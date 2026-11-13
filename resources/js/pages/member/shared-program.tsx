@@ -153,8 +153,15 @@ export default function MemberSharedProgram({
         }
         setSaving(true);
         try {
-            await memberApi<{ claimed: boolean }>(saveUrl, 'POST');
+            const response = await memberApi<{
+                claimed: boolean;
+                bot_url: string | null;
+            }>(saveUrl, 'POST');
             setClaimed(true);
+            if (response.bot_url !== null) {
+                window.location.href = response.bot_url;
+                return;
+            }
             toast.success(t('shared_program.saved_toast'));
         } catch {
             toast.error(t('shared_program.save_failed_toast'));

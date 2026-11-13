@@ -4,6 +4,7 @@ use App\Models\Exercise;
 use App\Models\ExerciseProgram;
 use App\Models\ExerciseProgramAccess;
 use App\Models\Payment;
+use App\Models\Trainer;
 use App\Models\User;
 use App\Services\Programs\ProgramAccessGranter;
 use Database\Seeders\LanguageSeeder;
@@ -387,4 +388,51 @@ test('the shared page lists today\'s sessions keyed by workout for a claiming me
         ->assertInertia(fn (Assert $page) => $page
             ->where('alreadyClaimed', true)
             ->has("todaysSessions.{$workout->id}.sets"));
+});
+
+test('claiming exposes the trainer bot deep link when the author has a bot', function () {
+    $trainer = Trainer::factory()->withBot()->create();
+    $program = sharedProgram(['user_id' => $trainer->user_id]);
+    $user = proUser();
+
+    $this->actingAs($user)
+        ->postJson(route('programs.shared.save', $program->share_token))
+        ->assertCreated()
+        ->assertJsonPath('claimed', true)
+        ->assertJsonPath('bot_url', "https://t.me/{$trainer->bot_username}");
+});
+
+test('claiming a program without a trainer bot returns no bot link', function () {
+    $program = sharedProgram();
+    $user = proUser();
+
+    $this->actingAs($user)
+        ->postJson(route('programs.shared.save', $program->share_token))
+        ->assertCreated()
+        ->assertJsonPath('bot_url', null);
+});
+
+test('a successful purchase sends the client to the trainer bot when connected', function () {
+    Http::fake([
+        'https://jami.bio/api/jamidev/checkout/*' => Http::response([
+            'status' => 'completed',
+            'orderStatus' => 'paid',
+        ]),
+    ]);
+
+    $trainer = Trainer::factory()->withBot()->create();
+    $program = sharedProgram(['user_id' => $trainer->user_id, 'price_etb' => 300]);
+    $user = User::factory()->create();
+    $payment = Payment::factory()->for($user)->jami()->create([
+        'status' => 'pending',
+        'purpose' => 'program_purchase',
+        'payable_type' => $program->getMorphClass(),
+        'payable_id' => $program->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('payment.callback', ['tx_ref' => $payment->tx_ref]))
+        ->assertRedirect("https://t.me/{$trainer->bot_username}");
+
+    expect($payment->fresh()->isSuccessful())->toBeTrue();
 });

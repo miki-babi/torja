@@ -224,6 +224,15 @@ class Trainer extends Model
     }
 
     /**
+     * Deep link into the trainer's Telegram bot — where clients land after
+     * claiming a program. Null when no bot is connected.
+     */
+    public function botUrl(): ?string
+    {
+        return $this->bot_username === null ? null : "https://t.me/{$this->bot_username}";
+    }
+
+    /**
      * The Telegram webhook URL this trainer's bot should post updates to.
      */
     public function webhookUrl(): string

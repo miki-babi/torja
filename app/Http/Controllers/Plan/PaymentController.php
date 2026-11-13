@@ -164,6 +164,12 @@ class PaymentController extends Controller
             $program = $payment->payable;
 
             if ($program instanceof ExerciseProgram && $program->share_token !== null) {
+                // A confirmed purchase sends the client straight to the
+                // trainer's bot — that's where their program lives now.
+                if ($payment->isSuccessful() && ($botUrl = $program->user->trainer?->botUrl()) !== null) {
+                    return redirect()->away($botUrl);
+                }
+
                 Inertia::flash('toast', $payment->isSuccessful()
                     ? ['type' => 'success', 'message' => __('Payment confirmed — the program is in your playlists.')]
                     : ['type' => $pending ? 'info' : 'error', 'message' => $pending
@@ -178,6 +184,10 @@ class PaymentController extends Controller
             $program = $payment->payable;
 
             if ($program instanceof MealProgram && $program->share_token !== null) {
+                if ($payment->isSuccessful() && ($botUrl = $program->user->trainer?->botUrl()) !== null) {
+                    return redirect()->away($botUrl);
+                }
+
                 Inertia::flash('toast', $payment->isSuccessful()
                     ? ['type' => 'success', 'message' => __('Payment confirmed — the meal program is in your plans.')]
                     : ['type' => $pending ? 'info' : 'error', 'message' => $pending

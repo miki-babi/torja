@@ -129,7 +129,10 @@ class SharedProgramController extends Controller
 
         $granted = $this->grants->grant($request->user(), $program);
 
-        return response()->json(['claimed' => true], $granted ? 201 : 200);
+        return response()->json([
+            'claimed' => true,
+            'bot_url' => $program->user->trainer?->botUrl(),
+        ], $granted ? 201 : 200);
     }
 
     /**

@@ -97,6 +97,7 @@ class SharedMealProgramController extends Controller
 
         return response()->json([
             'claimed' => true,
+            'bot_url' => $mealProgram->user->trainer?->botUrl(),
             'plan_url' => $plan !== null ? route('member.meal-programs.show', $plan) : null,
         ], $granted ? 201 : 200);
     }

@@ -95,9 +95,14 @@ export default function MemberSharedMealProgram({
         try {
             const data = await memberApi<{
                 claimed: boolean;
+                bot_url: string | null;
                 plan_url: string | null;
             }>(saveUrl, 'POST');
             setClaimed(true);
+            if (data.bot_url !== null) {
+                window.location.href = data.bot_url;
+                return;
+            }
             setPlanUrl(data.plan_url);
             toast.success(t('shared_meal_program.saved_toast'));
         } catch {
