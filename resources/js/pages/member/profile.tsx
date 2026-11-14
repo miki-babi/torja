@@ -3,6 +3,7 @@ import {
     Bell,
     ClipboardCheck,
     Dumbbell,
+    Gift,
     Languages,
     LogOut,
     Palette,
@@ -32,7 +33,7 @@ import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as appearanceEdit } from '@/routes/appearance';
 import { update as localeUpdate } from '@/routes/locale';
-import { coaching } from '@/routes/member';
+import { coaching, freePrograms } from '@/routes/member';
 import { index as checkInsIndex } from '@/routes/member/check-ins';
 import { update as remindersUpdate } from '@/routes/member/reminders';
 
@@ -357,6 +358,13 @@ export default function MemberProfile({
                         >
                             <Dumbbell className="size-4 text-muted-foreground" />
                             My coaching
+                        </Link>
+                        <Link
+                            href={freePrograms()}
+                            className="flex items-center gap-3 px-6 py-3 text-sm hover:bg-accent"
+                        >
+                            <Gift className="size-4 text-muted-foreground" />
+                            {t('member.programs.title')}
                         </Link>
                         <Link
                             href={appearanceEdit()}

@@ -203,6 +203,8 @@ Route::middleware(['auth', 'member.coach'])->group(function () {
     });
     Route::get('coaching', [Member\CoachingController::class, 'index'])
         ->name('member.coaching');
+    Route::get('member/free-programs', Member\FreeProgramsController::class)
+        ->name('member.free-programs');
     Route::get('member/check-ins', [Member\CheckInController::class, 'index'])
         ->name('member.check-ins.index');
     Route::post('member/check-ins', [Member\CheckInController::class, 'store'])

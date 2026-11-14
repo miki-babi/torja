@@ -15,6 +15,7 @@ Route::middleware(['auth', 'admin'])
 
         Route::get('trainers', [TrainersController::class, 'index'])->name('trainers.index');
         Route::get('trainers/{trainer}', [TrainersController::class, 'show'])->name('trainers.show');
+        Route::get('trainers/{trainer}/programs', [TrainersController::class, 'programs'])->name('trainers.programs');
         Route::post('trainers/promote', [TrainersController::class, 'promote'])->name('trainers.promote');
         Route::post('trainers/{trainer}/demote', [TrainersController::class, 'demote'])->name('trainers.demote');
         Route::post('trainers/{trainer}/suspend-bot', [TrainersController::class, 'suspendBot'])->name('trainers.suspend-bot');

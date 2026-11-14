@@ -156,6 +156,58 @@ class TrainersController extends Controller
     }
 
     /**
+     * The full program catalog for one trainer — every workout and meal
+     * program with its free/paid and share status, optionally filtered to
+     * free only. The trainer detail page only previews the latest ten.
+     */
+    public function programs(Request $request, Trainer $trainer): Response
+    {
+        $freeOnly = $request->boolean('free');
+
+        $exercisePrograms = $trainer->programs()
+            ->when($freeOnly, fn ($query) => $query->where('price_etb', 0))
+            ->latest()
+            ->get()
+            ->map(fn (ExerciseProgram $program): array => [
+                'id' => $program->id,
+                'name' => $program->localizedName(),
+                'price_etb' => $program->price_etb,
+                'is_free' => $program->isFree(),
+                'shared' => $program->share_token !== null,
+                'share_url' => $program->share_token === null
+                    ? null
+                    : route('programs.shared.show', $program->share_token),
+                'created_at' => $program->created_at->toDateString(),
+            ]);
+
+        $mealPrograms = $trainer->mealPrograms()
+            ->when($freeOnly, fn ($query) => $query->where('price_etb', 0))
+            ->latest()
+            ->get()
+            ->map(fn (MealProgram $program): array => [
+                'id' => $program->id,
+                'name' => $program->localizedName(),
+                'price_etb' => $program->price_etb,
+                'is_free' => $program->isFree(),
+                'shared' => $program->share_token !== null,
+                'share_url' => $program->share_token === null
+                    ? null
+                    : route('meal-programs.shared.show', $program->share_token),
+                'created_at' => $program->created_at->toDateString(),
+            ]);
+
+        return Inertia::render('admin/trainers/programs', [
+            'trainer' => [
+                'id' => $trainer->id,
+                'name' => $trainer->display_name,
+            ],
+            'filters' => ['free' => $freeOnly],
+            'programs' => $exercisePrograms->all(),
+            'mealPrograms' => $mealPrograms->all(),
+        ]);
+    }
+
+    /**
      * Promote an existing member to trainer — by id from the members
      * table, or by email for direct entry.
      */

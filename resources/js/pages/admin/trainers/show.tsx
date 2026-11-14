@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowDownCircle,
     Bot,
@@ -29,6 +29,7 @@ import {
     demote,
     destroy,
     index as trainersIndex,
+    programs as trainerPrograms,
     suspend,
     suspendBot,
     unsuspend,
@@ -348,7 +349,16 @@ export default function AdminTrainerShow({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base">Plans</CardTitle>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-base">Plans</CardTitle>
+                                <Button asChild size="sm" variant="ghost">
+                                    <Link
+                                        href={trainerPrograms(trainer.id).url}
+                                    >
+                                        View all
+                                    </Link>
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent className="grid gap-1.5">
                             {programs.length === 0 &&

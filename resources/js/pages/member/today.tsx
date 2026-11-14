@@ -5,12 +5,14 @@ import {
     ChevronRight,
     Dumbbell,
     Flame,
+    Gift,
     Play,
 } from 'lucide-react';
 import { MobileShell } from '@/components/member/mobile-shell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
+import { freePrograms } from '@/routes/member';
 
 type Workout = {
     id: number;
@@ -94,6 +96,19 @@ export default function MemberToday({
                         </p>
                     </div>
                 </div>
+            )}
+
+            {coach !== null && (
+                <Link
+                    href={freePrograms().url}
+                    className="mt-3 flex items-center gap-3 rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A] px-4 py-3"
+                >
+                    <Gift className="size-5 shrink-0 text-[#AFFA01]" />
+                    <span className="flex-1 text-sm font-medium">
+                        {t('member.programs.from_coach', { name: coach.name })}
+                    </span>
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                </Link>
             )}
 
             {program === null ? (
